@@ -122,6 +122,9 @@ class Config:
     host: str = os.getenv("HOST", "0.0.0.0")
     debug: bool = os.getenv("DEBUG", "false").lower() == "true"
 
+    # Admin panel
+    admin_secret: str = os.getenv("ADMIN_SECRET", "")
+
     # MCP Server metadata
     server_name: str = "StudioMCPHub"
     server_version: str = "0.3.0"

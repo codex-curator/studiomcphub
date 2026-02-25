@@ -29,6 +29,15 @@ from mcp.types import ListToolsRequest, CallToolRequest, CallToolRequestParams
 
 from .config import config, PRICING, GCX_PER_DOLLAR
 from .mcp_tools import create_mcp_server
+from .admin import admin_bp
+
+# Optional: rate limiting
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    _HAS_LIMITER = True
+except ImportError:
+    _HAS_LIMITER = False
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("studiomcphub")
@@ -42,8 +51,48 @@ app = Flask(
     template_folder="../../site/templates",
 )
 
+# Security headers on every response
+@app.after_request
+def add_security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # CORS: allow MCP clients from any origin (tools are pay-gated)
+    origin = request.headers.get("Origin", "")
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Headers"] = (
+            "Content-Type, Authorization, X-PAYMENT, X-Stripe-Payment-Intent, "
+            "Mcp-Session-Id, X-Admin-Token"
+        )
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS"
+        response.headers["Access-Control-Expose-Headers"] = "Mcp-Session-Id"
+        response.headers["Access-Control-Max-Age"] = "3600"
+    return response
+
+@app.route("/", methods=["OPTIONS"])
+@app.route("/<path:path>", methods=["OPTIONS"])
+def cors_preflight(path=""):
+    """Handle CORS preflight requests."""
+    return Response("", status=204)
+
+# Rate limiting (100/min free tools, 50 concurrent MCP sessions)
+if _HAS_LIMITER:
+    limiter = Limiter(
+        get_remote_address,
+        app=app,
+        default_limits=[],
+        storage_uri="memory://",
+    )
+else:
+    limiter = None
+
 # MCP session store: session_id -> (server, transport)
 _mcp_sessions: dict[str, tuple] = {}
+
+# Register admin panel
+app.register_blueprint(admin_bp)
 
 
 # ---------------------------------------------------------------------------
@@ -126,7 +175,10 @@ def llms_txt():
 # MCP Streamable HTTP transport
 # ---------------------------------------------------------------------------
 
+_mcp_rate = limiter.limit("200/minute") if limiter else lambda f: f
+
 @app.route("/mcp", methods=["POST", "GET", "DELETE"])
+@_mcp_rate
 def mcp_endpoint():
     """MCP Streamable HTTP endpoint.
 
@@ -424,11 +476,36 @@ def require_payment(tool_name: str):
 # delegates to these)
 # ---------------------------------------------------------------------------
 
+_tool_rate = limiter.limit("100/minute") if limiter else lambda f: f
+
 @app.route("/api/tools/<tool_name>", methods=["POST"])
+@_tool_rate
 def execute_tool(tool_name: str):
     """Generic tool execution endpoint with payment gating."""
     if tool_name not in PRICING:
         return jsonify({"error": f"Unknown tool: {tool_name}"}), 404
+
+    # Input validation: tools that require 'image' param
+    _image_required = {
+        "upscale_image", "enrich_metadata", "infuse_metadata",
+        "register_hash", "store_permanent", "mint_nft", "verify_provenance",
+    }
+    params_preview = request.get_json(silent=True) or {}
+    if tool_name in _image_required and "image" not in params_preview:
+        return jsonify({
+            "error": f"Missing required parameter 'image' (base64-encoded image data)",
+            "tool": tool_name,
+        }), 400
+    if tool_name == "generate_image" and "prompt" not in params_preview:
+        return jsonify({
+            "error": "Missing required parameter 'prompt'",
+            "tool": tool_name,
+        }), 400
+    if tool_name == "search_artworks" and "query" not in params_preview:
+        return jsonify({
+            "error": "Missing required parameter 'query'",
+            "tool": tool_name,
+        }), 400
 
     payment = check_payment(tool_name)
     if payment is None:

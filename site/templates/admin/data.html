@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudioMCPHub Admin - Data Browser</title>
+<style>
+:root{--bg:#0a0a0f;--surface:#12121a;--border:#2a2a3a;--accent:#7c5cff;--teal:#00d4aa;--text:#e0e0e0;--muted:#888;--red:#ff4d6a;--orange:#f0a030}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px}
+a{color:var(--accent);text-decoration:none;cursor:pointer}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.header h1{font-size:1.1rem;font-weight:600}
+.header h1 span{color:var(--accent)}
+.nav-links{display:flex;gap:12px}
+.nav-links a{padding:6px 12px;border-radius:6px;font-size:0.8rem;color:var(--muted);transition:all 0.2s}
+.nav-links a:hover,.nav-links a.active{color:var(--text);background:#1a1a2e}
+.controls{display:flex;gap:12px;padding:16px 24px;align-items:center;flex-wrap:wrap}
+select{background:#1a1a2e;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:0.85rem;outline:none}
+select:focus{border-color:var(--accent)}
+button{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem}
+button:hover{background:#6a4de0}
+.breadcrumb{padding:0 24px 8px;font-size:0.8rem;color:var(--muted)}
+.breadcrumb span{color:var(--text)}
+.data-container{padding:0 24px 24px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:8px 12px;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg)}
+td{padding:8px 12px;border-bottom:1px solid var(--border);font-size:0.8rem;vertical-align:top;max-width:300px;word-break:break-word}
+tr:hover{background:#1a1a2e}
+.empty{text-align:center;padding:40px;color:var(--muted)}
+.doc-id{color:var(--accent);cursor:pointer;font-family:monospace}
+.count{color:var(--muted);font-size:0.8rem}
+/* Doc detail view */
+.doc-detail{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin:0 24px 24px}
+.doc-detail h3{font-size:0.85rem;margin-bottom:12px;color:var(--accent)}
+.doc-detail pre{background:#1a1a2e;padding:16px;border-radius:8px;overflow-x:auto;font-size:0.8rem;font-family:'Fira Code',monospace;line-height:1.5;white-space:pre-wrap}
+.doc-detail .subcol{margin-top:12px;font-size:0.8rem;color:var(--muted)}
+.back-btn{display:inline-block;padding:6px 12px;margin-bottom:12px;color:var(--accent);cursor:pointer;font-size:0.85rem}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1><span>StudioMCPHub</span> Admin</h1>
+  <div class="nav-links">
+    <a href="/admin">Dashboard</a>
+    <a href="/admin/logs">Logs</a>
+    <a href="/admin/data" class="active">Data</a>
+  </div>
+  <div style="font-size:0.8rem;color:var(--muted)">v{{ version }}</div>
+</div>
+
+<div class="controls">
+  <label style="color:var(--muted);font-size:0.8rem">Collection:</label>
+  <select id="col" onchange="loadCollection()">
+    <option value="gcx_accounts">gcx_accounts</option>
+    <option value="agent_spend">agent_spend</option>
+    <option value="loyalty_accounts">loyalty_accounts</option>
+    <option value="loyalty_events">loyalty_events</option>
+    <option value="support_tickets">support_tickets</option>
+    <option value="gcx_transactions">gcx_transactions</option>
+  </select>
+  <button onclick="loadCollection()">Refresh</button>
+  <span class="count" id="count"></span>
+</div>
+
+<div class="breadcrumb" id="breadcrumb"></div>
+
+<!-- Collection list view -->
+<div class="data-container" id="list-view">
+  <table>
+    <thead id="table-head"><tr><th>Loading...</th></tr></thead>
+    <tbody id="table-body">
+      <tr><td class="empty">Select a collection</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Single document view -->
+<div class="hidden" id="doc-view">
+  <div class="doc-detail">
+    <a class="back-btn" onclick="showList()">&larr; Back to list</a>
+    <h3 id="doc-title">Document</h3>
+    <pre id="doc-json"></pre>
+    <div class="subcol" id="doc-subcol"></div>
+  </div>
+</div>
+
+<script>
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+let currentCollection = 'gcx_accounts';
+
+async function loadCollection(){
+  currentCollection = document.getElementById('col').value;
+  document.getElementById('breadcrumb').innerHTML = `<span>${currentCollection}</span>`;
+  showList();
+
+  try{
+    const order = ['agent_spend','loyalty_events','gcx_transactions','support_tickets'].includes(currentCollection) ? '&order_by=timestamp' : '';
+    const r = await fetch(`/api/admin/firestore/${currentCollection}?limit=100${order}`);
+    if(!r.ok){ document.getElementById('table-body').innerHTML = `<tr><td class="empty">Error: ${r.status}</td></tr>`; return; }
+    const d = await r.json();
+    document.getElementById('count').textContent = `${d.count} documents`;
+
+    if(!d.documents.length){
+      document.getElementById('table-head').innerHTML = '<tr><th>ID</th></tr>';
+      document.getElementById('table-body').innerHTML = '<tr><td class="empty">No documents in this collection</td></tr>';
+      return;
+    }
+
+    // Discover columns from first few docs
+    const allKeys = new Set();
+    d.documents.forEach(doc => Object.keys(doc).forEach(k => { if(k !== '_id') allKeys.add(k); }));
+    const cols = ['_id', ...Array.from(allKeys).slice(0, 8)];
+
+    document.getElementById('table-head').innerHTML = '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
+    document.getElementById('table-body').innerHTML = d.documents.map(doc => {
+      return '<tr>' + cols.map(c => {
+        let v = doc[c];
+        if(c === '_id') return `<td><a class="doc-id" onclick="loadDoc('${currentCollection}','${v}')">${escapeHtml(v)}</a></td>`;
+        if(v === null || v === undefined) return '<td style="color:var(--muted)">null</td>';
+        if(typeof v === 'object') v = JSON.stringify(v);
+        return `<td>${escapeHtml(String(v).substring(0,100))}</td>`;
+      }).join('') + '</tr>';
+    }).join('');
+  }catch(e){ console.error('Collection load error:', e); }
+}
+
+async function loadDoc(collection, docId){
+  try{
+    const r = await fetch(`/api/admin/firestore/${collection}/${docId}`);
+    if(!r.ok) return;
+    const d = await r.json();
+    document.getElementById('doc-title').textContent = `${collection} / ${docId}`;
+    document.getElementById('doc-json').textContent = JSON.stringify(d.document, null, 2);
+    const subcol = d.subcollections || [];
+    document.getElementById('doc-subcol').textContent = subcol.length ? 'Subcollections: ' + subcol.join(', ') : '';
+    document.getElementById('breadcrumb').innerHTML = `<a onclick="loadCollection()">${collection}</a> / <span>${docId}</span>`;
+    document.getElementById('list-view').classList.add('hidden');
+    document.getElementById('doc-view').classList.remove('hidden');
+  }catch(e){ console.error('Doc load error:', e); }
+}
+
+function showList(){
+  document.getElementById('list-view').classList.remove('hidden');
+  document.getElementById('doc-view').classList.add('hidden');
+}
+
+loadCollection();
+</script>
+</body>
+</html>

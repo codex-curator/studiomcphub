@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudioMCPHub Admin Dashboard</title>
+<style>
+:root{--bg:#0a0a0f;--surface:#12121a;--border:#2a2a3a;--accent:#7c5cff;--teal:#00d4aa;--text:#e0e0e0;--muted:#888;--red:#ff4d6a;--orange:#f0a030;--green:#00d4aa}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px}
+a{color:var(--accent);text-decoration:none}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.header h1{font-size:1.1rem;font-weight:600}
+.header h1 span{color:var(--accent)}
+.header-right{display:flex;align-items:center;gap:16px;font-size:0.8rem;color:var(--muted)}
+.nav-links{display:flex;gap:12px}
+.nav-links a{padding:6px 12px;border-radius:6px;font-size:0.8rem;color:var(--muted);transition:all 0.2s}
+.nav-links a:hover,.nav-links a.active{color:var(--text);background:#1a1a2e}
+
+/* Grid */
+.grid{display:grid;gap:16px;padding:20px 24px}
+.row-4{grid-template-columns:repeat(4,1fr)}
+.row-2{grid-template-columns:1fr 1fr}
+.row-1{grid-template-columns:1fr}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;overflow:hidden}
+.card h3{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:8px}
+.card .big{font-size:2rem;font-weight:700;line-height:1.1}
+.card .sub{font-size:0.8rem;color:var(--muted);margin-top:4px}
+
+/* Health bar */
+.health-bar{display:flex;gap:12px;flex-wrap:wrap}
+.health-item{display:flex;align-items:center;gap:6px;font-size:0.8rem;padding:6px 10px;background:#1a1a2e;border-radius:6px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot.healthy{background:var(--green)}
+.dot.unhealthy{background:var(--red)}
+.dot.cold{background:var(--orange)}
+.latency{color:var(--muted);font-size:0.7rem}
+
+/* Activity feed */
+.feed{max-height:400px;overflow-y:auto}
+.feed-item{padding:8px 0;border-bottom:1px solid var(--border);font-size:0.8rem;display:flex;justify-content:space-between}
+.feed-item:last-child{border-bottom:none}
+.feed-tool{color:var(--accent);font-weight:500}
+.feed-time{color:var(--muted);font-size:0.7rem}
+.feed-amount{color:var(--teal);font-weight:500}
+
+/* Bar chart */
+.bar-chart{display:flex;flex-direction:column;gap:6px}
+.bar-row{display:flex;align-items:center;gap:8px;font-size:0.8rem}
+.bar-label{width:120px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.bar-track{flex:1;height:20px;background:#1a1a2e;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;background:var(--accent);border-radius:4px;min-width:2px;transition:width 0.3s}
+.bar-value{width:40px;text-align:right;color:var(--muted);flex-shrink:0}
+
+/* Pie chart (SVG) */
+.pie-container{display:flex;align-items:center;gap:20px;justify-content:center}
+.pie-legend{display:flex;flex-direction:column;gap:6px;font-size:0.8rem}
+.pie-legend-item{display:flex;align-items:center;gap:6px}
+.pie-swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
+/* Error log */
+.error-log{max-height:400px;overflow-y:auto}
+.error-entry{padding:8px 0;border-bottom:1px solid var(--border);font-size:0.8rem}
+.error-entry:last-child{border-bottom:none}
+.severity-ERROR,.severity-CRITICAL{color:var(--red)}
+.severity-WARNING{color:var(--orange)}
+.severity-INFO{color:var(--teal)}
+
+/* Responsive */
+@media(max-width:900px){.row-4{grid-template-columns:repeat(2,1fr)}.row-2{grid-template-columns:1fr}}
+@media(max-width:600px){.row-4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>StudioMCPHub</span> Admin</h1>
+  <div class="nav-links">
+    <a href="/admin" class="active">Dashboard</a>
+    <a href="/admin/logs">Logs</a>
+    <a href="/admin/data">Data</a>
+  </div>
+  <div class="header-right">
+    <span>v{{ version }}</span>
+    <span id="refresh-time">Loading...</span>
+  </div>
+</div>
+
+<!-- Row 1: Key Metrics -->
+<div class="grid row-4">
+  <div class="card">
+    <h3>Requests (24h)</h3>
+    <div class="big" id="m-requests">--</div>
+    <div class="sub" id="m-requests-7d">7d: --</div>
+  </div>
+  <div class="card">
+    <h3>Tool Calls (30d)</h3>
+    <div class="big" id="m-tool-calls">--</div>
+    <div class="sub" id="m-top-tool">Top: --</div>
+  </div>
+  <div class="card">
+    <h3>Revenue (30d)</h3>
+    <div class="big" id="m-revenue">--</div>
+    <div class="sub" id="m-revenue-sub">By tool: --</div>
+  </div>
+  <div class="card">
+    <h3>Active Wallets</h3>
+    <div class="big" id="m-wallets">--</div>
+    <div class="sub" id="m-sessions">MCP sessions: --</div>
+  </div>
+</div>
+
+<!-- Row 2: Service Health -->
+<div class="grid row-1">
+  <div class="card">
+    <h3>Service Health</h3>
+    <div class="health-bar" id="health-bar">
+      <div class="health-item"><div class="dot cold"></div>Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 3: Activity + Tool Usage -->
+<div class="grid row-2">
+  <div class="card">
+    <h3>Recent Activity (30d spend)</h3>
+    <div class="feed" id="activity-feed">
+      <div class="feed-item">Loading...</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Tool Usage (30d calls)</h3>
+    <div class="bar-chart" id="tool-chart"></div>
+  </div>
+</div>
+
+<!-- Row 4: Errors + Wallet Tiers -->
+<div class="grid row-2">
+  <div class="card">
+    <h3>Errors (24h) <span id="error-count" style="color:var(--red)"></span></h3>
+    <div class="error-log" id="error-log">
+      <div class="error-entry">Loading...</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Wallet Tier Distribution</h3>
+    <div class="pie-container" id="tier-pie">
+      <div style="color:var(--muted)">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 5: Loyalty -->
+<div class="grid row-2">
+  <div class="card">
+    <h3>Loyalty Program</h3>
+    <div style="display:flex;gap:40px">
+      <div><div class="big" id="m-loyalty-earned">--</div><div class="sub">Total Earned (GCX)</div></div>
+      <div><div class="big" id="m-loyalty-redeemed">--</div><div class="sub">Total Redeemed (GCX)</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Revenue by Day (30d)</h3>
+    <div class="bar-chart" id="revenue-chart"></div>
+  </div>
+</div>
+
+<script>
+const PIE_COLORS = ['#7c5cff','#00d4aa','#f0a030','#ff4d6a','#4d9fff','#c084fc'];
+
+function $(id){ return document.getElementById(id) }
+
+function refreshTime(){
+  $('refresh-time').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+}
+
+// --- Stats ---
+async function fetchStats(){
+  try{
+    const r = await fetch('/api/admin/stats');
+    if(!r.ok) return;
+    const s = await r.json();
+
+    $('m-requests').textContent = s.requests_24h || 0;
+    $('m-requests-7d').textContent = '7d: ' + (s.requests_7d || 0);
+
+    const totalCalls = Object.values(s.tool_calls||{}).reduce((a,b)=>a+b, 0);
+    $('m-tool-calls').textContent = totalCalls;
+    const topTool = Object.entries(s.tool_calls||{})[0];
+    $('m-top-tool').textContent = topTool ? `Top: ${topTool[0]} (${topTool[1]})` : 'No data';
+
+    $('m-revenue').textContent = '$' + (s.revenue?.total_usd || 0).toFixed(2);
+    const topRevTool = Object.entries(s.revenue?.by_tool||{})[0];
+    $('m-revenue-sub').textContent = topRevTool ? `Top: ${topRevTool[0]} ($${topRevTool[1].toFixed(2)})` : 'No revenue';
+
+    $('m-wallets').textContent = s.wallets?.total || 0;
+    $('m-sessions').textContent = 'MCP sessions: ' + (s.mcp_sessions || 0);
+
+    $('m-loyalty-earned').textContent = (s.loyalty?.total_earned || 0).toFixed(1);
+    $('m-loyalty-redeemed').textContent = (s.loyalty?.total_redeemed || 0).toFixed(1);
+
+    // Tool usage bar chart
+    renderBarChart('tool-chart', s.tool_calls || {});
+
+    // Revenue by day chart
+    renderBarChart('revenue-chart', s.revenue?.by_day || {}, v => '$'+v.toFixed(2));
+
+    // Tier pie
+    renderPie('tier-pie', s.wallets?.by_tier || {});
+
+    $('error-count').textContent = s.errors_24h ? `(${s.errors_24h})` : '';
+
+    refreshTime();
+  }catch(e){ console.error('Stats fetch error:', e); }
+}
+
+// --- Health ---
+async function fetchHealth(){
+  try{
+    const r = await fetch('/api/admin/health');
+    if(!r.ok) return;
+    const h = await r.json();
+    const bar = $('health-bar');
+    bar.innerHTML = h.services.map(s =>
+      `<div class="health-item">
+        <div class="dot ${s.status}"></div>
+        ${s.name}
+        <span class="latency">${s.latency_ms}ms</span>
+      </div>`
+    ).join('');
+  }catch(e){ console.error('Health fetch error:', e); }
+}
+
+// --- Logs (errors only for dashboard) ---
+async function fetchErrors(){
+  try{
+    const r = await fetch('/api/admin/logs?severity=WARNING&limit=20');
+    if(!r.ok) return;
+    const l = await r.json();
+    const el = $('error-log');
+    if(!l.entries.length){
+      el.innerHTML = '<div class="error-entry" style="color:var(--muted)">No errors in the last 24h</div>';
+      return;
+    }
+    el.innerHTML = l.entries.map(e =>
+      `<div class="error-entry">
+        <span class="severity-${e.severity}">[${e.severity}]</span>
+        <span style="color:var(--muted);font-size:0.7rem">${new Date(e.timestamp).toLocaleTimeString()}</span>
+        ${escapeHtml(e.message.substring(0,200))}
+      </div>`
+    ).join('');
+  }catch(e){ console.error('Error log fetch error:', e); }
+}
+
+// --- Bar Chart ---
+function renderBarChart(containerId, data, formatVal){
+  const el = $(containerId);
+  const entries = Object.entries(data).slice(0, 10);
+  if(!entries.length){ el.innerHTML = '<div style="color:var(--muted)">No data yet</div>'; return; }
+  const max = Math.max(...entries.map(e=>e[1]), 1);
+  el.innerHTML = entries.map(([k,v]) => {
+    const pct = (v/max)*100;
+    const display = formatVal ? formatVal(v) : v;
+    return `<div class="bar-row">
+      <span class="bar-label" title="${k}">${k}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <span class="bar-value">${display}</span>
+    </div>`;
+  }).join('');
+}
+
+// --- Pie Chart ---
+function renderPie(containerId, data){
+  const el = $(containerId);
+  const entries = Object.entries(data);
+  if(!entries.length){ el.innerHTML = '<div style="color:var(--muted)">No wallet data</div>'; return; }
+  const total = entries.reduce((a,[,v])=>a+v, 0);
+  let cumulative = 0;
+  const size = 120;
+  const cx = size/2, cy = size/2, r = size/2 - 4;
+
+  let paths = '';
+  let legend = '';
+  entries.forEach(([label, val], i) => {
+    const startAngle = (cumulative / total) * 2 * Math.PI - Math.PI/2;
+    cumulative += val;
+    const endAngle = (cumulative / total) * 2 * Math.PI - Math.PI/2;
+    const large = (endAngle - startAngle) > Math.PI ? 1 : 0;
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+    const color = PIE_COLORS[i % PIE_COLORS.length];
+    if(entries.length === 1){
+      paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}"/>`;
+    } else {
+      paths += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z" fill="${color}"/>`;
+    }
+    legend += `<div class="pie-legend-item"><div class="pie-swatch" style="background:${color}"></div>${label}: ${val}</div>`;
+  });
+
+  el.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${paths}</svg><div class="pie-legend">${legend}</div>`;
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// --- Activity feed from agent_spend ---
+async function fetchActivity(){
+  try{
+    const r = await fetch('/api/admin/firestore/agent_spend?limit=30&order_by=timestamp');
+    if(!r.ok) return;
+    const d = await r.json();
+    const feed = $('activity-feed');
+    if(!d.documents.length){
+      feed.innerHTML = '<div class="feed-item" style="color:var(--muted)">No activity yet</div>';
+      return;
+    }
+    feed.innerHTML = d.documents.map(doc => {
+      const ts = doc.timestamp ? new Date(doc.timestamp).toLocaleTimeString() : '';
+      const wallet = (doc.wallet||'').substring(0,10) + '...';
+      return `<div class="feed-item">
+        <div><span class="feed-tool">${doc.tool||'?'}</span> <span style="color:var(--muted)">${wallet}</span></div>
+        <div><span class="feed-amount">$${(doc.amount_usd||0).toFixed(2)}</span> <span class="feed-time">${ts}</span></div>
+      </div>`;
+    }).join('');
+  }catch(e){ console.error('Activity fetch error:', e); }
+}
+
+// Initial load
+fetchStats();
+fetchHealth();
+fetchErrors();
+fetchActivity();
+
+// Polling
+setInterval(fetchStats, 10000);
+setInterval(fetchHealth, 30000);
+setInterval(fetchErrors, 15000);
+setInterval(fetchActivity, 15000);
+</script>
+</body>
+</html>
