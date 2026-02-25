@@ -1,0 +1,22 @@
+{
+  "service": "StudioMCPHub",
+  "currency": "USD",
+  "updated": "2026-02-25",
+  "gcx_rate": {"dollars": 1, "gcx": 20},
+  "gcx_bundles": [
+    {"amount_usd": 5, "gcx": 100, "bonus_pct": 0},
+    {"amount_usd": 20, "gcx": 440, "bonus_pct": 10},
+    {"amount_usd": 50, "gcx": 1200, "bonus_pct": 20}
+  ],
+  "tools": {
+    "generate_image":    {"x402_usd": 0.08, "stripe_usd": 0.10, "gcx": 10, "engine": "SD 3.5 Large"},
+    "upscale_image":     {"x402_usd": 0.04, "stripe_usd": 0.05, "gcx": 5,  "engine": "Real-ESRGAN x4"},
+    "enrich_metadata":   {"x402_usd": 0.03, "stripe_usd": 0.04, "gcx": 4,  "engine": "Nova / Gemini"},
+    "infuse_metadata":   {"x402_usd": 0.01, "stripe_usd": 0.02, "gcx": 2,  "engine": "Atlas / ExifTool"},
+    "register_hash":     {"x402_usd": 0.01, "stripe_usd": 0.02, "gcx": 2,  "engine": "Aegis LSH"},
+    "store_permanent":   {"x402_usd": 0.05, "stripe_usd": 0.06, "gcx": 6,  "engine": "Archivus / Arweave"},
+    "mint_nft":          {"x402_usd": 0.10, "stripe_usd": 0.12, "gcx": 12, "engine": "Mintra / Polygon"},
+    "verify_provenance": {"x402_usd": 0.00, "stripe_usd": 0.00, "gcx": 0,  "engine": "Aegis"},
+    "full_pipeline":     {"x402_usd": 0.25, "stripe_usd": 0.30, "gcx": 30, "engine": "All Agents"}
+  }
+}

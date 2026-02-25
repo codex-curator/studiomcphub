@@ -1,0 +1,29 @@
+rules_version='2'
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // GCX credit accounts - authenticated users can read their own
+    match /gcx_accounts/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // Server-side only via Admin SDK
+    }
+
+    // GCX transactions - users can read their own
+    match /gcx_transactions/{txId} {
+      allow read: if request.auth != null
+        && resource.data.user_id == request.auth.uid;
+      allow write: if false; // Server-side only
+    }
+
+    // Tool usage logs - server-side only
+    match /tool_usage/{logId} {
+      allow read, write: if false;
+    }
+
+    // Default deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

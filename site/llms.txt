@@ -1,0 +1,88 @@
+# StudioMCPHub
+## Creative AI Tools for Autonomous Agents
+
+StudioMCPHub is an MCP server offering creative AI tools as paid services.
+Connect your AI agent or local assistant to generate images, upscale them,
+enrich metadata with AI analysis, embed provenance, store permanently on
+Arweave, and mint NFTs — all via the Model Context Protocol.
+
+## MCP Endpoint
+Transport: Streamable HTTP
+URL: https://studiomcphub.com/mcp
+Discovery: https://studiomcphub.com/.well-known/mcp.json
+
+## Available Tools
+
+### generate_image ($0.08)
+Text-to-image generation using Stable Diffusion 3.5 Large with T5-XXL encoder.
+Input: prompt (string), negative_prompt (optional), width (int), height (int)
+Output: Base64-encoded PNG image
+
+### upscale_image ($0.04)
+4x super-resolution using Real-ESRGAN on NVIDIA L4 GPU.
+Input: image (base64 PNG/JPEG)
+Output: Base64-encoded upscaled PNG
+
+### enrich_metadata ($0.03)
+AI-powered artwork analysis using Gemini via Nova engine.
+Generates 8-section Golden Codex JSON: title, medium, period, palette,
+composition, symbolism, emotional resonance, provenance context.
+Input: image (base64 PNG/JPEG)
+Output: Golden Codex metadata JSON
+
+### infuse_metadata ($0.01)
+Embed metadata into image files using ExifTool.
+Writes XMP-gc (Golden Codex namespace), IPTC, and C2PA fields.
+Input: image (base64), metadata (Golden Codex JSON)
+Output: Base64-encoded image with embedded metadata
+
+### register_hash ($0.01)
+Register perceptual hash (256-bit pHash) with LSH band indexing.
+Enables strip-proof provenance recovery even if metadata is removed.
+Input: image (base64)
+Output: hash_id, phash, registration_timestamp
+
+### store_permanent ($0.05)
+Upload to Arweave L1 for permanent, immutable storage.
+Input: image (base64), metadata (optional JSON)
+Output: arweave_tx_id, arweave_url
+
+### mint_nft ($0.10)
+Mint as NFT on Polygon with on-chain provenance link.
+Input: image (base64), metadata (Golden Codex JSON), collection (optional)
+Output: token_id, contract_address, tx_hash
+
+### verify_provenance (FREE)
+Check an image against the Aegis hash index for provenance.
+Uses perceptual hashing — works even if metadata was stripped.
+Input: image (base64)
+Output: match_found, confidence, original_metadata (if found)
+
+### full_pipeline ($0.25)
+Run the complete creative pipeline: generate, upscale, enrich, infuse,
+register, store, mint. All stages in one call. Skip stages with options.
+Input: prompt (string) or image (base64), options (per-stage overrides)
+Output: All stage outputs + final artifact URLs
+
+## Payment Methods
+
+### x402 (Recommended for Agents)
+Pay per call with USDC on Base L2. No account needed.
+Server returns HTTP 402 with payment instructions.
+Wallet: 0xFE141943a93c184606F3060103D975662327063B
+
+### Stripe
+Traditional payment per call with API key.
+
+### GCX Credits
+Pre-purchase: $5 = 100 GCX (~17% discount vs Stripe).
+Volume: $20 = 440 GCX (+10%), $50 = 1200 GCX (+20%).
+
+## Human Studio
+For a full visual studio experience, visit https://golden-codex.com
+
+## Links
+- GitHub: https://github.com/codex-curator/studiomcphub
+- Golden Codex: https://golden-codex.com
+- Artiswa: https://artiswa.com
+- Metavolve Labs: https://metavolve.com
