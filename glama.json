@@ -1,4 +1,13 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
-  "maintainers": ["codex-curator"]
+  "maintainers": ["codex-curator"],
+  "name": "studiomcphub",
+  "version": "0.3.0",
+  "title": "StudioMCPHub",
+  "description": "Creative AI tools and art datasets for autonomous agents. 16 MCP tools: image generation, upscaling, metadata enrichment, provenance, Arweave storage, NFT minting, and 53K+ museum artworks from Alexandria Aeternum.",
+  "license": "MIT",
+  "repository": "https://github.com/codex-curator/studiomcphub",
+  "homepage": "https://studiomcphub.com",
+  "security": "https://github.com/codex-curator/studiomcphub/blob/master/SECURITY.md",
+  "keywords": ["mcp", "creative-ai", "image-generation", "art", "datasets", "x402", "provenance", "arweave", "nft"]
 }
