@@ -354,6 +354,61 @@ def execute_tool(tool_name: str):
 
 
 # ---------------------------------------------------------------------------
+# Support & Feedback
+# ---------------------------------------------------------------------------
+
+@app.route("/api/support/tickets", methods=["POST"])
+def create_support_ticket():
+    """Create a support ticket (bug, credit issue, feedback, etc.)."""
+    data = request.get_json(silent=True) or {}
+
+    required = ["type", "subject", "description"]
+    missing = [f for f in required if f not in data]
+    if missing:
+        return jsonify({"error": f"Missing fields: {missing}"}), 400
+
+    try:
+        from src.api.support import create_ticket, TICKET_TYPES
+        if data["type"] not in TICKET_TYPES:
+            return jsonify({"error": f"Invalid type. Must be: {TICKET_TYPES}"}), 400
+
+        result = create_ticket(
+            ticket_type=data["type"],
+            subject=data["subject"],
+            description=data["description"],
+            wallet_address=data.get("wallet"),
+            email=data.get("email"),
+            tool_name=data.get("tool"),
+            tx_hash=data.get("tx_hash"),
+        )
+        return jsonify(result), 201
+    except Exception as e:
+        logger.error(f"Ticket creation failed: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/support/tickets/<ticket_id>", methods=["GET"])
+def get_support_ticket(ticket_id: str):
+    """Get a ticket by ID."""
+    from src.api.support import get_ticket
+    ticket = get_ticket(ticket_id)
+    if not ticket:
+        return jsonify({"error": "Ticket not found"}), 404
+    return jsonify(ticket)
+
+
+# ---------------------------------------------------------------------------
+# Loyalty balance
+# ---------------------------------------------------------------------------
+
+@app.route("/api/loyalty/<wallet_address>", methods=["GET"])
+def loyalty_balance(wallet_address: str):
+    """Get loyalty credit balance for a wallet."""
+    from src.payment.loyalty import get_loyalty_balance
+    return jsonify(get_loyalty_balance(wallet_address))
+
+
+# ---------------------------------------------------------------------------
 # Landing page
 # ---------------------------------------------------------------------------
 

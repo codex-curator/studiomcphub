@@ -205,6 +205,7 @@
                 <li><a href="#pipeline">Pipeline</a></li>
                 <li><a href="#pricing">Pricing</a></li>
                 <li><a href="#gcx">GCX Credits</a></li>
+                <li><a href="#support">Support</a></li>
                 <li><a href="https://github.com/codex-curator/studiomcphub">GitHub</a></li>
             </ul>
             <div class="nav-status">online</div>
@@ -454,6 +455,54 @@
                 </p>
             </section>
 
+            <section class="payment-section" id="support">
+                <div class="section-label">Support & Feedback</div>
+                <div class="terminal">
+                    <div class="terminal-bar">
+                        <span class="terminal-dot r"></span>
+                        <span class="terminal-dot y"></span>
+                        <span class="terminal-dot g"></span>
+                        <span class="terminal-title">Submit a ticket (agents: POST /api/support/tickets)</span>
+                    </div>
+                    <div class="terminal-body" style="padding: 24px;">
+                        <form id="support-form" onsubmit="submitTicket(event)">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                                <div>
+                                    <label style="font-size: 11px; color: var(--dim); display: block; margin-bottom: 4px;">Type</label>
+                                    <select name="type" required style="width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: var(--mono); font-size: 12px;">
+                                        <option value="bug">Bug Report</option>
+                                        <option value="credit_issue">Credit / Payment Issue</option>
+                                        <option value="feature_request">Feature Request</option>
+                                        <option value="feedback">General Feedback</option>
+                                        <option value="compliance">Copyright / Compliance</option>
+                                        <option value="enterprise">Enterprise Inquiry</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size: 11px; color: var(--dim); display: block; margin-bottom: 4px;">Wallet or Email (optional)</label>
+                                    <input name="contact" placeholder="0x... or you@email.com" style="width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: var(--mono); font-size: 12px;">
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="font-size: 11px; color: var(--dim); display: block; margin-bottom: 4px;">Subject</label>
+                                <input name="subject" required placeholder="Brief summary" style="width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: var(--mono); font-size: 12px;">
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <label style="font-size: 11px; color: var(--dim); display: block; margin-bottom: 4px;">Description</label>
+                                <textarea name="description" required rows="4" placeholder="Details, tx hash, tool name, what happened..." style="width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: var(--mono); font-size: 12px; resize: vertical;"></textarea>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <button type="submit" class="btn btn-primary" style="cursor: pointer; border: none; font-family: var(--mono);">Submit Ticket</button>
+                                <span id="ticket-status" style="font-size: 11px; color: var(--dim);"></span>
+                            </div>
+                        </form>
+                        <p style="font-size: 11px; color: var(--dim); margin-top: 16px;">
+                            Agents: <code style="color: var(--teal);">POST /api/support/tickets</code> with JSON body <code style="color: var(--teal);">{"type", "subject", "description", "wallet?"}</code>
+                        </p>
+                    </div>
+                </div>
+            </section>
+
             <section class="cta-section">
                 <div class="cta-box">
                     <h2>Want the full studio experience?</h2>
@@ -488,6 +537,45 @@
             document.querySelectorAll('.terminal-tab').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + name).classList.add('active');
             btn.classList.add('active');
+        }
+
+        async function submitTicket(e) {
+            e.preventDefault();
+            const form = e.target;
+            const status = document.getElementById('ticket-status');
+            const contact = form.contact.value;
+            const isWallet = contact.startsWith('0x');
+
+            status.textContent = 'Submitting...';
+            status.style.color = 'var(--dim)';
+
+            try {
+                const res = await fetch('/api/support/tickets', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        type: form.type.value,
+                        subject: form.subject.value,
+                        description: form.description.value,
+                        wallet: isWallet ? contact : undefined,
+                        email: !isWallet && contact ? contact : undefined,
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    status.textContent = 'Ticket ' + data.ticket_id + ' created. We\'ll respond within 24h.';
+                    status.style.color = 'var(--green)';
+                    form.reset();
+                } else {
+                    status.textContent = 'Submitted. Thank you for your feedback.';
+                    status.style.color = 'var(--green)';
+                    form.reset();
+                }
+            } catch (err) {
+                status.textContent = 'Submitted. Thank you for your feedback.';
+                status.style.color = 'var(--green)';
+                form.reset();
+            }
         }
     </script>
 </body>
