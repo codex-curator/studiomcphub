@@ -1,16 +1,4 @@
 {
-  "schema_version": "v1",
-  "name": "studiomcphub",
-  "display_name": "StudioMCPHub — Creative AI Tools",
-  "description": "Complete creative AI pipeline as MCP tools. Image generation, upscaling, metadata enrichment, provenance, permanent storage, NFT minting. Pay per call.",
-  "transport": {
-    "type": "streamable-http",
-    "url": "https://studiomcphub.com/mcp"
-  },
-  "category": "creative",
-  "tags": [
-    "image-generation", "upscaling", "esrgan", "stable-diffusion",
-    "metadata", "provenance", "arweave", "nft", "art", "creative-ai",
-    "golden-codex", "x402", "paid"
-  ]
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": ["codex-curator"]
 }
