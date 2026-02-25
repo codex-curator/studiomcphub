@@ -107,32 +107,19 @@ def a2a_agent_card():
     )
 
 
+@app.route("/.well-known/glama.json")
+def glama_json():
+    """Glama MCP directory connector manifest."""
+    return send_from_directory(
+        os.path.join(_SITE_DIR, ".well-known"), "glama.json",
+        mimetype="application/json",
+    )
+
+
 @app.route("/llms.txt")
 def llms_txt():
     """LLM-readable documentation for AI discovery."""
     return send_from_directory(_SITE_DIR, "llms.txt", mimetype="text/plain")
-
-
-@app.route("/glama.json")
-def glama_json():
-    """Glama auto-discovery configuration."""
-    return jsonify({
-        "schema_version": "v1",
-        "name": "studiomcphub",
-        "display_name": "StudioMCPHub — Creative AI Tools + Art Datasets",
-        "description": config.server_description,
-        "transport": {
-            "type": "streamable-http",
-            "url": "https://studiomcphub.com/mcp"
-        },
-        "category": "creative",
-        "tags": [
-            "image-generation", "upscaling", "esrgan", "stable-diffusion",
-            "metadata", "provenance", "arweave", "nft", "art", "creative-ai",
-            "golden-codex", "x402", "paid", "dataset", "museum-art",
-            "alexandria-aeternum", "art-history", "compliance"
-        ],
-    })
 
 
 # ---------------------------------------------------------------------------
