@@ -2,21 +2,46 @@
   "service": "StudioMCPHub",
   "currency": "USD",
   "updated": "2026-02-25",
-  "gcx_rate": {"dollars": 1, "gcx": 20},
-  "gcx_bundles": [
-    {"amount_usd": 5, "gcx": 100, "bonus_pct": 0},
-    {"amount_usd": 20, "gcx": 440, "bonus_pct": 10},
-    {"amount_usd": 50, "gcx": 1200, "bonus_pct": 20}
+  "pricing_version": "v2",
+  "gcx_token": {
+    "base_rate": 0.10,
+    "description": "1 GCX = $0.10 at base rate. Volume discounts available."
+  },
+  "gcx_packs": [
+    {"name": "Starter",  "price_usd": 5,   "gcx": 50,   "per_gcx": 0.100, "savings": "0%"},
+    {"name": "Creator",  "price_usd": 10,  "gcx": 100,  "per_gcx": 0.100, "savings": "0%"},
+    {"name": "Pro",      "price_usd": 50,  "gcx": 600,  "per_gcx": 0.083, "savings": "17%"},
+    {"name": "Studio",   "price_usd": 100, "gcx": 1600, "per_gcx": 0.0625, "savings": "38%"}
   ],
+  "subscriptions": {
+    "free":    {"price_usd": 0,  "gcx_monthly": 50,   "per_gcx": 0.000, "name": "Artisan"},
+    "curator": {"price_usd": 19, "gcx_monthly": 200,  "per_gcx": 0.095, "name": "Curator"},
+    "studio":  {"price_usd": 49, "gcx_monthly": 600,  "per_gcx": 0.082, "name": "Studio"},
+    "gallery": {"price_usd": 99, "gcx_monthly": 1600, "per_gcx": 0.0625, "name": "Gallery"}
+  },
   "tools": {
-    "generate_image":    {"x402_usd": 0.08, "stripe_usd": 0.10, "gcx": 10, "engine": "SD 3.5 Large"},
-    "upscale_image":     {"x402_usd": 0.04, "stripe_usd": 0.05, "gcx": 5,  "engine": "Real-ESRGAN x4"},
-    "enrich_metadata":   {"x402_usd": 0.03, "stripe_usd": 0.04, "gcx": 4,  "engine": "Nova / Gemini"},
-    "infuse_metadata":   {"x402_usd": 0.01, "stripe_usd": 0.02, "gcx": 2,  "engine": "Atlas / ExifTool"},
-    "register_hash":     {"x402_usd": 0.01, "stripe_usd": 0.02, "gcx": 2,  "engine": "Aegis LSH"},
-    "store_permanent":   {"x402_usd": 0.05, "stripe_usd": 0.06, "gcx": 6,  "engine": "Archivus / Arweave"},
-    "mint_nft":          {"x402_usd": 0.10, "stripe_usd": 0.12, "gcx": 12, "engine": "Mintra / Polygon"},
-    "verify_provenance": {"x402_usd": 0.00, "stripe_usd": 0.00, "gcx": 0,  "engine": "Aegis"},
-    "full_pipeline":     {"x402_usd": 0.25, "stripe_usd": 0.30, "gcx": 30, "engine": "All Agents"}
-  }
+    "generate_image":    {"gcx": 8,  "base_usd": 0.80, "engine": "SD 3.5 Large"},
+    "upscale_image":     {"gcx": 2,  "base_usd": 0.20, "engine": "Real-ESRGAN x4"},
+    "enrich_metadata":   {"gcx": 2,  "base_usd": 0.20, "engine": "Nova / Gemini"},
+    "infuse_metadata":   {"gcx": 1,  "base_usd": 0.10, "engine": "Atlas / ExifTool"},
+    "register_hash":     {"gcx": 1,  "base_usd": 0.10, "engine": "Aegis LSH"},
+    "store_permanent":   {"gcx": 15, "base_usd": 1.50, "engine": "Archivus / Arweave"},
+    "mint_nft":          {"gcx": 10, "base_usd": 1.00, "engine": "Mintra / Polygon"},
+    "verify_provenance": {"gcx": 0,  "base_usd": 0.00, "engine": "Aegis"},
+    "full_pipeline":     {"gcx": 5,  "base_usd": 0.50, "engine": "Enrich + Upscale + Infuse"}
+  },
+  "combos": {
+    "creative_pipeline": {"gcx": 14, "includes": "generate + upscale + enrich + infuse + register"},
+    "full_with_mint":    {"gcx": 39, "includes": "creative_pipeline + store + mint"}
+  },
+  "volume_discounts": {
+    "description": "30-day rolling per wallet",
+    "tiers": [
+      {"min_spend_usd": 0,   "discount_pct": 0,  "label": "Standard"},
+      {"min_spend_usd": 50,  "discount_pct": 10, "label": "Active"},
+      {"min_spend_usd": 100, "discount_pct": 20, "label": "Pro"},
+      {"min_spend_usd": 200, "discount_pct": 30, "label": "Studio"}
+    ]
+  },
+  "enterprise_trigger_usd": 200
 }

@@ -6,27 +6,75 @@ from dataclasses import dataclass, field
 
 @dataclass
 class ToolPricing:
-    """Per-call pricing in USD cents."""
-    x402_cents: int     # x402 USDC price (cents)
-    stripe_cents: int   # Stripe price (cents)
-    gcx_credits: int    # GCX credit cost
+    """Per-call pricing.
+
+    Pricing aligns with PRICING_V2 (approved Feb 23, 2026).
+    1 GCX = $0.10 base rate (Starter/Creator pack).
+    x402 USDC = same as base GCX rate (no account = no discount).
+    GCX holders get volume discounts via tier pricing:
+      Curator: $0.095/GCX, Studio: $0.082/GCX, Gallery: $0.0625/GCX
+    """
+    gcx_credits: int         # GCX cost per call (canonical pricing unit)
+    x402_cents: int = 0      # Auto-calculated: gcx * 10 (base rate)
+    stripe_cents: int = 0    # Auto-calculated: gcx * 10 (same as x402)
+
+    def __post_init__(self):
+        if self.x402_cents == 0 and self.gcx_credits > 0:
+            self.x402_cents = self.gcx_credits * 10   # 1 GCX = $0.10
+        if self.stripe_cents == 0 and self.gcx_credits > 0:
+            self.stripe_cents = self.gcx_credits * 10  # Same base rate
 
 
-# Tool pricing table
+# Tool pricing table — aligned with PRICING_V2
+# Matches golden-codex.com SaaS operation costs exactly
 PRICING = {
-    "generate_image":    ToolPricing(x402_cents=8,  stripe_cents=10, gcx_credits=10),
-    "upscale_image":     ToolPricing(x402_cents=4,  stripe_cents=5,  gcx_credits=5),
-    "enrich_metadata":   ToolPricing(x402_cents=3,  stripe_cents=4,  gcx_credits=4),
-    "infuse_metadata":   ToolPricing(x402_cents=1,  stripe_cents=2,  gcx_credits=2),
-    "register_hash":     ToolPricing(x402_cents=1,  stripe_cents=2,  gcx_credits=2),
-    "store_permanent":   ToolPricing(x402_cents=5,  stripe_cents=6,  gcx_credits=6),
-    "mint_nft":          ToolPricing(x402_cents=10, stripe_cents=12, gcx_credits=12),
-    "verify_provenance": ToolPricing(x402_cents=0,  stripe_cents=0,  gcx_credits=0),
-    "full_pipeline":     ToolPricing(x402_cents=25, stripe_cents=30, gcx_credits=30),
+    "generate_image":    ToolPricing(gcx_credits=8),   # $0.80 — GPU-intensive (SD 3.5L on L4)
+    "upscale_image":     ToolPricing(gcx_credits=2),   # $0.20 — matches existing Flux cost
+    "enrich_metadata":   ToolPricing(gcx_credits=2),   # $0.20 — matches existing Nova cost
+    "infuse_metadata":   ToolPricing(gcx_credits=1),   # $0.10 — matches existing Atlas cost
+    "register_hash":     ToolPricing(gcx_credits=1),   # $0.10 — light compute
+    "store_permanent":   ToolPricing(gcx_credits=15),  # $1.50 — Arweave L1 storage
+    "mint_nft":          ToolPricing(gcx_credits=10),  # $1.00 — Polygon gas + contract
+    "verify_provenance": ToolPricing(gcx_credits=0),   # FREE  — adoption hook
+    "full_pipeline":     ToolPricing(gcx_credits=5),   # $0.50 — enrich+upscale+infuse (no gen/mint)
 }
 
-# GCX exchange rate
-GCX_PER_DOLLAR = 20  # $1 = 20 GCX, $5 = 100 GCX
+# Composite pipelines (for reference / UI display)
+PIPELINE_COMBOS = {
+    "creative_pipeline":  14,  # generate(8) + upscale(2) + enrich(2) + infuse(1) + register(1)
+    "full_with_mint":     39,  # creative(14) + store(15) + mint(10)
+}
+
+# GCX token economy — aligned with PRICING_V2
+GCX_BASE_RATE = 0.10  # $0.10 per GCX (Starter/Creator pack)
+GCX_PER_DOLLAR = 10   # $1 = 10 GCX at base rate
+
+# GCX packs (one-time purchase via Stripe or x402)
+GCX_PACKS = [
+    {"name": "Starter",  "price_usd": 5,   "gcx": 50,    "per_gcx": 0.100, "savings": "Base rate"},
+    {"name": "Creator",  "price_usd": 10,  "gcx": 100,   "per_gcx": 0.100, "savings": "Base rate"},
+    {"name": "Pro",      "price_usd": 50,  "gcx": 600,   "per_gcx": 0.083, "savings": "17% off"},
+    {"name": "Studio",   "price_usd": 100, "gcx": 1600,  "per_gcx": 0.0625, "savings": "38% off"},
+]
+
+# Subscription tiers (monthly via Stripe)
+SUBSCRIPTION_TIERS = {
+    "free":    {"price_usd": 0,  "gcx_monthly": 50,   "per_gcx": 0.000,  "name": "Artisan"},
+    "curator": {"price_usd": 19, "gcx_monthly": 200,  "per_gcx": 0.095,  "name": "Curator"},
+    "studio":  {"price_usd": 49, "gcx_monthly": 600,  "per_gcx": 0.082,  "name": "Studio"},
+    "gallery": {"price_usd": 99, "gcx_monthly": 1600, "per_gcx": 0.0625, "name": "Gallery"},
+}
+
+# Volume discounts for x402 agents (30-day rolling per wallet)
+AGENT_VOLUME_TIERS = [
+    {"min_spend_usd": 0,   "discount_pct": 0,  "label": "Standard"},
+    {"min_spend_usd": 50,  "discount_pct": 10, "label": "Active"},
+    {"min_spend_usd": 100, "discount_pct": 20, "label": "Pro"},
+    {"min_spend_usd": 200, "discount_pct": 30, "label": "Studio"},
+]
+
+# Enterprise trigger: auto-outreach at this threshold
+ENTERPRISE_TRIGGER_USD = 200
 
 
 @dataclass
