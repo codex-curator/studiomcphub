@@ -50,6 +50,28 @@ class PaymentRequirement:
         }
 
 
+def extract_wallet(payment_header: str) -> str | None:
+    """Extract the sender wallet address from an x402 payment header.
+
+    The X-PAYMENT header is base64-encoded JSON containing payment details.
+    Returns the sender/from address, or None if extraction fails.
+    """
+    import base64
+    try:
+        decoded = base64.b64decode(payment_header).decode("utf-8")
+        data = json.loads(decoded)
+        # x402 payment proof contains sender in various possible fields
+        return (
+            data.get("from")
+            or data.get("sender")
+            or data.get("payload", {}).get("from")
+            or data.get("payload", {}).get("sender")
+        )
+    except Exception as e:
+        logger.warning("Failed to extract wallet from x402 header", error=str(e))
+        return None
+
+
 def create_payment_requirement(tool_name: str, amount_usd: float) -> PaymentRequirement:
     """Create a 402 payment requirement for a tool call."""
     return PaymentRequirement(

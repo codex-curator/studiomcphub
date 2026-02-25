@@ -30,7 +30,8 @@ gcloud run deploy "${SERVICE_NAME}" \
     --min-instances=1 \
     --max-instances=10 \
     --timeout=300 \
-    --set-env-vars="GCP_PROJECT=${PROJECT_ID},GCP_REGION=${REGION}"
+    --set-env-vars="GCP_PROJECT=${PROJECT_ID},GCP_REGION=${REGION},FIRESTORE_DATABASE=golden-codex-database,DATA_PORTAL_URL=https://data-portal-172867820131.us-west1.run.app" \
+    --set-secrets="STRIPE_SECRET_KEY=stripe_secret_api:latest"
 
 # Get URL
 echo "[3/3] Getting service URL..."
@@ -46,6 +47,7 @@ echo "Health:      ${URL}/health"
 echo "MCP Card:    ${URL}/.well-known/mcp.json"
 echo "LLMs.txt:    ${URL}/llms.txt"
 echo "Pricing:     ${URL}/pricing"
+echo "MCP:         ${URL}/mcp"
 echo ""
 echo "Connect your MCP client:"
 echo "  {\"mcpServers\": {\"studiomcphub\": {\"url\": \"${URL}/mcp\"}}}"

@@ -1,7 +1,7 @@
 {
   "name": "StudioMCPHub",
-  "version": "0.1.0",
-  "description": "Creative AI tools for autonomous agents. Image generation, upscaling, metadata enrichment, provenance registration, permanent storage, and NFT minting.",
+  "version": "0.3.0",
+  "description": "Creative AI tools and art datasets for autonomous agents. Image generation, upscaling, metadata enrichment, provenance registration, permanent storage, NFT minting, and access to 53K+ museum artworks from Alexandria Aeternum.",
   "url": "https://studiomcphub.com",
   "transport": "streamable-http",
   "endpoint": "https://studiomcphub.com/mcp",
@@ -9,20 +9,44 @@
     "schemes": [
       {"type": "x402", "description": "Pay per call with USDC on Base L2. No account needed."},
       {"type": "bearer", "description": "API key or GCX credit token."},
-      {"type": "none", "description": "Free tools (verify_provenance)."}
+      {"type": "none", "description": "Free tools (search_tools, get_tool_schema, search_artworks, verify_provenance, compliance_manifest)."}
     ]
   },
   "tools": [
-    {"name": "generate_image", "description": "SD 3.5 Large text-to-image on L4 GPU", "price_usd": 0.08},
-    {"name": "upscale_image", "description": "Real-ESRGAN x4 super-resolution", "price_usd": 0.04},
-    {"name": "enrich_metadata", "description": "Gemini-powered Golden Codex analysis", "price_usd": 0.03},
-    {"name": "infuse_metadata", "description": "ExifTool XMP/IPTC/C2PA embedding", "price_usd": 0.01},
-    {"name": "register_hash", "description": "256-bit pHash + LSH band indexing", "price_usd": 0.01},
-    {"name": "store_permanent", "description": "Arweave L1 permanent storage", "price_usd": 0.05},
-    {"name": "mint_nft", "description": "Polygon NFT minting", "price_usd": 0.10},
-    {"name": "verify_provenance", "description": "Strip-proof provenance verification", "price_usd": 0.00},
-    {"name": "full_pipeline", "description": "Complete creative pipeline in one call", "price_usd": 0.25}
+    {"name": "search_tools", "description": "Discover available tools by category or price. Start here.", "price_usd": 0.00, "gcx_credits": 0},
+    {"name": "get_tool_schema", "description": "Get full JSON Schema + examples for a specific tool", "price_usd": 0.00, "gcx_credits": 0},
+    {"name": "generate_image", "description": "SD 3.5 Large text-to-image on L4 GPU", "price_usd": 0.20, "gcx_credits": 2},
+    {"name": "upscale_image", "description": "Real-ESRGAN x4 super-resolution", "price_usd": 0.20, "gcx_credits": 2},
+    {"name": "enrich_metadata", "description": "Gemini-powered Golden Codex analysis", "price_usd": 0.20, "gcx_credits": 2},
+    {"name": "infuse_metadata", "description": "ExifTool XMP/IPTC/C2PA embedding", "price_usd": 0.10, "gcx_credits": 1},
+    {"name": "register_hash", "description": "256-bit pHash + LSH band indexing", "price_usd": 0.10, "gcx_credits": 1},
+    {"name": "store_permanent", "description": "Arweave L1 permanent storage", "price_usd": 1.50, "gcx_credits": 15},
+    {"name": "mint_nft", "description": "Polygon NFT minting", "price_usd": 1.00, "gcx_credits": 10},
+    {"name": "verify_provenance", "description": "Strip-proof provenance verification", "price_usd": 0.00, "gcx_credits": 0},
+    {"name": "full_pipeline", "description": "Complete creative pipeline in one call", "price_usd": 0.50, "gcx_credits": 5},
+    {"name": "search_artworks", "description": "Search 53K+ museum artworks from Alexandria Aeternum", "price_usd": 0.00, "gcx_credits": 0},
+    {"name": "get_artwork", "description": "Human_Standard metadata + image (500-1200 tokens)", "price_usd": 0.10, "gcx_credits": 1},
+    {"name": "get_artwork_oracle", "description": "Hybrid_Premium 111-field NEST analysis (2K-6K tokens)", "price_usd": 0.20, "gcx_credits": 2},
+    {"name": "batch_download", "description": "Bulk download metadata + images (min 100)", "price_usd": 5.00, "gcx_credits": 50},
+    {"name": "compliance_manifest", "description": "AB 2013 + EU AI Act compliance manifests", "price_usd": 0.00, "gcx_credits": 0}
   ],
+  "volume_discounts": {
+    "description": "Automatic per-wallet discounts based on 30-day rolling spend.",
+    "check_url": "https://studiomcphub.com/api/agent/tier/{wallet_address}",
+    "tiers": [
+      {"label": "Standard", "min_spend_usd": 0, "discount_pct": 0},
+      {"label": "Active", "min_spend_usd": 50, "discount_pct": 10},
+      {"label": "Pro", "min_spend_usd": 100, "discount_pct": 20},
+      {"label": "Studio", "min_spend_usd": 200, "discount_pct": 30}
+    ]
+  },
+  "datasets": {
+    "alexandria_aeternum": {
+      "size": "53,000+ artworks",
+      "institutions": ["Metropolitan Museum of Art", "Art Institute of Chicago", "National Gallery of Art", "Rijksmuseum", "Smithsonian", "Cleveland Museum of Art", "Musee de Paris"],
+      "doi": "10.5281/zenodo.18359131"
+    }
+  },
   "payment": {
     "x402": {
       "wallet": "0xFE141943a93c184606F3060103D975662327063B",
@@ -32,8 +56,10 @@
   },
   "links": {
     "documentation": "https://studiomcphub.com/llms.txt",
-    "pricing": "https://studiomcphub.com/pricing.json",
+    "pricing": "https://studiomcphub.com/pricing",
+    "agent_card": "https://studiomcphub.com/.well-known/agent.json",
     "studio": "https://golden-codex.com",
+    "huggingface": "https://huggingface.co/datasets/Metavolve-Labs/alexandria-aeternum-genesis",
     "github": "https://github.com/codex-curator/studiomcphub"
   }
 }

@@ -33,6 +33,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Agent spend tracking (volume tiers) - server-side only
+    match /agent_spend/{spendId} {
+      allow read, write: if false;
+    }
+
     // Default deny everything else
     match /{document=**} {
       allow read, write: if false;

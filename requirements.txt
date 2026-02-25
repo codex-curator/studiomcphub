@@ -10,7 +10,7 @@ flask>=3.0.0
 gunicorn>=22.0.0
 
 # Payment
-x402-python>=0.2.0
+x402>=0.2.0
 stripe>=8.0.0
 
 # GCP Services

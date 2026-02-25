@@ -1,0 +1,157 @@
+{
+  "name": "StudioMCPHub",
+  "description": "Creative AI tools and art datasets for autonomous agents. Image generation, upscaling, metadata enrichment, provenance registration, permanent storage, NFT minting, and access to 53K+ museum artworks from Alexandria Aeternum.",
+  "url": "https://studiomcphub.com",
+  "version": "0.3.0",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false
+  },
+  "defaultInputModes": ["application/json"],
+  "defaultOutputModes": ["application/json"],
+  "provider": {
+    "name": "Metavolve Labs",
+    "url": "https://metavolve.com"
+  },
+  "authSchemes": [
+    {
+      "type": "x402",
+      "description": "Pay per call with USDC on Base L2. No account needed. HTTP 402 flow."
+    },
+    {
+      "type": "bearer",
+      "description": "API key or GCX credit token via Authorization header."
+    },
+    {
+      "type": "none",
+      "description": "Free tools require no authentication."
+    }
+  ],
+  "skills": [
+    {
+      "id": "search_tools",
+      "name": "Search Tools",
+      "description": "Discover available tools by category or price without loading all schemas. Start here to save tokens.",
+      "tags": ["meta", "discovery", "free"],
+      "examples": ["Search for free tools", "Find creative tools under $0.50"]
+    },
+    {
+      "id": "get_tool_schema",
+      "name": "Get Tool Schema",
+      "description": "Get the full JSON Schema and usage examples for a specific tool.",
+      "tags": ["meta", "discovery", "free"],
+      "examples": ["Get schema for generate_image"]
+    },
+    {
+      "id": "generate_image",
+      "name": "Generate Image",
+      "description": "Text-to-image generation using SD 3.5 Large + T5-XXL on NVIDIA L4 GPU.",
+      "tags": ["creative", "generation", "gpu", "paid"],
+      "examples": ["Generate a serene Japanese garden at sunset"]
+    },
+    {
+      "id": "upscale_image",
+      "name": "Upscale Image",
+      "description": "4x super-resolution using Real-ESRGAN on NVIDIA L4 GPU.",
+      "tags": ["creative", "upscaling", "gpu", "paid"],
+      "examples": ["Upscale an image to 4x resolution"]
+    },
+    {
+      "id": "enrich_metadata",
+      "name": "Enrich Metadata",
+      "description": "AI-powered artwork analysis via Gemini 2.5/3.0 Pro. Returns 8-section Golden Codex JSON.",
+      "tags": ["creative", "ai", "metadata", "paid"],
+      "examples": ["Analyze artwork and generate Golden Codex metadata"]
+    },
+    {
+      "id": "infuse_metadata",
+      "name": "Infuse Metadata",
+      "description": "Embed Golden Codex metadata into image via ExifTool (XMP-gc, IPTC, C2PA).",
+      "tags": ["creative", "metadata", "exiftool", "paid"],
+      "examples": ["Embed metadata into a PNG image"]
+    },
+    {
+      "id": "register_hash",
+      "name": "Register Hash",
+      "description": "Register 256-bit perceptual hash with LSH band indexing for strip-proof provenance.",
+      "tags": ["creative", "provenance", "hash", "paid"],
+      "examples": ["Register an image's perceptual hash"]
+    },
+    {
+      "id": "store_permanent",
+      "name": "Store Permanent",
+      "description": "Upload to Arweave L1 for permanent, immutable storage.",
+      "tags": ["creative", "storage", "arweave", "paid"],
+      "examples": ["Store an image permanently on Arweave"]
+    },
+    {
+      "id": "mint_nft",
+      "name": "Mint NFT",
+      "description": "Mint as NFT on Polygon with on-chain provenance link.",
+      "tags": ["creative", "nft", "polygon", "paid"],
+      "examples": ["Mint an artwork as an NFT on Polygon"]
+    },
+    {
+      "id": "verify_provenance",
+      "name": "Verify Provenance",
+      "description": "Strip-proof provenance verification via Aegis hash index.",
+      "tags": ["creative", "provenance", "verification", "free"],
+      "examples": ["Check if an image has registered provenance"]
+    },
+    {
+      "id": "full_pipeline",
+      "name": "Full Pipeline",
+      "description": "Complete creative pipeline: enrich, upscale, infuse, register in one call.",
+      "tags": ["creative", "pipeline", "paid"],
+      "examples": ["Run full pipeline on an image, skipping mint and storage"]
+    },
+    {
+      "id": "search_artworks",
+      "name": "Search Artworks",
+      "description": "Search 53K+ museum artworks from Alexandria Aeternum.",
+      "tags": ["dataset", "search", "museum", "free"],
+      "examples": ["Search for impressionist landscapes from the Met"]
+    },
+    {
+      "id": "get_artwork",
+      "name": "Get Artwork",
+      "description": "Get Human_Standard metadata (500-1200 tokens) + signed image URL.",
+      "tags": ["dataset", "metadata", "paid"],
+      "examples": ["Get metadata for met_437419"]
+    },
+    {
+      "id": "get_artwork_oracle",
+      "name": "Get Artwork Oracle",
+      "description": "Get Hybrid_Premium 111-field NEST analysis (2K-6K tokens) + image.",
+      "tags": ["dataset", "ai", "metadata", "paid"],
+      "examples": ["Get deep AI analysis for met_437419"]
+    },
+    {
+      "id": "batch_download",
+      "name": "Batch Download",
+      "description": "Bulk download metadata + images from Alexandria Aeternum (min 100).",
+      "tags": ["dataset", "bulk", "paid"],
+      "examples": ["Download 100 artworks starting at offset 0"]
+    },
+    {
+      "id": "compliance_manifest",
+      "name": "Compliance Manifest",
+      "description": "Get AB 2013 + EU AI Act Article 53 compliance manifests for dataset usage.",
+      "tags": ["dataset", "compliance", "legal", "free"],
+      "examples": ["Get compliance manifest for Alexandria Aeternum"]
+    }
+  ],
+  "tags": [
+    "creative-ai", "art", "image-generation", "upscaling", "metadata",
+    "provenance", "arweave", "nft", "dataset", "museum-art",
+    "golden-codex", "x402", "mcp"
+  ],
+  "links": {
+    "mcp_endpoint": "https://studiomcphub.com/mcp",
+    "mcp_card": "https://studiomcphub.com/.well-known/mcp.json",
+    "documentation": "https://studiomcphub.com/llms.txt",
+    "pricing": "https://studiomcphub.com/pricing",
+    "studio": "https://golden-codex.com",
+    "github": "https://github.com/codex-curator/studiomcphub"
+  }
+}

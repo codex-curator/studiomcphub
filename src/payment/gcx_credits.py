@@ -107,6 +107,31 @@ def deduct_credits(user_id: str, amount: int, tool_name: str) -> bool:
     return _deduct(db.transaction())
 
 
+def ensure_account(user_id: str) -> bool:
+    """Auto-provision a GCX account if it doesn't exist. Race-safe.
+
+    Uses Firestore create() which raises AlreadyExists if the doc exists,
+    preventing race conditions from concurrent requests.
+
+    Returns:
+        True if a new account was created, False if it already existed.
+    """
+    db = _get_db()
+    ref = db.collection("gcx_accounts").document(user_id)
+    try:
+        ref.create({
+            "balance": 0,
+            "created_at": datetime.now(timezone.utc),
+            "last_updated": datetime.now(timezone.utc),
+            "tier": "free",
+            "source": "x402_auto_provision",
+        })
+        return True
+    except Exception:
+        # google.cloud.exceptions.Conflict (AlreadyExists) — account exists
+        return False
+
+
 def create_account(user_id: str, email: str = "") -> dict:
     """Create a new GCX account."""
     db = _get_db()

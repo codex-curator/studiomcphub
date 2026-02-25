@@ -28,7 +28,7 @@ class ToolPricing:
 # Tool pricing table — aligned with PRICING_V2
 # Matches golden-codex.com SaaS operation costs exactly
 PRICING = {
-    "generate_image":    ToolPricing(gcx_credits=8),   # $0.80 — GPU-intensive (SD 3.5L on L4)
+    "generate_image":    ToolPricing(gcx_credits=2),   # $0.20 — SD 3.5L+T5XXL ($0.10 nano + $0.20 model)
     "upscale_image":     ToolPricing(gcx_credits=2),   # $0.20 — matches existing Flux cost
     "enrich_metadata":   ToolPricing(gcx_credits=2),   # $0.20 — matches existing Nova cost
     "infuse_metadata":   ToolPricing(gcx_credits=1),   # $0.10 — matches existing Atlas cost
@@ -37,12 +37,21 @@ PRICING = {
     "mint_nft":          ToolPricing(gcx_credits=10),  # $1.00 — Polygon gas + contract
     "verify_provenance": ToolPricing(gcx_credits=0),   # FREE  — adoption hook
     "full_pipeline":     ToolPricing(gcx_credits=5),   # $0.50 — enrich+upscale+infuse (no gen/mint)
+    # --- Alexandria Aeternum Dataset Tools ---
+    "search_artworks":      ToolPricing(gcx_credits=0),   # FREE  — discovery hook (50/hr rate limit)
+    "get_artwork":           ToolPricing(gcx_credits=1),   # $0.10 — Human_Standard metadata + image
+    "get_artwork_oracle":    ToolPricing(gcx_credits=2),   # $0.20 — Hybrid_Premium 111-field NEST analysis
+    "batch_download":        ToolPricing(gcx_credits=50),  # $5.00 — 100+ images bulk download
+    "compliance_manifest":   ToolPricing(gcx_credits=0),   # FREE  — AB 2013 + EU AI Act compliance
+    # --- Meta-tools (Progressive Discovery) ---
+    "search_tools":          ToolPricing(gcx_credits=0),   # FREE  — discover tools without loading schemas
+    "get_tool_schema":       ToolPricing(gcx_credits=0),   # FREE  — fetch full schema for one tool
 }
 
 # Composite pipelines (for reference / UI display)
 PIPELINE_COMBOS = {
-    "creative_pipeline":  14,  # generate(8) + upscale(2) + enrich(2) + infuse(1) + register(1)
-    "full_with_mint":     39,  # creative(14) + store(15) + mint(10)
+    "creative_pipeline":  8,   # generate(2) + upscale(2) + enrich(2) + infuse(1) + register(1)
+    "full_with_mint":     33,  # creative(8) + store(15) + mint(10)
 }
 
 # GCX token economy — aligned with PRICING_V2
@@ -95,6 +104,7 @@ class Config:
     atlas_url: str = os.getenv("ATLAS_SERVICE_URL", "https://atlas-agent-172867820131.us-west1.run.app")
     archivus_url: str = os.getenv("ARCHIVUS_SERVICE_URL", "https://archivus-agent-172867820131.us-west1.run.app")
     mintra_url: str = os.getenv("MINTRA_SERVICE_URL", "https://mintra-agent-172867820131.us-west1.run.app")
+    data_portal_url: str = os.getenv("DATA_PORTAL_URL", "https://data-portal-172867820131.us-west1.run.app")
 
     # Storage
     archive_bucket: str = os.getenv("ARCHIVE_BUCKET", "codex-archive-bucket")
@@ -114,11 +124,12 @@ class Config:
 
     # MCP Server metadata
     server_name: str = "StudioMCPHub"
-    server_version: str = "0.1.0"
+    server_version: str = "0.3.0"
     server_description: str = (
-        "Creative AI tools for autonomous agents. "
-        "Image generation, upscaling, metadata enrichment, "
-        "provenance registration, permanent storage, and NFT minting."
+        "Creative AI tools and art datasets for autonomous agents. "
+        "Image generation, upscaling, metadata enrichment, provenance registration, "
+        "permanent storage, NFT minting, and access to 53K+ museum artworks "
+        "from the Alexandria Aeternum dataset."
     )
 
 

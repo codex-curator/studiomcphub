@@ -20,22 +20,30 @@ Payment methods: x402 (USDC/Base), Stripe, GCX Credits
 
 import json
 import logging
-import base64
+import uuid
+import os
 from datetime import datetime, timezone
 
-from flask import Flask, request, jsonify, send_from_directory
-from mcp import types as mcp_types
+from flask import Flask, request, jsonify, send_from_directory, Response
+from mcp.types import ListToolsRequest, CallToolRequest, CallToolRequestParams
 
 from .config import config, PRICING, GCX_PER_DOLLAR
+from .mcp_tools import create_mcp_server
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("studiomcphub")
+
+# Resolve path to the site/ directory (for landing page serving)
+_SITE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "site")
 
 app = Flask(
     __name__,
     static_folder="../../site/static",
     template_folder="../../site/templates",
 )
+
+# MCP session store: session_id -> (server, transport)
+_mcp_sessions: dict[str, tuple] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -90,104 +98,19 @@ def mcp_server_card():
     })
 
 
+@app.route("/.well-known/agent.json")
+def a2a_agent_card():
+    """A2A Agent Card for agent-to-agent discovery."""
+    return send_from_directory(
+        os.path.join(_SITE_DIR, ".well-known"), "agent.json",
+        mimetype="application/json",
+    )
+
+
 @app.route("/llms.txt")
 def llms_txt():
     """LLM-readable documentation for AI discovery."""
-    return (
-        "# StudioMCPHub\n"
-        "## Creative AI Tools for Autonomous Agents\n"
-        "\n"
-        "StudioMCPHub is an MCP server offering creative AI tools as paid services.\n"
-        "Connect your AI agent or local assistant to generate images, upscale them,\n"
-        "enrich metadata with AI analysis, embed provenance, store permanently on\n"
-        "Arweave, and mint NFTs — all via the Model Context Protocol.\n"
-        "\n"
-        "## MCP Endpoint\n"
-        "Transport: Streamable HTTP\n"
-        "URL: https://studiomcphub.com/mcp\n"
-        "\n"
-        "## Available Tools\n"
-        "\n"
-        "### generate_image\n"
-        "Text-to-image generation using Stable Diffusion 3.5 Large with T5-XXL encoder.\n"
-        "Input: prompt (string), negative_prompt (optional), width (int), height (int)\n"
-        "Output: Base64-encoded PNG image\n"
-        "Price: $0.08 (x402) / $0.10 (Stripe) / 10 GCX\n"
-        "\n"
-        "### upscale_image\n"
-        "4x super-resolution using Real-ESRGAN on NVIDIA L4 GPU.\n"
-        "Input: image (base64 PNG/JPEG)\n"
-        "Output: Base64-encoded upscaled PNG\n"
-        "Price: $0.04 (x402) / $0.05 (Stripe) / 5 GCX\n"
-        "\n"
-        "### enrich_metadata\n"
-        "AI-powered artwork analysis using Gemini 2.5/3.0 Pro via Nova engine.\n"
-        "Generates 8-section Golden Codex JSON: title, medium, period, palette,\n"
-        "composition, symbolism, emotional resonance, provenance context.\n"
-        "Input: image (base64 PNG/JPEG)\n"
-        "Output: Golden Codex metadata JSON\n"
-        "Price: $0.03 (x402) / $0.04 (Stripe) / 4 GCX\n"
-        "\n"
-        "### infuse_metadata\n"
-        "Embed metadata into image files using ExifTool.\n"
-        "Writes XMP-gc (Golden Codex namespace), IPTC, and C2PA fields.\n"
-        "Input: image (base64), metadata (Golden Codex JSON)\n"
-        "Output: Base64-encoded image with embedded metadata\n"
-        "Price: $0.01 (x402) / $0.02 (Stripe) / 2 GCX\n"
-        "\n"
-        "### register_hash\n"
-        "Register perceptual hash (256-bit pHash) with LSH band indexing.\n"
-        "Enables strip-proof provenance recovery even if metadata is removed.\n"
-        "Input: image (base64)\n"
-        "Output: hash_id, phash, registration_timestamp\n"
-        "Price: $0.01 (x402) / $0.02 (Stripe) / 2 GCX\n"
-        "\n"
-        "### store_permanent\n"
-        "Upload to Arweave L1 for permanent, immutable storage.\n"
-        "Input: image (base64), metadata (optional JSON)\n"
-        "Output: arweave_tx_id, arweave_url\n"
-        "Price: $0.05 (x402) / $0.06 (Stripe) / 6 GCX\n"
-        "\n"
-        "### mint_nft\n"
-        "Mint as NFT on Polygon with on-chain provenance link.\n"
-        "Input: image (base64), metadata (Golden Codex JSON), collection (optional)\n"
-        "Output: token_id, contract_address, tx_hash, opensea_url\n"
-        "Price: $0.10 (x402) / $0.12 (Stripe) / 12 GCX\n"
-        "\n"
-        "### verify_provenance (FREE)\n"
-        "Check an image against the Aegis hash index for provenance.\n"
-        "Uses perceptual hashing — works even if metadata was stripped.\n"
-        "Input: image (base64)\n"
-        "Output: match_found, confidence, original_metadata (if found)\n"
-        "Price: FREE\n"
-        "\n"
-        "### full_pipeline\n"
-        "Run the complete creative pipeline: generate → upscale → enrich → infuse\n"
-        "→ register → store → mint. All stages in one call.\n"
-        "Input: prompt (string), options (per-stage overrides)\n"
-        "Output: All stage outputs + final artifact URLs\n"
-        "Price: $0.25 (x402) / $0.30 (Stripe) / 30 GCX\n"
-        "\n"
-        "## Payment Methods\n"
-        "\n"
-        "### x402 (Recommended for Agents)\n"
-        "Pay per call with USDC on Base L2. No account needed.\n"
-        "Server returns HTTP 402 with payment instructions.\n"
-        "Agent pays on-chain, resubmits with X-PAYMENT header.\n"
-        "\n"
-        "### Stripe\n"
-        "Traditional payment per call with API key.\n"
-        "Create account at https://studiomcphub.com/signup\n"
-        "\n"
-        "### GCX Credits\n"
-        "Pre-purchase credits: $5 = 100 GCX (~17% discount vs Stripe).\n"
-        "Best value for regular users.\n"
-        "\n"
-        "## Human Studio\n"
-        "For a full visual studio experience, visit https://golden-codex.com\n"
-        "The Golden Codex Studio offers the same tools with a beautiful UI,\n"
-        "batch processing, collection management, and more.\n"
-    ), 200, {"Content-Type": "text/plain; charset=utf-8"}
+    return send_from_directory(_SITE_DIR, "llms.txt", mimetype="text/plain")
 
 
 @app.route("/glama.json")
@@ -196,7 +119,7 @@ def glama_json():
     return jsonify({
         "schema_version": "v1",
         "name": "studiomcphub",
-        "display_name": "StudioMCPHub — Creative AI Tools",
+        "display_name": "StudioMCPHub — Creative AI Tools + Art Datasets",
         "description": config.server_description,
         "transport": {
             "type": "streamable-http",
@@ -206,9 +129,150 @@ def glama_json():
         "tags": [
             "image-generation", "upscaling", "esrgan", "stable-diffusion",
             "metadata", "provenance", "arweave", "nft", "art", "creative-ai",
-            "golden-codex", "x402", "paid"
+            "golden-codex", "x402", "paid", "dataset", "museum-art",
+            "alexandria-aeternum", "art-history", "compliance"
         ],
     })
+
+
+# ---------------------------------------------------------------------------
+# MCP Streamable HTTP transport
+# ---------------------------------------------------------------------------
+
+@app.route("/mcp", methods=["POST", "GET", "DELETE"])
+def mcp_endpoint():
+    """MCP Streamable HTTP endpoint.
+
+    POST: Send MCP JSON-RPC messages (initialize, tools/list, tools/call).
+    GET:  SSE stream for server-initiated notifications (long-poll).
+    DELETE: Terminate an MCP session.
+    """
+    import asyncio
+
+    session_id = request.headers.get("Mcp-Session-Id")
+
+    if request.method == "POST":
+        body = request.get_data(as_text=True)
+        if not body:
+            return jsonify({"error": "Empty request body"}), 400
+
+        try:
+            msg = json.loads(body)
+        except json.JSONDecodeError:
+            return jsonify({"error": "Invalid JSON"}), 400
+
+        # Initialize: create new session
+        if msg.get("method") == "initialize":
+            sid = str(uuid.uuid4())
+            server = create_mcp_server(check_payment)
+            _mcp_sessions[sid] = server
+
+            # Return MCP initialize response with session ID
+            return Response(
+                json.dumps({
+                    "jsonrpc": "2.0",
+                    "id": msg.get("id"),
+                    "result": {
+                        "protocolVersion": "2025-03-26",
+                        "capabilities": {
+                            "tools": {"listChanged": False},
+                        },
+                        "serverInfo": {
+                            "name": config.server_name,
+                            "version": config.server_version,
+                        },
+                    },
+                }),
+                status=200,
+                content_type="application/json",
+                headers={"Mcp-Session-Id": sid},
+            )
+
+        # All other methods require existing session
+        if not session_id or session_id not in _mcp_sessions:
+            return jsonify({"error": "Invalid or missing Mcp-Session-Id"}), 400
+
+        server = _mcp_sessions[session_id]
+
+        # Handle notifications (no id field) — just acknowledge
+        if "id" not in msg:
+            return Response("", status=202)
+
+        # tools/list
+        if msg.get("method") == "tools/list":
+            handler = server.request_handlers.get(ListToolsRequest)
+            loop = asyncio.new_event_loop()
+            try:
+                result = loop.run_until_complete(handler(ListToolsRequest(
+                    method="tools/list",
+                    params=None,
+                )))
+            finally:
+                loop.close()
+            return Response(
+                json.dumps({
+                    "jsonrpc": "2.0",
+                    "id": msg.get("id"),
+                    "result": result.model_dump(exclude_none=True) if hasattr(result, "model_dump") else result,
+                }),
+                status=200,
+                content_type="application/json",
+                headers={"Mcp-Session-Id": session_id},
+            )
+
+        # tools/call
+        if msg.get("method") == "tools/call":
+            call_params = msg.get("params", {})
+            tool_name = call_params.get("name", "")
+            arguments = call_params.get("arguments", {})
+
+            # Payment gate: check before dispatching
+            price = PRICING.get(tool_name)
+            if price and price.gcx_credits > 0:
+                payment = check_payment(tool_name)
+                if payment is None:
+                    return require_payment(tool_name)
+
+            handler = server.request_handlers.get(CallToolRequest)
+            loop = asyncio.new_event_loop()
+            try:
+                result = loop.run_until_complete(handler(CallToolRequest(
+                    method="tools/call",
+                    params=CallToolRequestParams(name=tool_name, arguments=arguments),
+                )))
+            finally:
+                loop.close()
+
+            return Response(
+                json.dumps({
+                    "jsonrpc": "2.0",
+                    "id": msg.get("id"),
+                    "result": result.model_dump(exclude_none=True) if hasattr(result, "model_dump") else result,
+                }),
+                status=200,
+                content_type="application/json",
+                headers={"Mcp-Session-Id": session_id},
+            )
+
+        return jsonify({
+            "jsonrpc": "2.0",
+            "id": msg.get("id"),
+            "error": {"code": -32601, "message": f"Method not found: {msg.get('method')}"},
+        }), 200
+
+    elif request.method == "GET":
+        # SSE endpoint for server-initiated messages (not implemented yet)
+        if not session_id or session_id not in _mcp_sessions:
+            return jsonify({"error": "Invalid session"}), 400
+        return Response("", status=200, content_type="text/event-stream")
+
+    elif request.method == "DELETE":
+        # Terminate session
+        if session_id and session_id in _mcp_sessions:
+            del _mcp_sessions[session_id]
+        return Response("", status=200)
+
+    return jsonify({"error": "Method not allowed"}), 405
 
 
 # ---------------------------------------------------------------------------
@@ -264,21 +328,67 @@ def check_payment(tool_name: str) -> tuple[str, dict] | None:
     # Check x402 header
     x_payment = request.headers.get("X-PAYMENT")
     if x_payment:
-        # TODO: Verify on-chain payment via x402 facilitator
-        return ("x402", {"header": x_payment})
+        from ..payment.x402 import verify_payment, extract_wallet
+        from ..payment.agent_tiers import apply_discount
+        base_usd = price.x402_cents / 100
+        wallet = extract_wallet(x_payment)
+        if wallet:
+            discounted_usd, tier_info = apply_discount(wallet, base_usd)
+        else:
+            discounted_usd, tier_info = base_usd, {"label": "Standard", "discount_pct": 0}
+        verified_usd = None
+        if verify_payment(x_payment, discounted_usd):
+            verified_usd = discounted_usd
+        elif discounted_usd != base_usd and verify_payment(x_payment, base_usd):
+            verified_usd = base_usd
 
-    # Check API key / GCX credit
+        if verified_usd is not None:
+            # Post-payment hooks (fire-and-forget)
+            if wallet:
+                try:
+                    from ..payment.agent_tiers import record_spend
+                    record_spend(wallet, verified_usd, tool_name)
+                except Exception as e:
+                    logger.warning(f"record_spend failed: {e}")
+                try:
+                    from ..payment.gcx_credits import ensure_account
+                    ensure_account(wallet)
+                except Exception as e:
+                    logger.warning(f"ensure_account failed: {e}")
+                try:
+                    from ..payment.loyalty import earn_loyalty
+                    earn_loyalty(wallet, price.gcx_credits, tool_name)
+                except Exception as e:
+                    logger.warning(f"earn_loyalty failed: {e}")
+            return ("x402", {"header": x_payment, "wallet": wallet, "tier": tier_info, "amount_usd": verified_usd})
+
+        logger.warning(f"x402 payment verification failed for {tool_name}")
+        return None
+
+    # Check API key / GCX credit (Bearer token = user_id for GCX)
     auth = request.headers.get("Authorization", "")
     if auth.startswith("Bearer "):
         token = auth[7:]
-        # TODO: Validate token, check GCX balance, deduct credits
-        return ("gcx", {"token": token})
+        from ..payment.gcx_credits import deduct_credits
+        if deduct_credits(user_id=token, amount=price.gcx_credits, tool_name=tool_name):
+            # Post-payment hook: loyalty credit-back (fire-and-forget)
+            try:
+                from ..payment.loyalty import earn_loyalty
+                earn_loyalty(token, price.gcx_credits, tool_name)
+            except Exception as e:
+                logger.warning(f"earn_loyalty failed: {e}")
+            return ("gcx", {"token": token, "gcx_deducted": price.gcx_credits})
+        logger.warning(f"GCX deduction failed for {tool_name} (user={token})")
+        return None
 
     # Check Stripe payment intent
     stripe_pi = request.headers.get("X-Stripe-Payment-Intent")
     if stripe_pi:
-        # TODO: Verify Stripe PaymentIntent is succeeded
-        return ("stripe", {"payment_intent": stripe_pi})
+        from ..payment.stripe_pay import verify_payment_intent
+        if verify_payment_intent(stripe_pi):
+            return ("stripe", {"payment_intent": stripe_pi})
+        logger.warning(f"Stripe PI verification failed for {tool_name}")
+        return None
 
     # No payment found — return 402
     return None
@@ -286,13 +396,15 @@ def check_payment(tool_name: str) -> tuple[str, dict] | None:
 
 def require_payment(tool_name: str):
     """Return 402 Payment Required response with instructions."""
+    from .config import AGENT_VOLUME_TIERS
     price = PRICING[tool_name]
+    base_usd = price.x402_cents / 100
     return jsonify({
         "error": "payment_required",
         "tool": tool_name,
         "pricing": {
             "x402": {
-                "amount_usd": price.x402_cents / 100,
+                "amount_usd": base_usd,
                 "wallet": config.x402_wallet,
                 "chain": "base",
                 "token": "USDC",
@@ -309,6 +421,13 @@ def require_payment(tool_name: str):
                 "credits_required": price.gcx_credits,
                 "purchase_url": "https://studiomcphub.com/credits",
             },
+        },
+        "volume_discounts": {
+            "check_url": "https://studiomcphub.com/api/agent/tier/{wallet_address}",
+            "tiers": [
+                {"label": t["label"], "min_spend_usd": t["min_spend_usd"], "discount_pct": t["discount_pct"]}
+                for t in AGENT_VOLUME_TIERS
+            ],
         },
     }), 402
 
@@ -335,7 +454,7 @@ def execute_tool(tool_name: str):
 
     # Import and dispatch to tool handler
     try:
-        from src.tools import dispatch_tool
+        from ..tools import dispatch_tool
         result = dispatch_tool(tool_name, params)
         return jsonify({
             "tool": tool_name,
@@ -368,7 +487,7 @@ def create_support_ticket():
         return jsonify({"error": f"Missing fields: {missing}"}), 400
 
     try:
-        from src.api.support import create_ticket, TICKET_TYPES
+        from ..api.support import create_ticket, TICKET_TYPES
         if data["type"] not in TICKET_TYPES:
             return jsonify({"error": f"Invalid type. Must be: {TICKET_TYPES}"}), 400
 
@@ -390,7 +509,7 @@ def create_support_ticket():
 @app.route("/api/support/tickets/<ticket_id>", methods=["GET"])
 def get_support_ticket(ticket_id: str):
     """Get a ticket by ID."""
-    from src.api.support import get_ticket
+    from ..api.support import get_ticket
     ticket = get_ticket(ticket_id)
     if not ticket:
         return jsonify({"error": "Ticket not found"}), 404
@@ -404,8 +523,15 @@ def get_support_ticket(ticket_id: str):
 @app.route("/api/loyalty/<wallet_address>", methods=["GET"])
 def loyalty_balance(wallet_address: str):
     """Get loyalty credit balance for a wallet."""
-    from src.payment.loyalty import get_loyalty_balance
+    from ..payment.loyalty import get_loyalty_balance
     return jsonify(get_loyalty_balance(wallet_address))
+
+
+@app.route("/api/agent/tier/<wallet_address>", methods=["GET"])
+def agent_tier(wallet_address: str):
+    """Get volume discount tier for a wallet."""
+    from ..payment.agent_tiers import get_tier
+    return jsonify(get_tier(wallet_address))
 
 
 # ---------------------------------------------------------------------------
@@ -419,8 +545,7 @@ def index():
     if "application/json" in accept or "text/plain" in accept:
         return mcp_server_card()
     try:
-        from flask import render_template
-        return render_template("index.html")
+        return send_from_directory(_SITE_DIR, "index.html")
     except Exception:
         return mcp_server_card()
 

@@ -1,53 +1,68 @@
 # StudioMCPHub
-## Creative AI Tools for Autonomous Agents
+## Creative AI Tools + Art Datasets for Autonomous Agents
 
-StudioMCPHub is an MCP server offering creative AI tools as paid services.
-Connect your AI agent or local assistant to generate images, upscale them,
-enrich metadata with AI analysis, embed provenance, store permanently on
-Arweave, and mint NFTs — all via the Model Context Protocol.
+StudioMCPHub is an MCP server offering creative AI tools and museum art
+datasets as paid services. Generate images, upscale them, enrich metadata,
+embed provenance, store on Arweave, mint NFTs, and access 53K+ museum
+artworks from Alexandria Aeternum — all via the Model Context Protocol.
 
 ## MCP Endpoint
 Transport: Streamable HTTP
 URL: https://studiomcphub.com/mcp
 Discovery: https://studiomcphub.com/.well-known/mcp.json
+Agent Card (A2A): https://studiomcphub.com/.well-known/agent.json
 
-## Available Tools
+## Progressive Discovery (Start Here)
+Call search_tools first to discover tools without loading all 16 schemas.
+Then call get_tool_schema for only the tools you need. ~98% token savings.
 
-### generate_image ($0.08)
+### search_tools (FREE)
+Discover available tools by category, price, or keyword.
+Input: query (string), category (creative|dataset|free|all), max_price_usd (number)
+Output: Lightweight list of matching tools with name, description, price, category
+
+### get_tool_schema (FREE)
+Get the full JSON Schema and usage examples for a specific tool.
+Input: tool_name (string, e.g. "generate_image")
+Output: Full inputSchema, description, price, examples
+
+## Creative Tools
+
+### generate_image ($0.20 / 2 GCX)
 Text-to-image generation using Stable Diffusion 3.5 Large with T5-XXL encoder.
 Input: prompt (string), negative_prompt (optional), width (int), height (int)
 Output: Base64-encoded PNG image
 
-### upscale_image ($0.04)
+### upscale_image ($0.20 / 2 GCX)
 4x super-resolution using Real-ESRGAN on NVIDIA L4 GPU.
 Input: image (base64 PNG/JPEG)
 Output: Base64-encoded upscaled PNG
 
-### enrich_metadata ($0.03)
+### enrich_metadata ($0.20 / 2 GCX)
 AI-powered artwork analysis using Gemini via Nova engine.
 Generates 8-section Golden Codex JSON: title, medium, period, palette,
 composition, symbolism, emotional resonance, provenance context.
 Input: image (base64 PNG/JPEG)
 Output: Golden Codex metadata JSON
 
-### infuse_metadata ($0.01)
+### infuse_metadata ($0.10 / 1 GCX)
 Embed metadata into image files using ExifTool.
 Writes XMP-gc (Golden Codex namespace), IPTC, and C2PA fields.
 Input: image (base64), metadata (Golden Codex JSON)
 Output: Base64-encoded image with embedded metadata
 
-### register_hash ($0.01)
+### register_hash ($0.10 / 1 GCX)
 Register perceptual hash (256-bit pHash) with LSH band indexing.
 Enables strip-proof provenance recovery even if metadata is removed.
 Input: image (base64)
 Output: hash_id, phash, registration_timestamp
 
-### store_permanent ($0.05)
+### store_permanent ($1.50 / 15 GCX)
 Upload to Arweave L1 for permanent, immutable storage.
 Input: image (base64), metadata (optional JSON)
 Output: arweave_tx_id, arweave_url
 
-### mint_nft ($0.10)
+### mint_nft ($1.00 / 10 GCX)
 Mint as NFT on Polygon with on-chain provenance link.
 Input: image (base64), metadata (Golden Codex JSON), collection (optional)
 Output: token_id, contract_address, tx_hash
@@ -58,11 +73,46 @@ Uses perceptual hashing — works even if metadata was stripped.
 Input: image (base64)
 Output: match_found, confidence, original_metadata (if found)
 
-### full_pipeline ($0.25)
+### full_pipeline ($0.50 / 5 GCX)
 Run the complete creative pipeline: generate, upscale, enrich, infuse,
 register, store, mint. All stages in one call. Skip stages with options.
 Input: prompt (string) or image (base64), options (per-stage overrides)
 Output: All stage outputs + final artifact URLs
+
+## Dataset Tools (Alexandria Aeternum)
+
+53K+ museum artworks from 7 world-class institutions: Metropolitan Museum
+of Art, Art Institute of Chicago, National Gallery of Art, Rijksmuseum,
+Smithsonian, Cleveland Museum of Art, Musee de Paris.
+
+### search_artworks (FREE)
+Search the Alexandria Aeternum dataset by keyword, artist, period, or style.
+Input: query (string), museum (optional filter), limit (1-100)
+Output: Matching artifact IDs, titles, artists, dates, classifications
+
+### get_artwork ($0.10 / 1 GCX)
+Get Human_Standard metadata (500-1200 tokens) + signed image download URL.
+Human-sourced from museum APIs, Wikipedia, Wikidata, Getty ULAN.
+Input: artifact_id (string, e.g. "met_437419")
+Output: title, artist, date, medium, classification, dimensions, image_url
+
+### get_artwork_oracle ($0.20 / 2 GCX)
+Get Hybrid_Premium 111-field NEST analysis (2K-6K tokens) + image.
+Deep AI visual analysis: color palette, composition, lighting, style,
+emotional journey, symbolism, archetypal analysis.
+Input: artifact_id (string)
+Output: Full Golden Codex JSON + signed image URL
+
+### batch_download ($5.00 / 50 GCX)
+Bulk download metadata + images (min 100 artworks).
+Input: dataset_id, quantity (min 100), offset
+Output: Signed download URLs (metadata + images, 24hr expiry)
+
+### compliance_manifest (FREE)
+Get AB 2013 (California) + EU AI Act Article 53 compliance manifests.
+Auto-generated regulatory documentation for dataset usage.
+Input: dataset_id, regulation (ab2013, eu_ai_act, or all)
+Output: Compliance manifest JSON
 
 ## Payment Methods
 
@@ -75,14 +125,32 @@ Wallet: 0xFE141943a93c184606F3060103D975662327063B
 Traditional payment per call with API key.
 
 ### GCX Credits
-Pre-purchase: $5 = 100 GCX (~17% discount vs Stripe).
-Volume: $20 = 440 GCX (+10%), $50 = 1200 GCX (+20%).
+Pre-purchase: $5 = 50 GCX (base rate), $50 = 600 GCX (17% off), $100 = 1600 GCX (38% off).
+
+### Volume Discounts
+Automatic per-wallet discounts based on 30-day rolling spend:
+- Standard ($0-49): 0% discount
+- Active ($50-99): 10% discount
+- Pro ($100-199): 20% discount
+- Studio ($200+): 30% discount
+Check your tier: GET https://studiomcphub.com/api/agent/tier/{wallet_address}
+
+### Loyalty Rewards
+Every paid tool call earns 5% credit-back as loyalty GCX credits.
+Credits accrue automatically per wallet — no sign-up needed.
+Non-transferable, no expiration, redeemable for any tool.
+Check balance: GET https://studiomcphub.com/api/loyalty/{wallet_address}
 
 ## Human Studio
 For a full visual studio experience, visit https://golden-codex.com
 
+## Research
+Alexandria Aeternum metadata density improves VLM visual perception by +25.5%
+and semantic coverage by +160.3%. See "The Density Imperative" (DOI: 10.5281/zenodo.18667735).
+
 ## Links
 - GitHub: https://github.com/codex-curator/studiomcphub
 - Golden Codex: https://golden-codex.com
+- HuggingFace: https://huggingface.co/datasets/Metavolve-Labs/alexandria-aeternum-genesis
 - Artiswa: https://artiswa.com
 - Metavolve Labs: https://metavolve.com

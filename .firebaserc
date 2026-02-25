@@ -1,5 +1,15 @@
 {
-  "projects": {},
-  "targets": {},
+  "projects": {
+    "default": "the-golden-codex-1111"
+  },
+  "targets": {
+    "the-golden-codex-1111": {
+      "hosting": {
+        "studiomcphub": [
+          "studiomcphub"
+        ]
+      }
+    }
+  },
   "etags": {}
 }
