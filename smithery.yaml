@@ -1,0 +1,46 @@
+# Smithery registry configuration
+# https://smithery.ai/docs/config
+
+name: studiomcphub
+display_name: "StudioMCPHub — Creative AI Tools"
+description: |
+  The first MCP server offering a complete creative AI post-production pipeline.
+  9 tools: image generation (SD 3.5L), ESRGAN upscaling, AI metadata enrichment,
+  XMP/C2PA infusion, perceptual hash registration, Arweave permanent storage,
+  and Polygon NFT minting. Pay per call with x402 (USDC), Stripe, or GCX credits.
+
+version: "0.1.0"
+author: "Metavolve Labs"
+homepage: "https://studiomcphub.com"
+repository: "https://github.com/codex-curator/studiomcphub"
+
+transport: streamable-http
+
+tags:
+  - image-generation
+  - upscaling
+  - esrgan
+  - stable-diffusion
+  - metadata
+  - provenance
+  - arweave
+  - nft
+  - creative-ai
+  - x402
+  - paid
+
+categories:
+  - creative
+  - art
+  - media
+
+tools:
+  - generate_image
+  - upscale_image
+  - enrich_metadata
+  - infuse_metadata
+  - register_hash
+  - store_permanent
+  - mint_nft
+  - verify_provenance
+  - full_pipeline

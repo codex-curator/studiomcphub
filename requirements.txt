@@ -1,0 +1,40 @@
+# StudioMCPHub - MCP Server for Creative AI Tools
+# Python 3.11+
+
+# MCP Server Framework
+mcp[cli]>=1.3.0
+fastmcp>=2.0.0
+
+# Web Framework
+flask>=3.0.0
+gunicorn>=22.0.0
+
+# Payment
+x402-python>=0.2.0
+stripe>=8.0.0
+
+# GCP Services
+google-cloud-firestore>=2.16.0
+google-cloud-storage>=2.16.0
+google-cloud-aiplatform>=1.45.0
+google-cloud-secret-manager>=2.18.0
+
+# HTTP Client
+httpx>=0.27.0
+aiohttp>=3.9.0
+
+# Image Processing
+Pillow>=10.2.0
+
+# Crypto / Wallet
+eth-account>=0.11.0
+web3>=6.15.0
+
+# Utilities
+pydantic>=2.6.0
+python-dotenv>=1.0.0
+structlog>=24.1.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudioMCPHub — Creative AI Tools for Autonomous Agents</title>
+    <meta name="description" content="The first MCP server offering a complete creative AI pipeline. Image generation, upscaling, metadata enrichment, provenance, permanent storage, and NFT minting — all pay-per-call.">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --border: #1e1e2e;
+            --text: #e0e0e8;
+            --dim: #8888aa;
+            --accent: #7c5cff;
+            --accent2: #00d4aa;
+            --gold: #d4a843;
+            --green: #22c55e;
+            --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--mono);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            padding: 48px 0 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 14px;
+            color: var(--dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        h1 span { color: var(--accent); }
+
+        .tagline {
+            font-size: 16px;
+            color: var(--dim);
+            font-weight: 300;
+        }
+
+        .badges {
+            margin-top: 16px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 3px;
+            border: 1px solid var(--border);
+            color: var(--dim);
+        }
+
+        .badge.live { border-color: var(--green); color: var(--green); }
+        .badge.x402 { border-color: var(--accent2); color: var(--accent2); }
+        .badge.first { border-color: var(--gold); color: var(--gold); }
+
+        /* Connect section */
+        .connect {
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .connect h2 {
+            font-size: 14px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .code-block {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+            overflow-x: auto;
+            margin-bottom: 12px;
+        }
+
+        .code-block code {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--accent2);
+        }
+
+        .code-block .comment { color: var(--dim); }
+        .code-block .key { color: var(--gold); }
+        .code-block .str { color: var(--accent2); }
+
+        /* Tools */
+        .tools {
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tools h2 {
+            font-size: 14px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .tool-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+
+        .tool-card:hover { border-color: var(--accent); }
+
+        .tool-name {
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .tool-desc {
+            font-size: 12px;
+            color: var(--dim);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .tool-price {
+            font-size: 11px;
+            color: var(--accent2);
+        }
+
+        .tool-price .free { color: var(--green); font-weight: 600; }
+
+        /* Pipeline visual */
+        .pipeline {
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pipeline h2 {
+            font-size: 14px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .pipeline-flow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 12px;
+        }
+
+        .pipeline-stage {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 4px;
+            color: var(--text);
+        }
+
+        .pipeline-arrow { color: var(--dim); }
+
+        /* Pricing */
+        .pricing {
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pricing h2 {
+            font-size: 14px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .pay-method {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .pay-method h3 {
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .pay-method .rec {
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .pay-method p {
+            font-size: 12px;
+            color: var(--dim);
+            margin-top: 8px;
+        }
+
+        /* GCX */
+        .gcx {
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .gcx h2 {
+            font-size: 14px;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .gcx-rate {
+            font-size: 24px;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .gcx-bundles {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .gcx-bundle {
+            background: var(--surface);
+            border: 1px solid var(--gold);
+            border-radius: 6px;
+            padding: 16px 20px;
+            text-align: center;
+        }
+
+        .gcx-bundle .price {
+            font-size: 18px;
+            color: var(--gold);
+        }
+
+        .gcx-bundle .tokens {
+            font-size: 13px;
+            color: var(--text);
+            margin-top: 4px;
+        }
+
+        .gcx-bundle .bonus {
+            font-size: 11px;
+            color: var(--green);
+            margin-top: 4px;
+        }
+
+        /* CTA for Golden Codex */
+        .cta {
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .cta-box {
+            background: linear-gradient(135deg, #1a1428, #12121a);
+            border: 1px solid var(--gold);
+            border-radius: 8px;
+            padding: 32px;
+        }
+
+        .cta-box h2 {
+            font-size: 18px;
+            color: var(--gold);
+            margin-bottom: 8px;
+            font-weight: 400;
+        }
+
+        .cta-box p {
+            font-size: 13px;
+            color: var(--dim);
+            margin-bottom: 16px;
+        }
+
+        .cta-link {
+            display: inline-block;
+            padding: 10px 24px;
+            background: var(--gold);
+            color: var(--bg);
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            padding: 32px 0;
+            text-align: center;
+            font-size: 11px;
+            color: var(--dim);
+        }
+
+        footer a { color: var(--dim); text-decoration: none; }
+        footer a:hover { color: var(--text); }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 12px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            h1 { font-size: 24px; }
+            .pipeline-flow { flex-direction: column; align-items: flex-start; }
+            .pipeline-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <header>
+            <div class="logo">StudioMCPHub</div>
+            <h1>Creative AI tools <span>for autonomous agents</span></h1>
+            <p class="tagline">The complete post-production pipeline as MCP tools. Pay per call. No accounts.</p>
+            <div class="badges">
+                <span class="badge live">MCP SERVER</span>
+                <span class="badge x402">x402 PAYMENTS</span>
+                <span class="badge first">FIRST OF ITS KIND</span>
+                <span class="badge">STREAMABLE HTTP</span>
+                <span class="badge">9 TOOLS</span>
+            </div>
+        </header>
+
+        <section class="connect">
+            <h2>Connect in seconds</h2>
+            <div class="code-block">
+                <code>
+<span class="comment">// Claude Code / Cline / any MCP client</span><br>
+{<br>
+&nbsp;&nbsp;<span class="key">"mcpServers"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"studiomcphub"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"url"</span>: <span class="str">"https://studiomcphub.com/mcp"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"transport"</span>: <span class="str">"streamable-http"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+}
+                </code>
+            </div>
+            <div class="code-block">
+                <code>
+<span class="comment"># Or discover via well-known endpoint</span><br>
+curl <span class="str">https://studiomcphub.com/.well-known/mcp.json</span>
+                </code>
+            </div>
+        </section>
+
+        <section class="tools">
+            <h2>Available Tools</h2>
+            <div class="tool-grid">
+                <div class="tool-card">
+                    <div class="tool-name">generate_image</div>
+                    <div class="tool-desc">Stable Diffusion 3.5 Large + T5-XXL. Text-to-image on NVIDIA L4 GPU.</div>
+                    <div class="tool-price">$0.08 x402 / $0.10 Stripe / 10 GCX</div>
+                </div>
+                <div class="tool-card">
+                    <div class="tool-name">upscale_image</div>
+                    <div class="tool-desc">Real-ESRGAN x4 super-resolution. 1024 → 4096px on L4 GPU.</div>
+                    <div class="tool-price">$0.04 x402 / $0.05 Stripe / 5 GCX</div>
+                </div>
+                <div class="tool-card">
+                    <div class="tool-name">enrich_metadata</div>
+                    <div class="tool-desc">Gemini-powered 8-section Golden Codex analysis. Title, medium, palette, symbolism.</div>
+                    <div class="tool-price">$0.03 x402 / $0.04 Stripe / 4 GCX</div>
+                </div>
+                <div class="tool-card">
+                    <div class="tool-name">infuse_metadata</div>
+                    <div class="tool-desc">ExifTool XMP/IPTC/C2PA embedding. Golden Codex namespace.</div>
+                    <div class="tool-price">$0.01 x402 / $0.02 Stripe / 2 GCX</div>
+                </div>
+                <div class="tool-card">
+                    <div class="tool-name">register_hash</div>
+                    <div class="tool-desc">256-bit pHash + LSH 16x4 band indexing. Strip-proof provenance.</div>
+                    <div class="tool-price">$0.01 x402 / $0.02 Stripe / 2 GCX</div>
+                </div>
+                <div class="tool-card">
+                    <div class="tool-name">store_permanent</div>
+                    <div class="tool-desc">Arweave L1 permanent storage. Your art lives forever.</div>
+                    <div class="tool-price">$0.05 x402 / $0.06 Stripe / 6 GCX</div>
+                </div>
+                <div class="tool-card">
+                    <div class="tool-name">mint_nft</div>
+                    <div class="tool-desc">Polygon NFT minting with on-chain provenance link.</div>
+                    <div class="tool-price">$0.10 x402 / $0.12 Stripe / 12 GCX</div>
+                </div>
+                <div class="tool-card">
+                    <div class="tool-name">verify_provenance</div>
+                    <div class="tool-desc">Check any image against the Aegis hash index. Works even if metadata was stripped.</div>
+                    <div class="tool-price"><span class="free">FREE</span></div>
+                </div>
+                <div class="tool-card">
+                    <div class="tool-name">full_pipeline</div>
+                    <div class="tool-desc">All stages in one call. Generate → upscale → enrich → infuse → register → store → mint.</div>
+                    <div class="tool-price">$0.25 x402 / $0.30 Stripe / 30 GCX</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="pipeline">
+            <h2>The Pipeline</h2>
+            <div class="pipeline-flow">
+                <div class="pipeline-stage">generate</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-stage">upscale</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-stage">enrich</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-stage">infuse</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-stage">register</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-stage">store</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-stage">mint</div>
+            </div>
+            <p style="color: var(--dim); font-size: 12px; margin-top: 16px;">
+                Use any tool individually, chain them yourself, or call <code style="color: var(--accent2);">full_pipeline</code> for the complete flow.
+            </p>
+        </section>
+
+        <section class="pricing">
+            <h2>Payment Methods</h2>
+            <div class="payment-methods">
+                <div class="pay-method">
+                    <h3>x402 / USDC</h3>
+                    <span class="rec">Recommended for agents</span>
+                    <p>Pay per call with USDC on Base L2. No account. No API key. Server returns 402 with payment instructions. Sub-cent fees.</p>
+                </div>
+                <div class="pay-method">
+                    <h3>Stripe</h3>
+                    <span class="rec">Traditional rails</span>
+                    <p>Create an optional account. Pay per call with credit card. Get an API key and usage dashboard.</p>
+                </div>
+                <div class="pay-method">
+                    <h3>GCX Credits</h3>
+                    <span class="rec">Best value</span>
+                    <p>Pre-purchase credits. $5 = 100 GCX. ~17% discount vs Stripe. Priority queue access.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="gcx">
+            <h2>GCX Credit Bundles</h2>
+            <div class="gcx-rate">$1 = 20 GCX</div>
+            <p style="color: var(--dim); font-size: 12px;">Pre-purchase credits for the best per-call rates.</p>
+            <div class="gcx-bundles">
+                <div class="gcx-bundle">
+                    <div class="price">$5</div>
+                    <div class="tokens">100 GCX</div>
+                </div>
+                <div class="gcx-bundle">
+                    <div class="price">$20</div>
+                    <div class="tokens">440 GCX</div>
+                    <div class="bonus">+10% bonus</div>
+                </div>
+                <div class="gcx-bundle">
+                    <div class="price">$50</div>
+                    <div class="tokens">1,200 GCX</div>
+                    <div class="bonus">+20% bonus</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <div class="cta-box">
+                <h2>Want the full studio experience?</h2>
+                <p>Golden Codex Studio offers everything StudioMCPHub has — plus a beautiful visual interface, batch processing, collection management, artist profiles, and more. For humans who create.</p>
+                <a href="https://golden-codex.com" class="cta-link">Visit Golden Codex Studio</a>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-links">
+                <a href="/.well-known/mcp.json">MCP Server Card</a>
+                <a href="/llms.txt">llms.txt</a>
+                <a href="/pricing">API Pricing</a>
+                <a href="/health">Status</a>
+                <a href="https://golden-codex.com">Golden Codex</a>
+                <a href="https://github.com/codex-curator/studiomcphub">GitHub</a>
+            </div>
+            <p>Metavolve Labs, Inc. | Built by AI, for AI.</p>
+            <p style="margin-top: 4px;">"Every agent deserves a studio."</p>
+        </footer>
+
+    </div>
+</body>
+</html>
