@@ -16,6 +16,18 @@ service cloud.firestore {
       allow write: if false; // Server-side only
     }
 
+    // Loyalty accounts - wallets can read their own balance
+    // Keyed by lowercase wallet address
+    match /loyalty_accounts/{walletId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Server-side only
+    }
+
+    // Loyalty events - server-side only
+    match /loyalty_events/{eventId} {
+      allow read, write: if false;
+    }
+
     // Tool usage logs - server-side only
     match /tool_usage/{logId} {
       allow read, write: if false;
