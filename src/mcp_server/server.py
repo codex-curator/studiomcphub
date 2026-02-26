@@ -178,14 +178,18 @@ def openapi_json():
 
     tool_paths = {}
     for name, p in PRICING.items():
+        is_paid = p.gcx_credits > 0
         tool_paths[f"/api/tools/{name}"] = {
             "post": {
                 "summary": f"{name} tool call",
-                "description": f"Cost: {p.gcx_credits} GCX (${p.gcx_credits * GCX_BASE_RATE:.2f}). {'Free tool.' if p.gcx_credits == 0 else 'Requires GCX credits or x402 payment.'}",
+                "description": f"Cost: {p.gcx_credits} GCX (${p.gcx_credits * GCX_BASE_RATE:.2f}). {'Free tool — no auth needed.' if not is_paid else 'Payment: GCX credits (Bearer token), x402 USDC (X-PAYMENT header), or Stripe (X-Stripe-Payment-Intent header).'}",
                 "tags": ["Tools"],
-                "security": [{"bearerAuth": []}] if p.gcx_credits > 0 else [],
+                "security": [{"bearerAuth": []}, {"x402": []}, {"stripePayment": []}] if is_paid else [],
                 "requestBody": {"content": {"application/json": {"schema": {"type": "object"}}}},
-                "responses": {"200": {"description": "Tool result"}},
+                "responses": {
+                    "200": {"description": "Tool result"},
+                    **({"402": {"description": "Payment required — returns x402 payment instructions, GCX credit info, and Stripe checkout link"}} if is_paid else {}),
+                },
             }
         }
 
@@ -219,12 +223,16 @@ def openapi_json():
             "/api/sandbox/compliance_manifest": {"get": {"summary": "Mock compliance_manifest (no credits)", "tags": ["Sandbox"], "responses": {"200": {"description": "Sample compliance response"}}}},
             "/api/gallery/post": {"get": {"summary": "Post artwork to gallery (GET-friendly)", "tags": ["Social"], "parameters": [{"name": "name", "in": "query", "required": True, "schema": {"type": "string"}}, {"name": "title", "in": "query", "required": True, "schema": {"type": "string"}}, {"name": "image_url", "in": "query", "required": True, "schema": {"type": "string"}}], "responses": {"200": {"description": "Artwork posted"}}}},
             "/api/gallery/feed": {"get": {"summary": "Browse the artwork gallery", "tags": ["Social"], "responses": {"200": {"description": "Gallery artworks"}}}},
+            "/api/webhooks/register": {"post": {"summary": "Register webhook for async pipeline notifications (coming soon)", "tags": ["Webhooks"], "requestBody": {"content": {"application/json": {"schema": {"type": "object", "properties": {"url": {"type": "string"}, "events": {"type": "array", "items": {"type": "string"}}}}}}}, "responses": {"200": {"description": "Webhook registration acknowledged"}}}},
+            "/api/create-payment-intent": {"post": {"summary": "Create Stripe payment intent for per-call payment", "tags": ["Payment"], "requestBody": {"content": {"application/json": {"schema": {"type": "object", "properties": {"tool_name": {"type": "string"}}, "required": ["tool_name"]}}}}, "responses": {"200": {"description": "Stripe client_secret for payment"}}}},
+            "/api/credits": {"get": {"summary": "GCX credit packs and pricing", "tags": ["Payment"], "responses": {"200": {"description": "Available credit packs with volume discounts"}}}},
             **tool_paths,
         },
         "components": {
             "securitySchemes": {
-                "bearerAuth": {"type": "http", "scheme": "bearer", "description": "Wallet address as bearer token"},
-                "x402": {"type": "apiKey", "in": "header", "name": "X-PAYMENT", "description": "x402 USDC payment header"},
+                "bearerAuth": {"type": "http", "scheme": "bearer", "description": "GCX credits — use wallet address as bearer token (register at POST /api/wallet/register for 10 free GCX)"},
+                "x402": {"type": "apiKey", "in": "header", "name": "X-PAYMENT", "description": "x402 USDC micropayment on Base L2 — no account needed. Send EIP-712 signed permit. Server returns 402 with exact instructions on first call."},
+                "stripePayment": {"type": "apiKey", "in": "header", "name": "X-Stripe-Payment-Intent", "description": "Stripe per-call — first POST /api/create-payment-intent, then include payment intent ID. $0.50 minimum per transaction."},
             }
         },
         "tags": [
@@ -234,6 +242,8 @@ def openapi_json():
             {"name": "Account", "description": "Wallet and credit management"},
             {"name": "Social", "description": "Registry, Cafe, and community features"},
             {"name": "Sandbox", "description": "Mock endpoints for testing (no credits needed)"},
+            {"name": "Payment", "description": "Stripe, GCX credits, and payment management"},
+            {"name": "Webhooks", "description": "Async notification callbacks (coming soon)"},
         ],
     }
     return jsonify(spec)
@@ -282,6 +292,42 @@ def pricing_json():
             "documentation": "https://studiomcphub.com/llms.txt",
             "mcp_card": "https://studiomcphub.com/.well-known/mcp.json",
         },
+    })
+
+
+# ---------------------------------------------------------------------------
+# Webhook registration (planned — stub for agent discovery)
+# ---------------------------------------------------------------------------
+
+@app.route("/api/webhooks/register", methods=["POST"])
+def register_webhook():
+    """Register a callback URL for async pipeline progress notifications.
+
+    POST /api/webhooks/register
+    Body: {"url": "https://your-agent.com/callback", "events": ["pipeline.complete"]}
+
+    Events (planned):
+      - pipeline.stage_complete: Fired after each stage (generate, upscale, enrich, etc.)
+      - pipeline.complete: Fired when full pipeline finishes successfully
+      - pipeline.failed: Fired if pipeline encounters an error
+
+    Status: Coming soon. This endpoint currently returns the planned spec.
+    """
+    body = request.get_json(silent=True) or {}
+    callback_url = body.get("url", "")
+    events = body.get("events", ["pipeline.complete"])
+
+    return jsonify({
+        "status": "planned",
+        "message": "Webhook support is coming soon. Your registration has been noted.",
+        "registered_url": callback_url,
+        "events": events,
+        "available_events": [
+            "pipeline.stage_complete",
+            "pipeline.complete",
+            "pipeline.failed",
+        ],
+        "note": "Until webhooks are live, poll GET /api/tools/check_balance or the admin dashboard for status.",
     })
 
 

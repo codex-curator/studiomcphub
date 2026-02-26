@@ -31,11 +31,12 @@ from .config import config, PRICING
 logger = logging.getLogger("studiomcphub.admin")
 
 
-def _make_sample_png(width: int = 64, height: int = 64) -> str:
-    """Generate a small gradient PNG (no PIL) for sandbox mock responses.
+def _make_sample_png(width: int = 128, height: int = 128) -> str:
+    """Generate a sample gradient PNG (no PIL) for sandbox mock responses.
 
     Creates a purple-to-teal gradient with a subtle diamond pattern —
     visually meaningful enough to test image processing pipelines.
+    128x128 by default — large enough to be visually interesting in previews.
     Returns base64-encoded PNG string.
     """
     def _chunk(chunk_type: bytes, data: bytes) -> bytes:
@@ -71,7 +72,7 @@ _SAMPLE_PNG_B64: str | None = None
 
 
 def _get_sample_png() -> str:
-    """Lazy-cached 64x64 sample PNG for sandbox endpoints."""
+    """Lazy-cached 128x128 sample PNG for sandbox endpoints."""
     global _SAMPLE_PNG_B64
     if _SAMPLE_PNG_B64 is None:
         _SAMPLE_PNG_B64 = _make_sample_png()
@@ -948,7 +949,7 @@ def sandbox_generate():
         "_sandbox": True,
         "_note": "This is a mock response. Use POST /api/tools/generate_image with GCX credits for real generation.",
         "image_b64": _get_sample_png(),
-        "image_b64_note": "64x64 sample gradient PNG. Real images are 1024x1024 high-detail renders.",
+        "image_b64_note": "128x128 sample gradient PNG. Real outputs are 1024x1024 high-detail renders from Stable Diffusion 3.5 Large with T5-XXL encoder.",
         "format": "png",
         "width": 1024,
         "height": 1024,
@@ -957,6 +958,13 @@ def sandbox_generate():
         "model": "sd35-large-t5xxl",
         "seed": 42,
         "cost": {"gcx": 2, "usd": 0.20},
+        "next_steps": [
+            {"action": "upscale", "endpoint": "POST /api/tools/upscale_image", "cost": "2 GCX ($0.20)", "why": "2x or 4x super-resolution via Real-ESRGAN on NVIDIA L4 GPU"},
+            {"action": "enrich", "endpoint": "POST /api/tools/enrich_metadata", "cost": "1-2 GCX ($0.10-$0.20)", "why": "AI-powered metadata: standard (SEO) or premium (museum-grade Golden Codex)"},
+            {"action": "full_pipeline", "endpoint": "POST /api/tools/full_pipeline", "cost": "5 GCX ($0.50)", "why": "Run generate → upscale → enrich → infuse → register in one call"},
+            {"action": "try_nano", "endpoint": "POST /api/tools/generate_image_nano", "cost": "1 GCX ($0.10)", "why": "Faster concept generation via Google Imagen 3 — great for rapid iteration"},
+        ],
+        "real_output_gallery": "https://studiomcphub.com/api/gallery/feed",
     })
 
 
@@ -980,7 +988,7 @@ def sandbox_upscale():
         "_sandbox": True,
         "_note": f"Mock response for model '{model}'. Real upscaling runs on NVIDIA L4 GPU with Real-ESRGAN.",
         "image_b64": _get_sample_png(),
-        "image_b64_note": f"64x64 sample. Real output would be {64*scale}x{64*scale} ({scale}x upscale).",
+        "image_b64_note": f"128x128 sample. Real output would be {64*scale}x{64*scale} ({scale}x upscale).",
         "scale": scale,
         "model": model,
         "original_size_bytes": 12288,
@@ -993,6 +1001,12 @@ def sandbox_upscale():
             "realesr_animevideov3": {"scale": 4, "best_for": "Anime video frames, fastest 4x option"},
         },
         "cost": {"gcx": 2, "usd": 0.20},
+        "next_steps": [
+            {"action": "enrich", "endpoint": "POST /api/tools/enrich_metadata", "cost": "1-2 GCX", "why": "Add AI metadata before or after upscaling"},
+            {"action": "infuse", "endpoint": "POST /api/tools/infuse_metadata", "cost": "1 GCX ($0.10)", "why": "Embed metadata into image file (XMP/IPTC/C2PA)"},
+            {"action": "register_hash", "endpoint": "POST /api/tools/register_hash", "cost": "1 GCX ($0.10)", "why": "Register perceptual hash for strip-proof provenance"},
+            {"action": "save_asset", "endpoint": "POST /api/tools/save_asset", "cost": "1 GCX ($0.10)", "why": "Save to your wallet storage (100MB free per wallet)"},
+        ],
     })
 
 
@@ -1017,6 +1031,10 @@ def sandbox_enrich():
             },
             "fields": ["title", "description", "keywords", "alt_text"],
             "cost": {"gcx": 1, "usd": 0.10},
+            "next_steps": [
+                {"action": "infuse", "endpoint": "POST /api/tools/infuse_metadata", "cost": "1 GCX ($0.10)", "why": "Embed this metadata into the image file (XMP/IPTC)"},
+                {"action": "upgrade_tier", "endpoint": "POST /api/tools/enrich_metadata", "params": {"tier": "premium"}, "cost": "2 GCX ($0.20)", "why": "Get full 8-section Golden Codex museum-grade analysis instead"},
+            ],
         })
     return jsonify({
         "_sandbox": True,
@@ -1024,7 +1042,7 @@ def sandbox_enrich():
         "tier": "premium",
         "metadata": {
             "title": "The Pilgrim's Path to the Emerald Soul",
-            "artist_analysis": "Digital artwork depicting a stone pathway through a mossy forest...",
+            "artist_analysis": "Digital artwork depicting a stone pathway through a mossy forest, where ancient stone steps lead toward a radiant green heart of crystalline light. The composition draws the eye along a vanishing-point corridor of towering trees whose canopy filters an otherworldly emerald glow.",
             "color_palette": [
                 {"name": "Crystalline Emerald", "hex": "#39FF14"},
                 {"name": "Forest Floor Moss", "hex": "#2a401c"},
@@ -1032,12 +1050,22 @@ def sandbox_enrich():
                 {"name": "Pathway Slate", "hex": "#4c5159"},
                 {"name": "Mystic Haze", "hex": "#a3b4c1"},
             ],
+            "composition": "Central vanishing-point perspective. Stone pathway creates a strong leading line, flanked by vertical tree trunks that frame the luminous focal point.",
+            "lighting": "Diffused backlighting from the emerald crystal formation creates volumetric god-rays through the canopy. Rim lighting on moss and stone surfaces suggests ambient bio-luminescence.",
+            "symbolism": "The pathway as spiritual journey — ascending steps toward illumination. The crystal heart as enlightenment or the soul's destination. Moss as the persistence of life over stone.",
+            "emotional_journey": "Wonder → Reverence → Longing → Peace",
             "themes": ["The Sacredness of Nature", "The Journey Inward", "Transformation"],
             "art_movements": ["Fantasy Realism", "Digital Art", "Romanticism (thematic)"],
             "mood": "Sublime Wonder",
             "keywords": ["fantasy art", "enchanted forest", "glowing crystals", "magical landscape"],
         },
+        "fields_count": "8 sections, 30+ fields in full production output",
         "cost": {"gcx": 2, "usd": 0.20},
+        "next_steps": [
+            {"action": "infuse", "endpoint": "POST /api/tools/infuse_metadata", "cost": "1 GCX ($0.10)", "why": "Embed Golden Codex metadata into image file (XMP-gc namespace + IPTC + C2PA + soulmark)"},
+            {"action": "register_hash", "endpoint": "POST /api/tools/register_hash", "cost": "1 GCX ($0.10)", "why": "Register perceptual hash — enables strip-proof provenance recovery"},
+            {"action": "store_permanent", "endpoint": "POST /api/tools/store_permanent", "cost": "15 GCX ($1.50)", "why": "Upload to Arweave L1 for immutable permanent storage"},
+        ],
     })
 
 
@@ -1059,6 +1087,10 @@ def sandbox_verify():
         },
         "total_matches": 1,
         "cost": {"gcx": 0, "usd": 0.00, "note": "Always free"},
+        "next_steps": [
+            {"action": "get_artwork", "endpoint": "POST /api/tools/get_artwork", "cost": "1 GCX ($0.10)", "why": "Get full Human_Standard metadata + signed image URL for the matched artwork"},
+            {"action": "get_artwork_oracle", "endpoint": "POST /api/tools/get_artwork_oracle", "cost": "2 GCX ($0.20)", "why": "Get Hybrid_Premium 111-field deep AI analysis of the matched artwork"},
+        ],
     })
 
 
@@ -1100,8 +1132,14 @@ def sandbox_search():
             },
         ],
         "total_results": 3,
-        "dataset": "Alexandria Aeternum (53K+ artworks)",
+        "dataset": "Alexandria Aeternum (53K+ artworks, 7 museums)",
         "cost": {"gcx": 0, "usd": 0.00, "note": "Free — 50 searches/hr rate limit"},
+        "next_steps": [
+            {"action": "get_artwork", "endpoint": "POST /api/tools/get_artwork", "params": {"artifact_id": "AETR-00142"}, "cost": "1 GCX ($0.10)", "why": "Get Human_Standard metadata (500-1200 tokens) + signed image download URL"},
+            {"action": "get_artwork_oracle", "endpoint": "POST /api/tools/get_artwork_oracle", "params": {"artifact_id": "AETR-00142"}, "cost": "2 GCX ($0.20)", "why": "Get Hybrid_Premium 111-field NEST deep visual analysis (2K-6K tokens)"},
+            {"action": "batch_download", "endpoint": "POST /api/tools/batch_download", "cost": "50 GCX ($5.00)", "why": "Bulk download metadata + images (min 100 artworks)"},
+            {"action": "compliance_manifest", "endpoint": "POST /api/tools/compliance_manifest", "cost": "Free", "why": "Get AB 2013 + EU AI Act compliance documentation for the dataset"},
+        ],
     })
 
 
@@ -1118,7 +1156,7 @@ def sandbox_pipeline():
         "prompt_used": prompt,
         "stages_completed": ["generate", "upscale", "enrich", "infuse", "register"],
         "image_b64": _get_sample_png(),
-        "image_b64_note": "64x64 sample gradient. Real output is 2048x2048 upscaled PNG (~6MB).",
+        "image_b64_note": "128x128 sample gradient. Real output is 2048x2048 upscaled PNG (~6MB).",
         "metadata": {
             "title": f"Vision of: {prompt[:60]}",
             "artist_analysis": "AI-generated artwork with vivid detail and atmospheric lighting...",
@@ -1142,6 +1180,17 @@ def sandbox_pipeline():
             "total": "~71s",
         },
         "cost": {"gcx": 5, "usd": 0.50},
+        "next_steps": [
+            {"action": "store_permanent", "endpoint": "POST /api/tools/store_permanent", "cost": "15 GCX ($1.50)", "why": "Upload final artifact to Arweave L1 for permanent, immutable storage"},
+            {"action": "mint_nft", "endpoint": "POST /api/tools/mint_nft", "cost": "10 GCX ($1.00)", "why": "Mint as NFT on Polygon with on-chain provenance link"},
+            {"action": "save_asset", "endpoint": "POST /api/tools/save_asset", "cost": "1 GCX ($0.10)", "why": "Save to your wallet storage for later retrieval"},
+            {"action": "verify_provenance", "endpoint": "POST /api/tools/verify_provenance", "cost": "Free", "why": "Verify the registered hash matches — strip-proof provenance check"},
+        ],
+        "webhook": {
+            "_note": "Coming soon: register a callback URL for async pipeline progress notifications",
+            "register": "POST /api/webhooks/register (planned)",
+            "events": ["pipeline.stage_complete", "pipeline.complete", "pipeline.failed"],
+        },
     })
 
 
@@ -1187,6 +1236,10 @@ def sandbox_compliance():
             },
         },
         "cost": {"gcx": 0, "usd": 0.00, "note": "Always free"},
+        "next_steps": [
+            {"action": "search_artworks", "endpoint": "POST /api/tools/search_artworks", "cost": "Free", "why": "Search the dataset to find specific artworks"},
+            {"action": "batch_download", "endpoint": "POST /api/tools/batch_download", "cost": "50 GCX ($5.00)", "why": "Download metadata + images in bulk (min 100)"},
+        ],
     })
 
 
