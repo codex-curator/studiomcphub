@@ -113,7 +113,7 @@ def mcp_server_card():
             "schemes": [
                 {"type": "x402", "description": "Pay per call with USDC on Base L2"},
                 {"type": "bearer", "description": "API key or GCX credit token"},
-                {"type": "none", "description": "Free tools (verify_provenance)"},
+                {"type": "none", "description": "Free tools (10 of 24 — verify_provenance, search_artworks, compliance_manifest, get_asset, list_assets, delete_asset, register_wallet, check_balance, search_tools, get_tool_schema)"},
             ]
         },
         "tools": [
@@ -135,12 +135,13 @@ def mcp_server_card():
             },
             "gcx": {
                 "rate": f"$1 = {GCX_PER_DOLLAR} GCX",
-                "purchase_url": "https://studiomcphub.com/credits",
+                "purchase_url": "https://studiomcphub.com/api/credits",
             },
         },
         "links": {
-            "documentation": "https://studiomcphub.com/docs",
-            "pricing": "https://studiomcphub.com/pricing",
+            "documentation": "https://studiomcphub.com/llms.txt",
+            "pricing": "https://studiomcphub.com/pricing.json",
+            "openapi": "https://studiomcphub.com/openapi.json",
             "golden_codex_studio": "https://golden-codex.com",
             "github": "https://github.com/codex-curator/studiomcphub",
         },

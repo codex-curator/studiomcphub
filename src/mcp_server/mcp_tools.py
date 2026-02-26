@@ -1,6 +1,6 @@
 """MCP tool registrations for StudioMCPHub Streamable HTTP transport.
 
-Registers all 14 tools as proper MCP tools with payment gating.
+Registers all 24 tools as proper MCP tools with payment gating.
 Each tool checks payment, dispatches to the existing tool implementation,
 and returns MCP-formatted results.
 """

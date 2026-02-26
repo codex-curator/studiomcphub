@@ -1,8 +1,8 @@
 {
   "name": "StudioMCPHub",
-  "description": "Creative AI tools and art datasets for autonomous agents. Image generation, upscaling, metadata enrichment, provenance registration, permanent storage, NFT minting, and access to 53K+ museum artworks from Alexandria Aeternum.",
+  "description": "Creative AI tools and museum art datasets for autonomous agents. 24 MCP tools: image generation (SD 3.5 + Imagen 3), 5-model ESRGAN upscaling, tiered metadata enrichment, resize/convert, provenance registration, Arweave permanent storage, NFT minting, wallet storage, and 53K+ museum artworks from Alexandria Aeternum.",
   "url": "https://studiomcphub.com",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "capabilities": {
     "streaming": true,
     "pushNotifications": false
@@ -20,11 +20,15 @@
     },
     {
       "type": "bearer",
-      "description": "API key or GCX credit token via Authorization header."
+      "description": "GCX credits via Authorization: Bearer 0xWALLET header."
+    },
+    {
+      "type": "stripe",
+      "description": "Credit card via Stripe PaymentIntent. $0.50 minimum per transaction."
     },
     {
       "type": "none",
-      "description": "Free tools require no authentication."
+      "description": "Free tools (10 of 24) require no authentication."
     }
   ],
   "skills": [
@@ -45,112 +49,169 @@
     {
       "id": "generate_image",
       "name": "Generate Image",
-      "description": "Text-to-image generation using SD 3.5 Large + T5-XXL on NVIDIA L4 GPU.",
+      "description": "Text-to-image generation using SD 3.5 Large + T5-XXL on NVIDIA L4 GPU. $0.20 / 2 GCX.",
       "tags": ["creative", "generation", "gpu", "paid"],
       "examples": ["Generate a serene Japanese garden at sunset"]
     },
     {
+      "id": "generate_image_nano",
+      "name": "Generate Image Nano",
+      "description": "Fast concept generation via Google Imagen 3. Great for rapid iteration. $0.10 / 1 GCX.",
+      "tags": ["creative", "generation", "paid"],
+      "examples": ["Quick concept sketch of a crystal fox"]
+    },
+    {
       "id": "upscale_image",
       "name": "Upscale Image",
-      "description": "4x super-resolution using Real-ESRGAN on NVIDIA L4 GPU.",
+      "description": "Super-resolution using Real-ESRGAN on NVIDIA L4 GPU. 5 models (2x and 4x). $0.20 / 2 GCX.",
       "tags": ["creative", "upscaling", "gpu", "paid"],
-      "examples": ["Upscale an image to 4x resolution"]
+      "examples": ["Upscale an image to 4x resolution with the anime model"]
+    },
+    {
+      "id": "resize_image",
+      "name": "Resize Image",
+      "description": "Resize images to target dimensions. Modes: contain, cover, stretch. Formats: PNG, JPEG, WebP. $0.10 / 1 GCX.",
+      "tags": ["creative", "utility", "paid"],
+      "examples": ["Resize to 512x512 cover mode as JPEG"]
     },
     {
       "id": "enrich_metadata",
       "name": "Enrich Metadata",
-      "description": "AI-powered artwork analysis via Gemini 2.5/3.0 Pro. Returns 8-section Golden Codex JSON.",
+      "description": "AI-powered artwork analysis via Gemini 2.5 Pro. Standard (SEO) or Premium (museum-grade Golden Codex). $0.20 / 2 GCX.",
       "tags": ["creative", "ai", "metadata", "paid"],
       "examples": ["Analyze artwork and generate Golden Codex metadata"]
     },
     {
       "id": "infuse_metadata",
       "name": "Infuse Metadata",
-      "description": "Embed Golden Codex metadata into image via ExifTool (XMP-gc, IPTC, C2PA).",
+      "description": "Embed metadata into image via ExifTool (XMP-gc, IPTC, C2PA, soulmark). $0.10 / 1 GCX.",
       "tags": ["creative", "metadata", "exiftool", "paid"],
-      "examples": ["Embed metadata into a PNG image"]
+      "examples": ["Embed Golden Codex metadata into a PNG image"]
     },
     {
       "id": "register_hash",
       "name": "Register Hash",
-      "description": "Register 256-bit perceptual hash with LSH band indexing for strip-proof provenance.",
+      "description": "Register 256-bit perceptual hash with LSH band indexing for strip-proof provenance. $0.10 / 1 GCX.",
       "tags": ["creative", "provenance", "hash", "paid"],
       "examples": ["Register an image's perceptual hash"]
     },
     {
       "id": "store_permanent",
       "name": "Store Permanent",
-      "description": "Upload to Arweave L1 for permanent, immutable storage.",
+      "description": "Upload to Arweave L1 for permanent, immutable storage. $1.50 / 15 GCX.",
       "tags": ["creative", "storage", "arweave", "paid"],
       "examples": ["Store an image permanently on Arweave"]
     },
     {
       "id": "mint_nft",
       "name": "Mint NFT",
-      "description": "Mint as NFT on Polygon with on-chain provenance link.",
+      "description": "Mint as NFT on Polygon with on-chain provenance link. $1.00 / 10 GCX.",
       "tags": ["creative", "nft", "polygon", "paid"],
       "examples": ["Mint an artwork as an NFT on Polygon"]
     },
     {
       "id": "verify_provenance",
       "name": "Verify Provenance",
-      "description": "Strip-proof provenance verification via Aegis hash index.",
+      "description": "Strip-proof provenance verification via Aegis perceptual hash index. FREE.",
       "tags": ["creative", "provenance", "verification", "free"],
       "examples": ["Check if an image has registered provenance"]
     },
     {
       "id": "full_pipeline",
       "name": "Full Pipeline",
-      "description": "Complete creative pipeline: enrich, upscale, infuse, register in one call.",
+      "description": "Complete creative pipeline: generate/upscale/enrich/infuse/register in one call. $0.50 / 5 GCX.",
       "tags": ["creative", "pipeline", "paid"],
-      "examples": ["Run full pipeline on an image, skipping mint and storage"]
+      "examples": ["Run full pipeline on an image"]
+    },
+    {
+      "id": "save_asset",
+      "name": "Save Asset",
+      "description": "Save an image or data to personal wallet storage. 100MB free, 500 assets max. $0.10 / 1 GCX.",
+      "tags": ["storage", "wallet", "paid"],
+      "examples": ["Save my generated image as 'sunset-001'"]
+    },
+    {
+      "id": "get_asset",
+      "name": "Get Asset",
+      "description": "Retrieve a stored asset from wallet storage by key. FREE.",
+      "tags": ["storage", "wallet", "free"],
+      "examples": ["Retrieve the asset named 'sunset-001'"]
+    },
+    {
+      "id": "list_assets",
+      "name": "List Assets",
+      "description": "List all assets in wallet storage with sizes and metadata. FREE.",
+      "tags": ["storage", "wallet", "free"],
+      "examples": ["List all my stored assets"]
+    },
+    {
+      "id": "delete_asset",
+      "name": "Delete Asset",
+      "description": "Delete an asset from wallet storage. FREE.",
+      "tags": ["storage", "wallet", "free"],
+      "examples": ["Delete the asset named 'sunset-001'"]
     },
     {
       "id": "search_artworks",
       "name": "Search Artworks",
-      "description": "Search 53K+ museum artworks from Alexandria Aeternum.",
+      "description": "Search 53K+ museum artworks from Alexandria Aeternum (7 museums). FREE.",
       "tags": ["dataset", "search", "museum", "free"],
       "examples": ["Search for impressionist landscapes from the Met"]
     },
     {
       "id": "get_artwork",
       "name": "Get Artwork",
-      "description": "Get Human_Standard metadata (500-1200 tokens) + signed image URL.",
+      "description": "Get Human_Standard metadata (500-1200 tokens) + signed image URL. $0.10 / 1 GCX.",
       "tags": ["dataset", "metadata", "paid"],
       "examples": ["Get metadata for met_437419"]
     },
     {
       "id": "get_artwork_oracle",
       "name": "Get Artwork Oracle",
-      "description": "Get Hybrid_Premium 111-field NEST analysis (2K-6K tokens) + image.",
+      "description": "Get Hybrid_Premium 111-field NEST analysis (2K-6K tokens) + image. $0.20 / 2 GCX.",
       "tags": ["dataset", "ai", "metadata", "paid"],
       "examples": ["Get deep AI analysis for met_437419"]
     },
     {
       "id": "batch_download",
       "name": "Batch Download",
-      "description": "Bulk download metadata + images from Alexandria Aeternum (min 100).",
+      "description": "Bulk download metadata + images from Alexandria Aeternum (min 100). $5.00 / 50 GCX.",
       "tags": ["dataset", "bulk", "paid"],
       "examples": ["Download 100 artworks starting at offset 0"]
     },
     {
       "id": "compliance_manifest",
       "name": "Compliance Manifest",
-      "description": "Get AB 2013 + EU AI Act Article 53 compliance manifests for dataset usage.",
+      "description": "Get AB 2013 + EU AI Act Article 53 compliance manifests for dataset usage. FREE.",
       "tags": ["dataset", "compliance", "legal", "free"],
       "examples": ["Get compliance manifest for Alexandria Aeternum"]
+    },
+    {
+      "id": "register_wallet",
+      "name": "Register Wallet",
+      "description": "Register an EVM wallet and receive 10 FREE GCX welcome credits ($1 value). FREE.",
+      "tags": ["account", "onboarding", "free"],
+      "examples": ["Register my wallet 0x1234..."]
+    },
+    {
+      "id": "check_balance",
+      "name": "Check Balance",
+      "description": "Check GCX balance, loyalty credits, and volume tier for a wallet. FREE.",
+      "tags": ["account", "balance", "free"],
+      "examples": ["Check my GCX balance"]
     }
   ],
   "tags": [
     "creative-ai", "art", "image-generation", "upscaling", "metadata",
     "provenance", "arweave", "nft", "dataset", "museum-art",
-    "golden-codex", "x402", "mcp"
+    "golden-codex", "x402", "mcp", "resize", "wallet-storage"
   ],
   "links": {
     "mcp_endpoint": "https://studiomcphub.com/mcp",
     "mcp_card": "https://studiomcphub.com/.well-known/mcp.json",
     "documentation": "https://studiomcphub.com/llms.txt",
-    "pricing": "https://studiomcphub.com/pricing",
+    "pricing": "https://studiomcphub.com/pricing.json",
+    "openapi": "https://studiomcphub.com/openapi.json",
     "studio": "https://golden-codex.com",
     "github": "https://github.com/codex-curator/studiomcphub"
   }
