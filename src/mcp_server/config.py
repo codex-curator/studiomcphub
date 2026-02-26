@@ -43,6 +43,18 @@ PRICING = {
     "get_artwork_oracle":    ToolPricing(gcx_credits=2),   # $0.20 — Hybrid_Premium 111-field NEST analysis
     "batch_download":        ToolPricing(gcx_credits=50),  # $5.00 — 100+ images bulk download
     "compliance_manifest":   ToolPricing(gcx_credits=0),   # FREE  — AB 2013 + EU AI Act compliance
+    # --- Nano Banana Pro (Imagen 3) ---
+    "generate_image_nano":   ToolPricing(gcx_credits=1),   # $0.10 — Imagen 3 fast (concept iteration)
+    # --- Image Utilities ---
+    "resize_image":          ToolPricing(gcx_credits=1),   # $0.10 — resize/crop/fit to target dimensions
+    # --- Agent Storage ---
+    "save_asset":            ToolPricing(gcx_credits=1),   # $0.10 — save to wallet storage (10MB max)
+    "get_asset":             ToolPricing(gcx_credits=0),   # FREE  — retrieve stored asset
+    "list_assets":           ToolPricing(gcx_credits=0),   # FREE  — list stored assets
+    "delete_asset":          ToolPricing(gcx_credits=0),   # FREE  — delete stored asset
+    # --- Account tools ---
+    "register_wallet":       ToolPricing(gcx_credits=0),   # FREE  — onboarding + 10 GCX welcome bonus
+    "check_balance":         ToolPricing(gcx_credits=0),   # FREE  — account status check
     # --- Meta-tools (Progressive Discovery) ---
     "search_tools":          ToolPricing(gcx_credits=0),   # FREE  — discover tools without loading schemas
     "get_tool_schema":       ToolPricing(gcx_credits=0),   # FREE  — fetch full schema for one tool
@@ -99,7 +111,7 @@ class Config:
 
     # Backend service URLs (Golden Codex pipeline agents)
     sd35_url: str = os.getenv("SD35_SERVICE_URL", "https://sd35-l4-172867820131.us-east4.run.app")
-    esrgan_url: str = os.getenv("ESRGAN_SERVICE_URL", "https://esrgan-gpu-primary-172867820131.us-central1.run.app")
+    esrgan_url: str = os.getenv("ESRGAN_SERVICE_URL", "https://esrgan-l4-172867820131.us-central1.run.app")
     nova_url: str = os.getenv("NOVA_SERVICE_URL", "https://nova-agent-172867820131.us-west1.run.app")
     atlas_url: str = os.getenv("ATLAS_SERVICE_URL", "https://atlas-agent-172867820131.us-west1.run.app")
     archivus_url: str = os.getenv("ARCHIVUS_SERVICE_URL", "https://archivus-agent-172867820131.us-west1.run.app")

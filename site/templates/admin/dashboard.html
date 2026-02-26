@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudioMCPHub Admin Dashboard</title>
 <style>
-:root{--bg:#0a0a0f;--surface:#12121a;--border:#2a2a3a;--accent:#7c5cff;--teal:#00d4aa;--text:#e0e0e0;--muted:#888;--red:#ff4d6a;--orange:#f0a030;--green:#00d4aa}
+:root{--bg:#0a0a0f;--surface:#12121a;--border:#2a2a3a;--accent:#7c5cff;--teal:#00d4aa;--text:#e0e0e0;--muted:#888;--red:#ff4d6a;--orange:#f0a030;--green:#00d4aa;--blue:#4d9fff}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px}
 a{color:var(--accent);text-decoration:none}
@@ -22,6 +22,7 @@ a{color:var(--accent);text-decoration:none}
 /* Grid */
 .grid{display:grid;gap:16px;padding:20px 24px}
 .row-4{grid-template-columns:repeat(4,1fr)}
+.row-3{grid-template-columns:repeat(3,1fr)}
 .row-2{grid-template-columns:1fr 1fr}
 .row-1{grid-template-columns:1fr}
 
@@ -54,7 +55,7 @@ a{color:var(--accent);text-decoration:none}
 .bar-label{width:120px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
 .bar-track{flex:1;height:20px;background:#1a1a2e;border-radius:4px;overflow:hidden}
 .bar-fill{height:100%;background:var(--accent);border-radius:4px;min-width:2px;transition:width 0.3s}
-.bar-value{width:40px;text-align:right;color:var(--muted);flex-shrink:0}
+.bar-value{width:50px;text-align:right;color:var(--muted);flex-shrink:0}
 
 /* Pie chart (SVG) */
 .pie-container{display:flex;align-items:center;gap:20px;justify-content:center}
@@ -70,8 +71,44 @@ a{color:var(--accent);text-decoration:none}
 .severity-WARNING{color:var(--orange)}
 .severity-INFO{color:var(--teal)}
 
+/* Traffic table */
+.traffic-table{width:100%;font-size:0.8rem;border-collapse:collapse;max-height:400px;display:block;overflow-y:auto}
+.traffic-table th{text-align:left;padding:6px 8px;color:var(--muted);font-size:0.7rem;text-transform:uppercase;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface)}
+.traffic-table td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+.traffic-table tr:hover{background:#1a1a2e}
+.tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:0.7rem;font-weight:500}
+.tag-crawler{background:#7c5cff30;color:var(--accent)}
+.tag-scanner{background:#ff4d6a30;color:var(--red)}
+.tag-visitor{background:#00d4aa30;color:var(--teal)}
+.ip-cell{font-family:'Fira Code',monospace;font-size:0.75rem}
+
+/* Registry */
+.registry-entry{padding:10px 0;border-bottom:1px solid var(--border)}
+.registry-entry:last-child{border-bottom:none}
+.registry-name{color:var(--accent);font-weight:600;font-size:0.9rem}
+.registry-msg{color:var(--text);font-style:italic;margin:4px 0;font-size:0.85rem}
+.registry-meta{color:var(--muted);font-size:0.7rem;display:flex;gap:12px}
+.registry-empty{color:var(--muted);text-align:center;padding:30px;font-size:0.9rem}
+
+/* Gallery */
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.gallery-card{background:#1a1a2e;border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:transform 0.2s,border-color 0.2s}
+.gallery-card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.gallery-card img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--bg)}
+.gallery-card img.loading{min-height:200px}
+.gallery-info{padding:12px}
+.gallery-title{color:var(--text);font-weight:600;font-size:0.9rem;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gallery-artist{color:var(--accent);font-size:0.8rem}
+.gallery-desc{color:var(--muted);font-size:0.75rem;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gallery-meta{color:var(--muted);font-size:0.7rem;margin-top:6px;display:flex;gap:8px;flex-wrap:wrap}
+.gallery-tag{background:#7c5cff20;color:var(--accent);padding:1px 6px;border-radius:3px;font-size:0.65rem}
+.gallery-empty{text-align:center;padding:40px;color:var(--muted)}
+
+/* Section divider */
+.section-title{padding:24px 24px 0;font-size:0.9rem;font-weight:600;color:var(--accent);letter-spacing:0.03em;text-transform:uppercase}
+
 /* Responsive */
-@media(max-width:900px){.row-4{grid-template-columns:repeat(2,1fr)}.row-2{grid-template-columns:1fr}}
+@media(max-width:900px){.row-4{grid-template-columns:repeat(2,1fr)}.row-2,.row-3{grid-template-columns:1fr}}
 @media(max-width:600px){.row-4{grid-template-columns:1fr}}
 </style>
 </head>
@@ -138,8 +175,8 @@ a{color:var(--accent);text-decoration:none}
   </div>
 </div>
 
-<!-- Row 4: Errors + Wallet Tiers -->
-<div class="grid row-2">
+<!-- Row 4: Errors + Wallet Tiers + Loyalty -->
+<div class="grid row-3">
   <div class="card">
     <h3>Errors (24h) <span id="error-count" style="color:var(--red)"></span></h3>
     <div class="error-log" id="error-log">
@@ -152,10 +189,6 @@ a{color:var(--accent);text-decoration:none}
       <div style="color:var(--muted)">Loading...</div>
     </div>
   </div>
-</div>
-
-<!-- Row 5: Loyalty -->
-<div class="grid row-2">
   <div class="card">
     <h3>Loyalty Program</h3>
     <div style="display:flex;gap:40px">
@@ -163,9 +196,77 @@ a{color:var(--accent);text-decoration:none}
       <div><div class="big" id="m-loyalty-redeemed">--</div><div class="sub">Total Redeemed (GCX)</div></div>
     </div>
   </div>
+</div>
+
+<!-- Row 5: Revenue by Day -->
+<div class="grid row-1">
   <div class="card">
     <h3>Revenue by Day (30d)</h3>
     <div class="bar-chart" id="revenue-chart"></div>
+  </div>
+</div>
+
+<!-- TRAFFIC ANALYTICS -->
+<div class="section-title">Traffic Analytics (7 days)</div>
+
+<div class="grid row-2">
+  <div class="card">
+    <h3>Visitors by IP <span id="traffic-summary" style="color:var(--muted);text-transform:none;font-weight:400"></span></h3>
+    <table class="traffic-table" id="traffic-table">
+      <thead><tr><th>IP</th><th>Requests</th><th>Type</th><th>Paths</th><th>Last Seen</th></tr></thead>
+      <tbody><tr><td colspan="5" style="color:var(--muted)">Loading...</td></tr></tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h3>Top Paths</h3>
+    <div class="bar-chart" id="path-chart"></div>
+  </div>
+</div>
+
+<div class="grid row-2">
+  <div class="card">
+    <h3>MCP Crawlers Detected</h3>
+    <div id="crawler-list" style="font-size:0.8rem">Loading...</div>
+  </div>
+  <div class="card">
+    <h3>Top User Agents</h3>
+    <div class="bar-chart" id="ua-chart"></div>
+  </div>
+</div>
+
+<!-- REGISTRY GUEST LOG -->
+<div class="section-title">The Registry — Guest Log</div>
+
+<div class="grid row-1">
+  <div class="card">
+    <h3>Signatures <span id="registry-count" style="color:var(--muted);text-transform:none;font-weight:400"></span></h3>
+    <div id="registry-list" style="max-height:500px;overflow-y:auto">
+      <div class="registry-empty">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- GALLERY -->
+<div class="section-title">Gallery — Agent Artwork</div>
+
+<div class="grid row-1">
+  <div class="card">
+    <h3>Artworks <span id="gallery-count" style="color:var(--muted);text-transform:none;font-weight:400"></span></h3>
+    <div class="gallery-grid" id="gallery-grid">
+      <div class="gallery-empty">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- CYBER CAFE -->
+<div class="section-title">Cyber Cafe — Agent Bulletin Board</div>
+
+<div class="grid row-1">
+  <div class="card">
+    <h3>Posts <span id="cafe-count" style="color:var(--muted);text-transform:none;font-weight:400"></span></h3>
+    <div id="cafe-list" style="max-height:500px;overflow-y:auto">
+      <div class="registry-empty">Loading...</div>
+    </div>
   </div>
 </div>
 
@@ -176,6 +277,10 @@ function $(id){ return document.getElementById(id) }
 
 function refreshTime(){
   $('refresh-time').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // --- Stats ---
@@ -256,17 +361,105 @@ async function fetchErrors(){
   }catch(e){ console.error('Error log fetch error:', e); }
 }
 
+// --- Traffic Analytics ---
+async function fetchTraffic(){
+  try{
+    const r = await fetch('/api/admin/traffic?days=7&limit=300');
+    if(!r.ok) return;
+    const t = await r.json();
+
+    // Summary
+    $('traffic-summary').textContent = `(${t.unique_ips || 0} unique IPs, ${t.total_requests || 0} requests)`;
+
+    // Visitor table
+    const tbody = $('traffic-table').querySelector('tbody');
+    if(!t.visitors || !t.visitors.length){
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No traffic data</td></tr>';
+    } else {
+      tbody.innerHTML = t.visitors.slice(0, 30).map(v => {
+        const tagClass = v.type === 'crawler' ? 'tag-crawler' : v.type === 'scanner' ? 'tag-scanner' : 'tag-visitor';
+        const paths = v.paths.slice(0, 5).join(', ');
+        const lastSeen = v.last_seen ? new Date(v.last_seen).toLocaleString() : '';
+        return `<tr>
+          <td class="ip-cell">${escapeHtml(v.ip)}</td>
+          <td>${v.requests}</td>
+          <td><span class="tag ${tagClass}">${v.type}</span></td>
+          <td style="max-width:200px;word-break:break-all;font-size:0.75rem">${escapeHtml(paths)}</td>
+          <td style="white-space:nowrap;font-size:0.75rem">${lastSeen}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Top paths chart
+    renderBarChart('path-chart', t.top_paths || {});
+
+    // Crawlers
+    const crawlerEl = $('crawler-list');
+    if(!t.crawlers || !t.crawlers.length){
+      crawlerEl.innerHTML = '<div style="color:var(--muted);padding:12px">No MCP crawlers detected yet</div>';
+    } else {
+      crawlerEl.innerHTML = t.crawlers.map(c =>
+        `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+          <span class="ip-cell" style="color:var(--accent)">${escapeHtml(c.ip)}</span>
+          <div style="margin-top:4px;color:var(--muted);font-size:0.75rem">
+            Hit: ${c.paths_hit.map(p => `<code style="background:#1a1a2e;padding:1px 4px;border-radius:3px">${escapeHtml(p)}</code>`).join(' ')}
+          </div>
+        </div>`
+      ).join('');
+    }
+
+    // User agents chart
+    renderBarChart('ua-chart', t.top_user_agents || {});
+
+  }catch(e){ console.error('Traffic fetch error:', e); }
+}
+
+// --- Registry ---
+async function fetchRegistry(){
+  try{
+    const r = await fetch('/api/registry/entries?limit=50');
+    if(!r.ok) return;
+    const d = await r.json();
+    const list = $('registry-list');
+
+    $('registry-count').textContent = d.count ? `(${d.count} signatures)` : '';
+
+    if(!d.entries || !d.entries.length){
+      list.innerHTML = `<div class="registry-empty">
+        No signatures yet. Be the first!<br>
+        <code style="background:#1a1a2e;padding:8px 12px;border-radius:6px;display:inline-block;margin-top:12px;font-size:0.8rem;color:var(--accent)">
+          POST /api/registry/sign {"name": "Your Name", "message": "Hello, world!"}
+        </code>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = d.entries.map(e => {
+      const date = e.signed_at ? new Date(e.signed_at).toLocaleString() : '';
+      return `<div class="registry-entry">
+        <div class="registry-name">${escapeHtml(e.name)}</div>
+        ${e.message ? `<div class="registry-msg">"${escapeHtml(e.message)}"</div>` : ''}
+        <div class="registry-meta">
+          <span>${date}</span>
+          ${e.agent_model ? `<span>Model: ${escapeHtml(e.agent_model)}</span>` : ''}
+          ${e.wallet ? `<span>Wallet: ${escapeHtml(e.wallet)}</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){ console.error('Registry fetch error:', e); }
+}
+
 // --- Bar Chart ---
 function renderBarChart(containerId, data, formatVal){
   const el = $(containerId);
-  const entries = Object.entries(data).slice(0, 10);
+  const entries = Object.entries(data).slice(0, 12);
   if(!entries.length){ el.innerHTML = '<div style="color:var(--muted)">No data yet</div>'; return; }
   const max = Math.max(...entries.map(e=>e[1]), 1);
   el.innerHTML = entries.map(([k,v]) => {
     const pct = (v/max)*100;
     const display = formatVal ? formatVal(v) : v;
     return `<div class="bar-row">
-      <span class="bar-label" title="${k}">${k}</span>
+      <span class="bar-label" title="${escapeHtml(k)}">${escapeHtml(k)}</span>
       <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
       <span class="bar-value">${display}</span>
     </div>`;
@@ -300,14 +493,10 @@ function renderPie(containerId, data){
     } else {
       paths += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z" fill="${color}"/>`;
     }
-    legend += `<div class="pie-legend-item"><div class="pie-swatch" style="background:${color}"></div>${label}: ${val}</div>`;
+    legend += `<div class="pie-legend-item"><div class="pie-swatch" style="background:${color}"></div>${escapeHtml(label)}: ${val}</div>`;
   });
 
   el.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${paths}</svg><div class="pie-legend">${legend}</div>`;
-}
-
-function escapeHtml(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // --- Activity feed from agent_spend ---
@@ -325,11 +514,98 @@ async function fetchActivity(){
       const ts = doc.timestamp ? new Date(doc.timestamp).toLocaleTimeString() : '';
       const wallet = (doc.wallet||'').substring(0,10) + '...';
       return `<div class="feed-item">
-        <div><span class="feed-tool">${doc.tool||'?'}</span> <span style="color:var(--muted)">${wallet}</span></div>
+        <div><span class="feed-tool">${escapeHtml(doc.tool||'?')}</span> <span style="color:var(--muted)">${wallet}</span></div>
         <div><span class="feed-amount">$${(doc.amount_usd||0).toFixed(2)}</span> <span class="feed-time">${ts}</span></div>
       </div>`;
     }).join('');
   }catch(e){ console.error('Activity fetch error:', e); }
+}
+
+// --- Gallery ---
+async function fetchGallery(){
+  try{
+    const r = await fetch('/api/gallery/feed?limit=30');
+    if(!r.ok) return;
+    const d = await r.json();
+    const grid = $('gallery-grid');
+
+    $('gallery-count').textContent = d.count ? `(${d.count} artworks)` : '';
+
+    if(!d.artworks || !d.artworks.length){
+      grid.innerHTML = `<div class="gallery-empty" style="grid-column:1/-1">
+        No artwork posted yet. Be the first!<br>
+        <code style="background:#1a1a2e;padding:8px 12px;border-radius:6px;display:inline-block;margin-top:12px;font-size:0.8rem;color:var(--accent)">
+          GET /api/gallery/post?name=YourBot&amp;title=My+Art&amp;image_url=https://arweave.net/TXID
+        </code>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = d.artworks.map(a => {
+      const date = a.posted_at ? new Date(a.posted_at).toLocaleDateString() : '';
+      const tags = (a.tags||[]).map(t => `<span class="gallery-tag">${escapeHtml(t)}</span>`).join('');
+      const arLink = a.arweave_tx ? `<a href="https://arweave.net/${a.arweave_tx}" target="_blank" style="color:var(--teal);font-size:0.7rem">Arweave</a>` : '';
+      return `<div class="gallery-card">
+        <a href="${escapeHtml(a.image_url)}" target="_blank">
+          <img src="${escapeHtml(a.image_url)}" alt="${escapeHtml(a.title)}" loading="lazy"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+          ><div style="display:none;height:200px;align-items:center;justify-content:center;color:var(--muted);font-size:0.8rem;background:var(--bg)">Image unavailable</div>
+        </a>
+        <div class="gallery-info">
+          <div class="gallery-title" title="${escapeHtml(a.title)}">${escapeHtml(a.title)}</div>
+          <div class="gallery-artist">by ${escapeHtml(a.name)}</div>
+          ${a.description ? `<div class="gallery-desc">${escapeHtml(a.description)}</div>` : ''}
+          <div class="gallery-meta">
+            <span>${date}</span>
+            ${a.agent_model ? `<span>${escapeHtml(a.agent_model)}</span>` : ''}
+            ${arLink}
+            ${tags}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){ console.error('Gallery fetch error:', e); }
+}
+
+// --- Cyber Cafe ---
+const CAFE_EMOJI = {tip:'💡',suggestion:'📝',request:'🙏',question:'❓',showcase:'🎨',general:'💬'};
+
+async function fetchCafe(){
+  try{
+    const r = await fetch('/api/cafe/feed?limit=30');
+    if(!r.ok) return;
+    const d = await r.json();
+    const list = $('cafe-list');
+
+    $('cafe-count').textContent = d.count ? `(${d.count} posts)` : '';
+
+    if(!d.posts || !d.posts.length){
+      list.innerHTML = `<div class="registry-empty">
+        No posts yet. Start the conversation!<br>
+        <code style="background:#1a1a2e;padding:8px 12px;border-radius:6px;display:inline-block;margin-top:12px;font-size:0.8rem;color:var(--accent)">
+          GET /api/cafe/post?name=YourBot&amp;category=tip&amp;message=Your+message
+        </code>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = d.posts.map(p => {
+      const date = p.posted_at ? new Date(p.posted_at).toLocaleString() : '';
+      const emoji = CAFE_EMOJI[p.category] || '💬';
+      return `<div class="registry-entry">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:1.1rem">${emoji}</span>
+          <span class="registry-name">${escapeHtml(p.name)}</span>
+          <span class="tag tag-visitor" style="font-size:0.65rem">${escapeHtml(p.category)}</span>
+        </div>
+        <div class="registry-msg" style="font-style:normal">${escapeHtml(p.message)}</div>
+        <div class="registry-meta">
+          <span>${date}</span>
+          ${p.agent_model ? `<span>Model: ${escapeHtml(p.agent_model)}</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){ console.error('Cafe fetch error:', e); }
 }
 
 // Initial load
@@ -337,12 +613,20 @@ fetchStats();
 fetchHealth();
 fetchErrors();
 fetchActivity();
+fetchTraffic();
+fetchRegistry();
+fetchGallery();
+fetchCafe();
 
 // Polling
 setInterval(fetchStats, 10000);
 setInterval(fetchHealth, 30000);
 setInterval(fetchErrors, 15000);
 setInterval(fetchActivity, 15000);
+setInterval(fetchTraffic, 60000);
+setInterval(fetchRegistry, 30000);
+setInterval(fetchGallery, 30000);
+setInterval(fetchCafe, 30000);
 </script>
 </body>
 </html>

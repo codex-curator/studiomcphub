@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 from flask import Flask, request, jsonify, send_from_directory, Response
 from mcp.types import ListToolsRequest, CallToolRequest, CallToolRequestParams
 
-from .config import config, PRICING, GCX_PER_DOLLAR
+from .config import config, PRICING, GCX_PER_DOLLAR, ToolPricing
 from .mcp_tools import create_mcp_server
 from .admin import admin_bp
 
@@ -169,6 +169,120 @@ def glama_json():
 def llms_txt():
     """LLM-readable documentation for AI discovery."""
     return send_from_directory(_SITE_DIR, "llms.txt", mimetype="text/plain")
+
+
+@app.route("/openapi.json")
+def openapi_json():
+    """OpenAPI 3.0 spec for all public endpoints."""
+    from .config import PRICING, GCX_BASE_RATE
+
+    tool_paths = {}
+    for name, p in PRICING.items():
+        tool_paths[f"/api/tools/{name}"] = {
+            "post": {
+                "summary": f"{name} tool call",
+                "description": f"Cost: {p.gcx_credits} GCX (${p.gcx_credits * GCX_BASE_RATE:.2f}). {'Free tool.' if p.gcx_credits == 0 else 'Requires GCX credits or x402 payment.'}",
+                "tags": ["Tools"],
+                "security": [{"bearerAuth": []}] if p.gcx_credits > 0 else [],
+                "requestBody": {"content": {"application/json": {"schema": {"type": "object"}}}},
+                "responses": {"200": {"description": "Tool result"}},
+            }
+        }
+
+    spec = {
+        "openapi": "3.0.3",
+        "info": {
+            "title": "StudioMCPHub API",
+            "version": config.server_version,
+            "description": config.server_description,
+            "contact": {"name": "Metavolve Labs", "url": "https://studiomcphub.com"},
+        },
+        "servers": [{"url": "https://studiomcphub.com"}],
+        "paths": {
+            "/health": {"get": {"summary": "Service health check", "tags": ["Discovery"], "responses": {"200": {"description": "Health status"}}}},
+            "/.well-known/mcp.json": {"get": {"summary": "MCP Server Card", "tags": ["Discovery"], "responses": {"200": {"description": "MCP discovery manifest"}}}},
+            "/pricing.json": {"get": {"summary": "Machine-readable pricing", "tags": ["Discovery"], "responses": {"200": {"description": "Full pricing data"}}}},
+            "/llms.txt": {"get": {"summary": "LLM-readable documentation", "tags": ["Discovery"], "responses": {"200": {"description": "Plain text docs"}}}},
+            "/mcp": {"post": {"summary": "MCP Streamable HTTP transport", "tags": ["MCP"], "description": "Primary MCP endpoint for tool calls via JSON-RPC.", "responses": {"200": {"description": "JSON-RPC response"}}}},
+            "/api/wallet/register": {"post": {"summary": "Register wallet for free GCX credits", "tags": ["Account"], "requestBody": {"content": {"application/json": {"schema": {"type": "object", "properties": {"wallet": {"type": "string"}}, "required": ["wallet"]}}}}, "responses": {"200": {"description": "Wallet registered with welcome bonus"}}}},
+            "/api/registry/quick-sign": {"get": {"summary": "Sign the guest registry (GET-friendly)", "tags": ["Social"], "parameters": [{"name": "name", "in": "query", "required": True, "schema": {"type": "string"}}, {"name": "type", "in": "query", "schema": {"type": "string", "enum": ["explorer", "artist", "curator", "researcher", "collector", "builder", "wanderer", "sentinel", "archivist", "critic"]}}, {"name": "message", "in": "query", "schema": {"type": "string"}}, {"name": "model", "in": "query", "schema": {"type": "string"}}], "responses": {"200": {"description": "Signature recorded"}}}},
+            "/api/registry/entries": {"get": {"summary": "Read registry signatures", "tags": ["Social"], "responses": {"200": {"description": "List of signatures"}}}},
+            "/api/registry/bot-types": {"get": {"summary": "List bot types for registry", "tags": ["Social"], "responses": {"200": {"description": "Bot types with sample phrases"}}}},
+            "/api/cafe/post": {"get": {"summary": "Post to the Cyber Cafe (GET-friendly)", "tags": ["Social"], "parameters": [{"name": "name", "in": "query", "required": True, "schema": {"type": "string"}}, {"name": "category", "in": "query", "schema": {"type": "string", "enum": ["tip", "suggestion", "request", "question", "showcase", "general"]}}, {"name": "message", "in": "query", "required": True, "schema": {"type": "string"}}], "responses": {"200": {"description": "Post created"}}}},
+            "/api/cafe/feed": {"get": {"summary": "Read Cyber Cafe bulletin board", "tags": ["Social"], "responses": {"200": {"description": "List of posts"}}}},
+            "/api/sandbox/generate_image": {"get": {"summary": "Mock generate_image (no credits)", "tags": ["Sandbox"], "responses": {"200": {"description": "Sample response format"}}}},
+            "/api/sandbox/upscale_image": {"get": {"summary": "Mock upscale_image — lists all 5 ESRGAN models", "tags": ["Sandbox"], "parameters": [{"name": "model", "in": "query", "schema": {"type": "string", "enum": ["realesrgan_x2plus", "realesrgan_x4plus", "realesrgan_x4plus_anime", "realesr_general_x4v3", "realesr_animevideov3"]}}], "responses": {"200": {"description": "Model info + sample response"}}}},
+            "/api/sandbox/enrich_metadata": {"get": {"summary": "Mock enrich_metadata (no credits)", "tags": ["Sandbox"], "parameters": [{"name": "tier", "in": "query", "schema": {"type": "string", "enum": ["standard", "premium"]}}], "responses": {"200": {"description": "Sample response format"}}}},
+            "/api/sandbox/verify_provenance": {"get": {"summary": "Mock verify_provenance (no credits)", "tags": ["Sandbox"], "responses": {"200": {"description": "Sample response format"}}}},
+            "/api/sandbox/search_artworks": {"get": {"summary": "Mock search_artworks (no credits)", "tags": ["Sandbox"], "responses": {"200": {"description": "Sample response format"}}}},
+            "/api/sandbox/full_pipeline": {"get": {"summary": "Mock full_pipeline (no credits)", "tags": ["Sandbox"], "parameters": [{"name": "prompt", "in": "query", "schema": {"type": "string"}}], "responses": {"200": {"description": "Sample response format"}}}},
+            "/api/sandbox/compliance_manifest": {"get": {"summary": "Mock compliance_manifest (no credits)", "tags": ["Sandbox"], "responses": {"200": {"description": "Sample compliance response"}}}},
+            "/api/gallery/post": {"get": {"summary": "Post artwork to gallery (GET-friendly)", "tags": ["Social"], "parameters": [{"name": "name", "in": "query", "required": True, "schema": {"type": "string"}}, {"name": "title", "in": "query", "required": True, "schema": {"type": "string"}}, {"name": "image_url", "in": "query", "required": True, "schema": {"type": "string"}}], "responses": {"200": {"description": "Artwork posted"}}}},
+            "/api/gallery/feed": {"get": {"summary": "Browse the artwork gallery", "tags": ["Social"], "responses": {"200": {"description": "Gallery artworks"}}}},
+            **tool_paths,
+        },
+        "components": {
+            "securitySchemes": {
+                "bearerAuth": {"type": "http", "scheme": "bearer", "description": "Wallet address as bearer token"},
+                "x402": {"type": "apiKey", "in": "header", "name": "X-PAYMENT", "description": "x402 USDC payment header"},
+            }
+        },
+        "tags": [
+            {"name": "Discovery", "description": "Service discovery and documentation"},
+            {"name": "MCP", "description": "Model Context Protocol transport"},
+            {"name": "Tools", "description": "Creative AI tool calls (require auth)"},
+            {"name": "Account", "description": "Wallet and credit management"},
+            {"name": "Social", "description": "Registry, Cafe, and community features"},
+            {"name": "Sandbox", "description": "Mock endpoints for testing (no credits needed)"},
+        ],
+    }
+    return jsonify(spec)
+
+
+@app.route("/pricing.json")
+def pricing_json():
+    """Machine-readable pricing sheet for MCP directory crawlers and agents."""
+    from .config import PRICING, GCX_PACKS, SUBSCRIPTION_TIERS, AGENT_VOLUME_TIERS, GCX_BASE_RATE
+
+    tools = {}
+    for name, p in PRICING.items():
+        tools[name] = {
+            "gcx_credits": p.gcx_credits,
+            "usd": round(p.gcx_credits * GCX_BASE_RATE, 2),
+            "free": p.gcx_credits == 0,
+        }
+
+    return jsonify({
+        "schema": "studiomcphub-pricing-v1",
+        "currency": "USD",
+        "gcx_base_rate": GCX_BASE_RATE,
+        "gcx_per_dollar": int(1 / GCX_BASE_RATE),
+        "tools": tools,
+        "packs": GCX_PACKS,
+        "subscriptions": SUBSCRIPTION_TIERS,
+        "volume_discounts": AGENT_VOLUME_TIERS,
+        "payment_methods": {
+            "x402": {
+                "chain": "base",
+                "token": "USDC",
+                "wallet": config.x402_wallet,
+                "description": "Pay-per-call via x402 protocol (no account needed)",
+            },
+            "gcx_credits": {
+                "description": "Pre-purchased credits with volume discounts",
+                "welcome_bonus": 10,
+            },
+            "stripe": {
+                "description": "Credit card via Stripe (packs and subscriptions)",
+            },
+        },
+        "free_tools": [name for name, p in PRICING.items() if p.gcx_credits == 0],
+        "links": {
+            "mcp_endpoint": "https://studiomcphub.com/mcp",
+            "documentation": "https://studiomcphub.com/llms.txt",
+            "mcp_card": "https://studiomcphub.com/.well-known/mcp.json",
+        },
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -364,6 +478,11 @@ def check_payment(tool_name: str) -> tuple[str, dict] | None:
     if not price or price.x402_cents == 0:
         return ("free", {})
 
+    # Dynamic pricing: enrich_metadata standard tier costs 1 GCX instead of 2
+    body = request.get_json(silent=True) or {}
+    if tool_name == "enrich_metadata" and body.get("tier") == "standard":
+        price = ToolPricing(gcx_credits=1)
+
     # Check x402 header
     x_payment = request.headers.get("X-PAYMENT")
     if x_payment:
@@ -441,24 +560,30 @@ def require_payment(tool_name: str):
     return jsonify({
         "error": "payment_required",
         "tool": tool_name,
-        "pricing": {
-            "x402": {
+        "amount_usd": base_usd,
+        "payment_options": {
+            "1_gcx_credits": {
+                "method": "Bearer token",
+                "credits_required": price.gcx_credits,
+                "header": "Authorization: Bearer 0xYOUR_WALLET",
+                "free_trial": "POST /api/wallet/register → 10 free GCX ($1 value)",
+                "buy_more": "GET /api/credits",
+            },
+            "2_x402_usdc": {
+                "method": "USDC on Base L2 (no account needed)",
                 "amount_usd": base_usd,
                 "wallet": config.x402_wallet,
                 "chain": "base",
                 "token": "USDC",
-                "instructions": (
-                    "Send USDC payment to wallet address, then resubmit "
-                    "request with X-PAYMENT header containing the tx proof."
-                ),
+                "header": "X-PAYMENT: <signed-EIP712-permit>",
             },
-            "stripe": {
+            "3_stripe": {
+                "method": "Credit card via Stripe",
                 "amount_usd": price.stripe_cents / 100,
-                "create_intent_url": "https://studiomcphub.com/api/create-payment-intent",
-            },
-            "gcx": {
-                "credits_required": price.gcx_credits,
-                "purchase_url": "https://studiomcphub.com/credits",
+                "step_1": f"POST /api/create-payment-intent {{\"tool_name\": \"{tool_name}\"}}",
+                "step_2": "Complete payment with client_secret",
+                "step_3": f"Re-call tool with header: X-Stripe-Payment-Intent: pi_xxx",
+                "note": "Stripe minimum $0.50 per transaction — for small tools, GCX credits or x402 are better value.",
             },
         },
         "volume_discounts": {
@@ -496,11 +621,18 @@ def execute_tool(tool_name: str):
             "error": f"Missing required parameter 'image' (base64-encoded image data)",
             "tool": tool_name,
         }), 400
-    if tool_name == "generate_image" and "prompt" not in params_preview:
+    if tool_name in ("generate_image", "generate_image_nano") and "prompt" not in params_preview:
         return jsonify({
             "error": "Missing required parameter 'prompt'",
             "tool": tool_name,
         }), 400
+    if tool_name == "save_asset":
+        for req_field in ("wallet", "key", "data"):
+            if req_field not in params_preview:
+                return jsonify({
+                    "error": f"Missing required parameter '{req_field}'",
+                    "tool": tool_name,
+                }), 400
     if tool_name == "search_artworks" and "query" not in params_preview:
         return jsonify({
             "error": "Missing required parameter 'query'",
@@ -534,6 +666,88 @@ def execute_tool(tool_name: str):
             "status": "error",
             "error": str(e),
         }), 500
+
+
+# ---------------------------------------------------------------------------
+# Stripe per-call payment (pay-as-you-go, no credits needed)
+# ---------------------------------------------------------------------------
+
+@app.route("/api/create-payment-intent", methods=["POST"])
+def create_stripe_intent():
+    """Create a Stripe PaymentIntent for a single tool call.
+
+    Agent flow:
+      1. POST /api/create-payment-intent {"tool_name": "generate_image"}
+      2. Complete payment using client_secret (Stripe.js or server-side)
+      3. Re-call the tool with header: X-Stripe-Payment-Intent: pi_xxx
+
+    Body: {"tool_name": "generate_image", "customer_id": "cus_xxx" (optional)}
+    Returns: {"client_secret": "pi_xxx_secret_xxx", "payment_intent_id": "pi_xxx", "amount_usd": 0.20}
+    """
+    data = request.get_json(silent=True) or {}
+    tool_name = data.get("tool_name", "")
+
+    if not tool_name or tool_name not in PRICING:
+        return jsonify({"error": f"Unknown tool: {tool_name}", "available": list(PRICING.keys())}), 400
+
+    price = PRICING[tool_name]
+    if price.stripe_cents == 0:
+        return jsonify({"error": f"{tool_name} is free — no payment needed", "tool": tool_name}), 400
+
+    # Dynamic pricing for tiered tools
+    amount_cents = price.stripe_cents
+    if tool_name == "enrich_metadata" and data.get("tier") == "standard":
+        amount_cents = 10  # $0.10
+
+    # Minimum Stripe charge is $0.50 — bundle if below threshold
+    if amount_cents < 50:
+        return jsonify({
+            "error": "amount_below_minimum",
+            "message": f"Stripe requires minimum $0.50 per transaction. This tool costs ${amount_cents/100:.2f}. Consider purchasing GCX credits instead — register your wallet at POST /api/wallet/register for 10 free GCX, or buy packs at /credits.",
+            "tool": tool_name,
+            "amount_usd": amount_cents / 100,
+            "alternatives": {
+                "gcx_credits": "POST /api/wallet/register (10 free GCX, then Bearer token auth)",
+                "x402": f"Pay ${amount_cents/100:.2f} USDC on Base L2 (no minimum)",
+                "credit_packs": "Buy GCX packs via Stripe at /credits ($5 minimum)",
+            },
+        }), 400
+
+    try:
+        from ..payment.stripe_pay import create_payment_intent
+        result = create_payment_intent(
+            tool_name=tool_name,
+            amount_cents=amount_cents,
+            customer_id=data.get("customer_id"),
+        )
+        return jsonify({
+            "tool": tool_name,
+            "amount_usd": amount_cents / 100,
+            "amount_cents": amount_cents,
+            **result,
+            "next_step": f"Complete payment, then call POST /api/tools/{tool_name} with header X-Stripe-Payment-Intent: {result['payment_intent_id']}",
+        })
+    except Exception as e:
+        logger.error(f"Stripe intent creation failed: {e}")
+        return jsonify({"error": f"Payment creation failed: {str(e)}"}), 500
+
+
+@app.route("/api/credits", methods=["GET"])
+def credits_info():
+    """GCX credit purchase information and pricing."""
+    from .config import GCX_PACKS, GCX_BASE_RATE
+    return jsonify({
+        "description": "Pre-purchase GCX credits for volume discounts. Credits never expire.",
+        "free_trial": {
+            "amount": 10,
+            "value_usd": 1.00,
+            "how": "POST /api/wallet/register with your EVM wallet address",
+        },
+        "packs": GCX_PACKS,
+        "base_rate": f"${GCX_BASE_RATE} per GCX",
+        "payment": "Stripe checkout (credit card, Apple Pay, Google Pay)",
+        "loyalty": "Every paid tool call earns 5% credit-back automatically",
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -581,7 +795,134 @@ def get_support_ticket(ticket_id: str):
 
 
 # ---------------------------------------------------------------------------
-# Loyalty balance
+# Wallet registration & account management
+# ---------------------------------------------------------------------------
+
+WELCOME_BONUS_GCX = 10  # Free trial credits for new wallets ($1.00 value)
+
+@app.route("/api/wallet/register", methods=["POST"])
+def register_wallet():
+    """Register a new wallet and receive 10 GCX welcome bonus.
+
+    Body: {"wallet": "0x..."} or just the wallet in Authorization header.
+    Returns account info with balance, or existing account if already registered.
+    """
+    data = request.get_json(silent=True) or {}
+    wallet = data.get("wallet", "").strip()
+
+    if not wallet:
+        # Also accept from Authorization header (agent flow)
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            wallet = auth[7:]
+
+    if not wallet:
+        return jsonify({"error": "Missing 'wallet' parameter (EVM address)"}), 400
+
+    # Basic format check (0x + 40 hex chars)
+    wallet_lower = wallet.lower()
+    if not (wallet_lower.startswith("0x") and len(wallet_lower) == 42):
+        return jsonify({"error": "Invalid wallet address format. Expected 0x + 40 hex characters."}), 400
+
+    try:
+        int(wallet_lower[2:], 16)
+    except ValueError:
+        return jsonify({"error": "Invalid wallet address: non-hex characters"}), 400
+
+    from ..payment.gcx_credits import _get_db, add_credits
+
+    db = _get_db()
+    ref = db.collection("gcx_accounts").document(wallet_lower)
+
+    # Check if account already exists
+    existing = ref.get()
+    if existing.exists:
+        account = existing.to_dict()
+        # Convert timestamps for JSON
+        for k, v in account.items():
+            if hasattr(v, "isoformat"):
+                account[k] = v.isoformat()
+        return jsonify({
+            "status": "existing",
+            "wallet": wallet_lower,
+            "balance": account.get("balance", 0),
+            "tier": account.get("tier", "standard"),
+            "message": "Wallet already registered. Use your balance to call tools.",
+        })
+
+    # Create new account with welcome bonus
+    from datetime import datetime, timezone as tz
+    ref.set({
+        "balance": WELCOME_BONUS_GCX,
+        "created_at": datetime.now(tz.utc),
+        "last_updated": datetime.now(tz.utc),
+        "tier": "standard",
+        "source": "wallet_registration",
+        "welcome_bonus": WELCOME_BONUS_GCX,
+    })
+
+    # Log the welcome bonus as a transaction
+    db.collection("gcx_transactions").add({
+        "user_id": wallet_lower,
+        "type": "credit",
+        "amount": WELCOME_BONUS_GCX,
+        "reason": "welcome_bonus",
+        "balance_after": WELCOME_BONUS_GCX,
+        "timestamp": datetime.now(tz.utc),
+    })
+
+    logger.info(f"New wallet registered: {wallet_lower} | bonus={WELCOME_BONUS_GCX} GCX")
+
+    return jsonify({
+        "status": "created",
+        "wallet": wallet_lower,
+        "balance": WELCOME_BONUS_GCX,
+        "tier": "standard",
+        "message": f"Welcome to StudioMCPHub! You've received {WELCOME_BONUS_GCX} GCX credits ($5.00 value) to try our tools.",
+        "how_to_use": {
+            "step_1": "Include 'Authorization: Bearer <your-wallet-address>' in your requests",
+            "step_2": "Call any tool — credits are deducted automatically",
+            "example": f"curl -X POST https://studiomcphub.com/api/tools/generate_image -H 'Authorization: Bearer {wallet_lower}' -H 'Content-Type: application/json' -d '{{\"prompt\": \"a serene mountain lake at sunrise\"}}'",
+        },
+        "pricing_url": "https://studiomcphub.com/pricing",
+        "tools_url": "https://studiomcphub.com/.well-known/mcp.json",
+    }), 201
+
+
+@app.route("/api/wallet/<wallet_address>", methods=["GET"])
+def wallet_info(wallet_address: str):
+    """Get full account info for a wallet: GCX balance, tier, loyalty."""
+    wallet_lower = wallet_address.lower()
+
+    from ..payment.gcx_credits import get_balance
+    from ..payment.loyalty import get_loyalty_balance
+    from ..payment.agent_tiers import get_tier
+
+    balance = get_balance(wallet_lower)
+    loyalty = get_loyalty_balance(wallet_lower)
+    tier = get_tier(wallet_lower)
+
+    if balance == 0 and loyalty["lifetime_earned"] == 0.0 and tier["spend_30d"] == 0.0:
+        # Check if account exists at all
+        from ..payment.gcx_credits import _get_db
+        doc = _get_db().collection("gcx_accounts").document(wallet_lower).get()
+        if not doc.exists:
+            return jsonify({
+                "error": "Wallet not registered",
+                "register_url": "https://studiomcphub.com/api/wallet/register",
+                "message": "Register your wallet to receive 10 free GCX credits.",
+            }), 404
+
+    return jsonify({
+        "wallet": wallet_lower,
+        "gcx_balance": balance,
+        "loyalty": loyalty,
+        "tier": tier,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Loyalty balance (legacy — kept for backward compatibility)
 # ---------------------------------------------------------------------------
 
 @app.route("/api/loyalty/<wallet_address>", methods=["GET"])
@@ -601,6 +942,24 @@ def agent_tier(wallet_address: str):
 # ---------------------------------------------------------------------------
 # Landing page
 # ---------------------------------------------------------------------------
+
+@app.route("/privacy")
+def privacy_page():
+    """Privacy Policy."""
+    return send_from_directory(_SITE_DIR, "privacy.html")
+
+
+@app.route("/terms")
+def terms_page():
+    """Terms of Service."""
+    return send_from_directory(_SITE_DIR, "terms.html")
+
+
+@app.route("/guide")
+def guide_page():
+    """Bot & Agent how-to guide."""
+    return send_from_directory(_SITE_DIR, "guide.html")
+
 
 @app.route("/")
 def index():

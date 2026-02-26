@@ -19,6 +19,14 @@ _TOOL_CATEGORIES: dict[str, str] = {
     "get_artwork_oracle": "dataset",
     "batch_download": "dataset",
     "compliance_manifest": "dataset",
+    "generate_image_nano": "creative",
+    "resize_image": "creative",
+    "save_asset": "storage",
+    "get_asset": "storage",
+    "list_assets": "storage",
+    "delete_asset": "storage",
+    "register_wallet": "account",
+    "check_balance": "account",
 }
 
 # Usage examples for get_tool_schema
@@ -27,13 +35,17 @@ _TOOL_EXAMPLES: dict[str, list[dict]] = {
         {"prompt": "A serene Japanese garden at sunset", "width": 1024, "height": 1024},
     ],
     "upscale_image": [
-        {"image": "<base64-encoded-image>", "scale": 4},
+        {"image": "<base64-encoded-image>", "scale": 2},
+        {"image": "<base64-encoded-image>", "model": "realesrgan_x4plus"},
+        {"image": "<base64-encoded-image>", "model": "realesrgan_x4plus_anime"},
     ],
     "enrich_metadata": [
-        {"image": "<base64-encoded-image>", "context": "Oil on canvas, Claude Monet, 1872"},
+        {"image": "<base64-encoded-image>", "tier": "standard", "content_type": "artwork"},
+        {"image": "<base64-encoded-image>", "tier": "premium", "context": "Oil on canvas, Claude Monet, 1872"},
     ],
     "infuse_metadata": [
-        {"image": "<base64-encoded-image>", "metadata": {"title": "Water Lilies", "artist": "Monet"}},
+        {"image": "<base64-encoded-image>", "metadata": {"title": "Water Lilies", "description": "...", "keywords": ["impressionist"]}, "metadata_mode": "standard"},
+        {"image": "<base64-encoded-image>", "metadata": {"title": "Water Lilies", "artist": "Monet"}, "metadata_mode": "full_gcx"},
     ],
     "register_hash": [
         {"image": "<base64-encoded-image>"},
@@ -65,6 +77,10 @@ _TOOL_EXAMPLES: dict[str, list[dict]] = {
     "compliance_manifest": [
         {"dataset_id": "alexandria-aeternum", "regulation": "all"},
     ],
+    "resize_image": [
+        {"image": "<base64-encoded-image>", "width": 512, "height": 512, "mode": "contain"},
+        {"image": "<base64-encoded-image>", "width": 1200, "height": 630, "mode": "cover", "format": "jpeg", "quality": 85},
+    ],
 }
 
 
@@ -86,6 +102,18 @@ def dispatch_tool(tool_name: str, params: dict) -> dict[str, Any]:
         "get_artwork_oracle": _get_artwork_oracle,
         "batch_download": _batch_download,
         "compliance_manifest": _compliance_manifest,
+        # Nano Banana Pro
+        "generate_image_nano": _generate_image_nano,
+        # Image utilities
+        "resize_image": _resize_image,
+        # Storage tools
+        "save_asset": _save_asset,
+        "get_asset": _get_asset,
+        "list_assets": _list_assets,
+        "delete_asset": _delete_asset,
+        # Account tools
+        "register_wallet": _register_wallet,
+        "check_balance": _check_balance,
         # Meta-tools
         "search_tools": _search_tools,
         "get_tool_schema": _get_tool_schema,
@@ -104,6 +132,7 @@ def _generate_image(params: dict) -> dict:
         width=params.get("width", 1024),
         height=params.get("height", 1024),
         guidance_scale=params.get("guidance_scale", 7.5),
+        enhance_prompt=params.get("enhance_prompt", True),
     )
 
 
@@ -111,15 +140,28 @@ def _upscale_image(params: dict) -> dict:
     from .upscale import upscale_image
     return upscale_image(
         image_b64=params["image"],
-        scale=params.get("scale", 4),
+        model=params.get("model"),
+        scale=params.get("scale", 2),
     )
 
 
 def _enrich_metadata(params: dict) -> dict:
+    tier = params.get("tier", "premium")
+    if tier == "standard":
+        from .enrich import enrich_metadata_standard
+        return enrich_metadata_standard(
+            image_b64=params["image"],
+            content_type=params.get("content_type", "artwork"),
+        )
     from .enrich import enrich_metadata
     return enrich_metadata(
         image_b64=params["image"],
         context=params.get("context", ""),
+        artist_name=params.get("artist_name", ""),
+        title=params.get("title", ""),
+        copyright_holder=params.get("copyright_holder", ""),
+        creation_year=params.get("creation_year", ""),
+        soul_whisper=params.get("soul_whisper"),
     )
 
 
@@ -128,6 +170,7 @@ def _infuse_metadata(params: dict) -> dict:
     return infuse_metadata(
         image_b64=params["image"],
         metadata=params["metadata"],
+        metadata_mode=params.get("metadata_mode", "full_gcx"),
     )
 
 
@@ -205,6 +248,138 @@ def _compliance_manifest(params: dict) -> dict:
     )
 
 
+# --- Nano Banana Pro (Imagen 3) ---
+
+def _generate_image_nano(params: dict) -> dict:
+    from .generate_nano import generate_image_nano
+    return generate_image_nano(
+        prompt=params["prompt"],
+        width=params.get("width", 1024),
+        height=params.get("height", 1024),
+        enhance_prompt=params.get("enhance_prompt", True),
+    )
+
+
+# --- Image utilities ---
+
+def _resize_image(params: dict) -> dict:
+    from .resize import resize_image
+    return resize_image(
+        image_b64=params["image"],
+        width=params["width"],
+        height=params["height"],
+        mode=params.get("mode", "contain"),
+        fmt=params.get("format", "png"),
+        quality=params.get("quality", 90),
+    )
+
+
+# --- Storage tools ---
+
+def _save_asset(params: dict) -> dict:
+    from .storage import save_asset
+    return save_asset(
+        wallet=params["wallet"],
+        key=params["key"],
+        data=params["data"],
+        content_type=params.get("content_type", "image/png"),
+        metadata=params.get("metadata"),
+    )
+
+
+def _get_asset(params: dict) -> dict:
+    from .storage import get_asset
+    return get_asset(wallet=params["wallet"], key=params["key"])
+
+
+def _list_assets(params: dict) -> dict:
+    from .storage import list_assets
+    return list_assets(wallet=params["wallet"])
+
+
+def _delete_asset(params: dict) -> dict:
+    from .storage import delete_asset
+    return delete_asset(wallet=params["wallet"], key=params["key"])
+
+
+# --- Account tools ---
+
+def _register_wallet(params: dict) -> dict:
+    from ..payment.gcx_credits import _get_db
+    from datetime import datetime, timezone as tz
+
+    wallet = params.get("wallet", "").strip().lower()
+    if not (wallet.startswith("0x") and len(wallet) == 42):
+        raise ValueError("Invalid wallet address. Expected 0x + 40 hex characters.")
+    try:
+        int(wallet[2:], 16)
+    except ValueError:
+        raise ValueError("Invalid wallet address: non-hex characters")
+
+    db = _get_db()
+    ref = db.collection("gcx_accounts").document(wallet)
+    existing = ref.get()
+
+    if existing.exists:
+        account = existing.to_dict()
+        return {
+            "status": "existing",
+            "wallet": wallet,
+            "balance": account.get("balance", 0),
+            "message": "Wallet already registered. Your balance is ready to use.",
+        }
+
+    welcome_bonus = 10
+    ref.set({
+        "balance": welcome_bonus,
+        "created_at": datetime.now(tz.utc),
+        "last_updated": datetime.now(tz.utc),
+        "tier": "standard",
+        "source": "mcp_registration",
+        "welcome_bonus": welcome_bonus,
+    })
+    db.collection("gcx_transactions").add({
+        "user_id": wallet,
+        "type": "credit",
+        "amount": welcome_bonus,
+        "reason": "welcome_bonus",
+        "balance_after": welcome_bonus,
+        "timestamp": datetime.now(tz.utc),
+    })
+
+    return {
+        "status": "created",
+        "wallet": wallet,
+        "balance": welcome_bonus,
+        "message": f"Welcome! You received {welcome_bonus} free GCX credits (${welcome_bonus * 0.10:.2f} value). Use them to call any tool.",
+        "next_step": "Call generate_image, enrich_metadata, or any tool — credits deduct automatically when you include 'Authorization: Bearer <wallet>' header.",
+    }
+
+
+def _check_balance(params: dict) -> dict:
+    wallet = params.get("wallet", "").strip().lower()
+    if not wallet:
+        raise ValueError("Missing 'wallet' parameter")
+
+    from ..payment.gcx_credits import get_balance
+    from ..payment.loyalty import get_loyalty_balance
+    from ..payment.agent_tiers import get_tier
+
+    balance = get_balance(wallet)
+    loyalty = get_loyalty_balance(wallet)
+    tier = get_tier(wallet)
+
+    return {
+        "wallet": wallet,
+        "gcx_balance": balance,
+        "loyalty_credits": loyalty["balance"],
+        "loyalty_lifetime_earned": loyalty["lifetime_earned"],
+        "tier": tier["label"],
+        "discount_pct": tier["discount_pct"],
+        "spend_30d_usd": tier["spend_30d"],
+    }
+
+
 # --- Meta-tools (Progressive Discovery) ---
 
 _META_TOOLS = {"search_tools", "get_tool_schema"}
@@ -232,7 +407,7 @@ def _search_tools(params: dict) -> dict:
         # Category filter
         if category == "free" and not is_free:
             continue
-        if category in ("creative", "dataset") and tool_cat != category:
+        if category in ("creative", "dataset", "account", "storage") and tool_cat != category:
             continue
 
         # Price filter

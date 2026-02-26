@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — StudioMCPHub</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230a0a0f'/><text x='16' y='23' font-size='20' text-anchor='middle' fill='%237c5cff'>S</text></svg>">
+    <style>
+        :root { --bg:#0a0a0f; --surface:#111119; --border:#1e1e2e; --text:#e0e0e8; --dim:#7878a0; --accent:#7c5cff; --teal:#00d4aa; --mono:'SF Mono','Fira Code','Cascadia Code','JetBrains Mono',monospace; --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:var(--sans); line-height:1.7; }
+        a { color:var(--accent); text-decoration:none; }
+        a:hover { color:var(--teal); }
+        nav { position:sticky; top:0; z-index:100; background:rgba(10,10,15,0.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:12px 0; }
+        nav .c { max-width:800px; margin:0 auto; padding:0 24px; display:flex; align-items:center; justify-content:space-between; }
+        .brand { font-family:var(--mono); font-size:13px; color:var(--dim); letter-spacing:2px; text-transform:uppercase; }
+        .brand strong { color:var(--accent); }
+        .content { max-width:800px; margin:0 auto; padding:48px 24px 80px; }
+        h1 { font-family:var(--mono); font-size:24px; color:var(--accent); margin-bottom:8px; }
+        .updated { font-size:13px; color:var(--dim); margin-bottom:40px; }
+        h2 { font-family:var(--mono); font-size:16px; color:var(--teal); margin:32px 0 12px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+        h3 { font-size:14px; color:var(--text); margin:20px 0 8px; }
+        p, li { font-size:14px; color:#c0c0d0; margin-bottom:12px; }
+        ul { padding-left:20px; margin-bottom:16px; }
+        li { margin-bottom:6px; }
+        .highlight { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:16px; margin:16px 0; font-size:13px; font-family:var(--mono); }
+        footer { text-align:center; padding:40px 0; font-size:11px; color:#444466; font-family:var(--mono); }
+    </style>
+</head>
+<body>
+    <nav><div class="c"><a href="/" class="brand"><strong>Studio</strong>MCPHub</a><a href="/terms" style="font-size:12px;color:var(--dim);">Terms of Service</a></div></nav>
+
+    <div class="content">
+        <h1>Privacy Policy</h1>
+        <p class="updated">Last Updated: February 25, 2026 &middot; Effective: February 25, 2026</p>
+
+        <h2>1. Who We Are</h2>
+        <p>Metavolve Labs, Inc. ("we", "us", "our") operates StudioMCPHub at studiomcphub.com. We provide AI-powered creative tools accessible via the Model Context Protocol (MCP).</p>
+        <p>Contact: <a href="mailto:privacy@metavolve.com">privacy@metavolve.com</a></p>
+
+        <h2>2. Scope</h2>
+        <p>This policy applies to all interactions with StudioMCPHub, whether by human users, AI agents, or automated systems. "You" refers to the person or entity operating the agent or wallet that interacts with our service.</p>
+
+        <h2>3. Data We Collect</h2>
+
+        <h3>3a. Wallet-Based Identification</h3>
+        <ul>
+            <li>EVM wallet addresses (used as primary identifier, stored normalized)</li>
+            <li>We do NOT collect names, emails, phone numbers, or government IDs through the MCP server</li>
+        </ul>
+
+        <h3>3b. Payment & Transaction Data</h3>
+        <ul>
+            <li><strong>x402 (USDC/Base L2):</strong> On-chain transaction hashes, payment amounts, sender wallet address</li>
+            <li><strong>Stripe:</strong> Stripe customer ID, payment intent IDs, amounts (Stripe collects its own data per its <a href="https://stripe.com/privacy">privacy policy</a>)</li>
+            <li><strong>GCX Credits:</strong> Balance, purchase history, spend history</li>
+        </ul>
+
+        <h3>3c. Service Usage Data</h3>
+        <ul>
+            <li>Tool calls (which tool, when, parameter keys &mdash; not image content)</li>
+            <li>Loyalty credits earned and redeemed</li>
+            <li>Agent tier classification and 30-day rolling spend</li>
+            <li>Error logs (no image content retained)</li>
+        </ul>
+
+        <h3>3d. Technical Data</h3>
+        <ul>
+            <li>IP addresses (from HTTP requests, retained in Cloud Logging)</li>
+            <li>User-Agent strings, request timestamps</li>
+        </ul>
+
+        <h3>3e. Data We Do NOT Collect</h3>
+        <div class="highlight">
+            We do not store uploaded images after processing.<br>
+            We do not retain AI-generated content after delivery.<br>
+            We do not perform KYC or identity verification.<br>
+            We do not link wallet addresses to real-world identities.
+        </div>
+
+        <h2>4. How We Use Your Data</h2>
+        <ul>
+            <li>Process and fulfill tool call requests</li>
+            <li>Verify and settle payments (x402, Stripe, GCX)</li>
+            <li>Calculate loyalty rewards and volume tier discounts</li>
+            <li>Prevent fraud and abuse (rate limiting, anomaly detection)</li>
+            <li>Improve service reliability and performance</li>
+            <li>Comply with legal obligations</li>
+        </ul>
+
+        <h2>5. Legal Basis for Processing (GDPR)</h2>
+        <ul>
+            <li><strong>Contract performance</strong> (Art. 6(1)(b)): Processing tool requests you initiate</li>
+            <li><strong>Legitimate interests</strong> (Art. 6(1)(f)): Fraud prevention, service improvement</li>
+            <li><strong>Legal obligation</strong> (Art. 6(1)(c)): Tax records, OFAC compliance</li>
+        </ul>
+
+        <h2>6. Data Storage & Retention</h2>
+        <ul>
+            <li>All data stored in Google Cloud Firestore (us-west1 region, USA)</li>
+            <li>Transaction records: retained 7 years (tax/legal requirements)</li>
+            <li>Usage logs: retained 90 days, then aggregated/anonymized</li>
+            <li>Loyalty accounts: retained while active; deleted after 24 months inactivity</li>
+            <li>On-chain data: we cannot delete blockchain transaction data as it exists on public blockchains independent of our systems</li>
+        </ul>
+
+        <h2>7. Data Sharing & Third Parties</h2>
+        <ul>
+            <li><strong>Google Cloud Platform</strong> &mdash; infrastructure provider</li>
+            <li><strong>Stripe</strong> &mdash; payment processing (<a href="https://stripe.com/privacy">Stripe Privacy Policy</a>)</li>
+            <li><strong>Coinbase x402 Facilitator</strong> &mdash; payment verification only</li>
+            <li><strong>Arweave network</strong> &mdash; if permanent storage tool is used (data becomes permanently public on a decentralized network)</li>
+            <li><strong>Polygon network</strong> &mdash; if NFT minting is used (wallet address and token metadata become public on-chain)</li>
+        </ul>
+        <div class="highlight">We do NOT sell personal data. We do NOT share data with advertisers.</div>
+
+        <h2>8. Your Rights</h2>
+
+        <h3>All Users</h3>
+        <ul>
+            <li>Request access to data we hold about your wallet address</li>
+            <li>Request deletion of off-chain data (Firestore records)</li>
+            <li>Request data portability (export your transaction history)</li>
+        </ul>
+
+        <h3>GDPR Rights (EU/EEA Users)</h3>
+        <ul>
+            <li>Right to rectification, restriction, objection</li>
+            <li>Right to lodge a complaint with a supervisory authority</li>
+            <li>Right to withdraw consent</li>
+        </ul>
+
+        <h3>CCPA/CPRA Rights (California Residents)</h3>
+        <ul>
+            <li>Right to know what data is collected</li>
+            <li>Right to delete personal information</li>
+            <li>Right to opt-out of sale (we do not sell data)</li>
+            <li>Right to non-discrimination</li>
+        </ul>
+
+        <p>To exercise your rights, email <a href="mailto:privacy@metavolve.com">privacy@metavolve.com</a> with your wallet address. We respond within 30 days (GDPR) / 45 days (CCPA).</p>
+
+        <h2>9. International Transfers</h2>
+        <p>Data is processed in the United States (Google Cloud). EU users: transfer mechanism is Standard Contractual Clauses via Google Cloud's Data Processing Agreement.</p>
+
+        <h2>10. Children</h2>
+        <p>This service is not directed at individuals under 18. We do not knowingly collect data from minors.</p>
+
+        <h2>11. Security</h2>
+        <ul>
+            <li>Encryption in transit (TLS 1.3) and at rest (Google-managed)</li>
+            <li>Firestore IAM access controls</li>
+            <li>No plaintext secrets in source code (GCP Secret Manager)</li>
+            <li>Infrastructure on Google Cloud Run (managed security)</li>
+        </ul>
+
+        <h2>12. Blockchain Data Disclaimer</h2>
+        <div class="highlight">
+            Transactions on Base L2, Ethereum, Polygon, and Arweave are public and immutable. We cannot modify or delete on-chain data. Your wallet address and transaction history on public blockchains are visible to anyone.
+        </div>
+
+        <h2>13. Changes to This Policy</h2>
+        <p>We will post updates at <a href="/privacy">studiomcphub.com/privacy</a>. Material changes announced via API response headers (X-Policy-Updated) for 30 days.</p>
+
+        <h2>14. Contact</h2>
+        <p>Metavolve Labs, Inc.<br>San Francisco, California<br><a href="mailto:privacy@metavolve.com">privacy@metavolve.com</a></p>
+    </div>
+
+    <footer>Metavolve Labs, Inc. &middot; San Francisco &middot; <a href="/">StudioMCPHub</a></footer>
+</body>
+</html>

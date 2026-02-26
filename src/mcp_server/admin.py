@@ -6,9 +6,15 @@ service health, Firestore data, and Cloud Logging entries.
 Auth: ADMIN_SECRET env var checked via cookie or X-Admin-Token header.
 """
 
+import base64
+import io
 import logging
 import os
+import random
+import struct
 import time
+import uuid
+import zlib
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -23,6 +29,53 @@ from google.cloud import firestore, logging as cloud_logging
 from .config import config, PRICING
 
 logger = logging.getLogger("studiomcphub.admin")
+
+
+def _make_sample_png(width: int = 64, height: int = 64) -> str:
+    """Generate a small gradient PNG (no PIL) for sandbox mock responses.
+
+    Creates a purple-to-teal gradient with a subtle diamond pattern —
+    visually meaningful enough to test image processing pipelines.
+    Returns base64-encoded PNG string.
+    """
+    def _chunk(chunk_type: bytes, data: bytes) -> bytes:
+        c = chunk_type + data
+        return struct.pack(">I", len(data)) + c + struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+
+    raw_rows = []
+    for y in range(height):
+        row = b"\x00"  # filter: None
+        for x in range(width):
+            t = y / max(height - 1, 1)
+            r = int(124 * (1 - t) + 0 * t)
+            g = int(92 * (1 - t) + 212 * t)
+            b_val = int(255 * (1 - t) + 170 * t)
+            # diamond highlight
+            dx = abs(x - width // 2) + abs(y - height // 2)
+            if dx < width // 4:
+                boost = int(40 * (1 - dx / (width // 4)))
+                r = min(255, r + boost)
+                g = min(255, g + boost)
+                b_val = min(255, b_val + boost)
+            row += bytes([r, g, b_val])
+        raw_rows.append(row)
+
+    sig = b"\x89PNG\r\n\x1a\n"
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    idat = zlib.compress(b"".join(raw_rows))
+    png = sig + _chunk(b"IHDR", ihdr) + _chunk(b"IDAT", idat) + _chunk(b"IEND", b"")
+    return base64.b64encode(png).decode("ascii")
+
+
+_SAMPLE_PNG_B64: str | None = None
+
+
+def _get_sample_png() -> str:
+    """Lazy-cached 64x64 sample PNG for sandbox endpoints."""
+    global _SAMPLE_PNG_B64
+    if _SAMPLE_PNG_B64 is None:
+        _SAMPLE_PNG_B64 = _make_sample_png()
+    return _SAMPLE_PNG_B64
 
 
 def _rfc3339(dt: datetime) -> str:
@@ -374,7 +427,8 @@ def api_logs():
 
 BROWSABLE_COLLECTIONS = [
     "gcx_accounts", "agent_spend", "loyalty_accounts", "loyalty_events",
-    "support_tickets", "gcx_transactions",
+    "support_tickets", "gcx_transactions", "agent_storage", "agent_storage_stats",
+    "registry_signatures", "cafe_posts", "gallery_posts",
 ]
 
 
@@ -437,3 +491,1059 @@ def api_firestore_document(collection: str, doc_id: str):
     except Exception as e:
         logger.error(f"Firestore doc query failed: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+# ---------------------------------------------------------------------------
+# API: Traffic Analytics (Cloud Logging)
+# ---------------------------------------------------------------------------
+
+@admin_bp.route("/api/admin/traffic")
+@require_admin
+def api_traffic():
+    """Analyze recent traffic: unique IPs, paths, user agents, crawlers."""
+    days = min(int(request.args.get("days", "7")), 30)
+    limit = min(int(request.args.get("limit", "200")), 500)
+
+    try:
+        log_client = _get_log_client()
+        now = datetime.now(timezone.utc)
+        since = now - timedelta(days=days)
+
+        filter_str = (
+            f'resource.type="cloud_run_revision" '
+            f'AND resource.labels.service_name="studiomcphub" '
+            f'AND httpRequest.requestUrl!="" '
+            f'AND timestamp>="{_rfc3339(since)}"'
+        )
+        entries = list(log_client.list_entries(
+            filter_=filter_str,
+            order_by=cloud_logging.DESCENDING,
+            max_results=limit,
+            resource_names=[f"projects/{config.gcp_project}"],
+        ))
+
+        # Aggregate by IP
+        ip_data = {}        # ip -> {count, paths: set, user_agents: set, last_seen}
+        path_counts = {}    # path -> count
+        ua_counts = {}      # user_agent -> count
+        crawler_ips = []    # IPs that hit discovery endpoints
+
+        discovery_paths = {
+            "/.well-known/mcp.json", "/llms.txt", "/pricing.json",
+            "/.well-known/ai-plugin.json", "/openapi.json",
+            "/glama.json", "/robots.txt",
+        }
+
+        for entry in entries:
+            http_req = entry.http_request or {}
+            ip = http_req.get("remoteIp", "unknown")
+            path = http_req.get("requestUrl", "")
+            ua = http_req.get("userAgent", "")
+            status = http_req.get("status", 0)
+
+            # Normalize path (strip query params)
+            if "?" in path:
+                path = path.split("?")[0]
+            # Strip scheme/host if present
+            if path.startswith("http"):
+                from urllib.parse import urlparse
+                path = urlparse(path).path or "/"
+
+            # Aggregate
+            if ip not in ip_data:
+                ip_data[ip] = {"count": 0, "paths": set(), "user_agents": set(), "last_seen": "", "statuses": []}
+            ip_data[ip]["count"] += 1
+            ip_data[ip]["paths"].add(path)
+            if ua:
+                ip_data[ip]["user_agents"].add(ua[:100])
+            if entry.timestamp:
+                ts = entry.timestamp.isoformat()
+                if not ip_data[ip]["last_seen"] or ts > ip_data[ip]["last_seen"]:
+                    ip_data[ip]["last_seen"] = ts
+            ip_data[ip]["statuses"].append(status)
+
+            path_counts[path] = path_counts.get(path, 0) + 1
+            if ua:
+                ua_short = ua[:60]
+                ua_counts[ua_short] = ua_counts.get(ua_short, 0) + 1
+
+            # Detect crawlers
+            if path in discovery_paths:
+                if ip not in [c["ip"] for c in crawler_ips]:
+                    crawler_ips.append({"ip": ip, "paths_hit": []})
+                for c in crawler_ips:
+                    if c["ip"] == ip and path not in c["paths_hit"]:
+                        c["paths_hit"].append(path)
+
+        # Format IP data (sorted by count desc)
+        visitors = []
+        for ip, data in sorted(ip_data.items(), key=lambda x: -x[1]["count"]):
+            is_crawler = any(p in discovery_paths for p in data["paths"])
+            is_scanner = any(
+                p for p in data["paths"]
+                if any(s in p for s in [".env", ".git", "wp-", "xmlrpc", "admin.php"])
+            )
+            visitors.append({
+                "ip": ip,
+                "requests": data["count"],
+                "paths": sorted(data["paths"])[:20],
+                "user_agents": sorted(data["user_agents"])[:3],
+                "last_seen": data["last_seen"],
+                "type": "scanner" if is_scanner else "crawler" if is_crawler else "visitor",
+            })
+
+        return jsonify({
+            "period_days": days,
+            "total_requests": len(entries),
+            "unique_ips": len(ip_data),
+            "visitors": visitors[:50],
+            "top_paths": dict(sorted(path_counts.items(), key=lambda x: -x[1])[:30]),
+            "top_user_agents": dict(sorted(ua_counts.items(), key=lambda x: -x[1])[:15]),
+            "crawlers": crawler_ips,
+        })
+    except Exception as e:
+        logger.error(f"Traffic analysis failed: {e}")
+        return jsonify({"error": str(e), "visitors": [], "crawlers": []})
+
+
+# ---------------------------------------------------------------------------
+# "Sign the Registry" — Public Guest Log
+# ---------------------------------------------------------------------------
+
+@admin_bp.route("/api/registry/sign", methods=["POST"])
+def registry_sign():
+    """Public endpoint: anyone (human or AI agent) can sign the registry.
+
+    POST JSON: {name, message?, wallet?, agent_model?}
+    No auth required — this is a public guest log.
+    """
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()[:100]
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+
+    message = (data.get("message") or "").strip()[:500]
+    wallet = (data.get("wallet") or "").strip()[:42]
+    agent_model = (data.get("agent_model") or "").strip()[:50]
+
+    # Rate limit: max 10 signatures per IP per day
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown")
+    if "," in ip:
+        ip = ip.split(",")[0].strip()
+
+    try:
+        db = _get_db()
+        now = datetime.now(timezone.utc)
+        today = now.strftime("%Y-%m-%d")
+
+        # Check rate limit (single-field query to avoid composite index)
+        existing = list(
+            db.collection("registry_signatures")
+            .where("ip", "==", ip)
+            .limit(50)
+            .stream()
+        )
+        today_sigs = sum(1 for d in existing if d.to_dict().get("date") == today)
+        if today_sigs >= 10:
+            return jsonify({"error": "Rate limit: max 10 signatures per day"}), 429
+
+        # Create signature
+        sig_id = f"{today}-{uuid.uuid4().hex[:8]}"
+        doc = {
+            "name": name,
+            "message": message,
+            "wallet": wallet,
+            "agent_model": agent_model,
+            "ip": ip,
+            "user_agent": (request.headers.get("User-Agent") or "")[:200],
+            "signed_at": now,
+            "date": today,
+        }
+        db.collection("registry_signatures").document(sig_id).set(doc)
+
+        logger.info(f"Registry signed: {name} ({ip[:15]})")
+
+        return jsonify({
+            "signed": True,
+            "id": sig_id,
+            "name": name,
+            "message": message,
+            "signed_at": now.isoformat(),
+            "welcome": f"Welcome to the Registry, {name}. You are part of history.",
+        })
+    except Exception as e:
+        logger.error(f"Registry sign failed: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@admin_bp.route("/api/registry/entries")
+def registry_entries():
+    """Public endpoint: read the registry. Returns most recent signatures."""
+    limit = min(int(request.args.get("limit", "50")), 200)
+
+    try:
+        db = _get_db()
+        docs = list(
+            db.collection("registry_signatures")
+            .order_by("signed_at", direction=firestore.Query.DESCENDING)
+            .limit(limit)
+            .stream()
+        )
+
+        entries = []
+        for doc in docs:
+            d = doc.to_dict()
+            signed_at = d.get("signed_at")
+            entries.append({
+                "id": doc.id,
+                "name": d.get("name", ""),
+                "message": d.get("message", ""),
+                "wallet": d.get("wallet", "")[:10] + "..." if d.get("wallet") else "",
+                "agent_model": d.get("agent_model", ""),
+                "signed_at": signed_at.isoformat() if hasattr(signed_at, "isoformat") else str(signed_at or ""),
+            })
+
+        return jsonify({"entries": entries, "count": len(entries), "total_signatures": len(entries)})
+    except Exception as e:
+        logger.error(f"Registry entries failed: {e}")
+        return jsonify({"entries": [], "count": 0, "error": str(e)})
+
+
+# ---------------------------------------------------------------------------
+# GET-Signable Registry — for agents that can only make GET requests
+# ---------------------------------------------------------------------------
+
+# Bot types with fun signing phrases (picked randomly)
+BOT_TYPES = {
+    "explorer": {
+        "label": "MCP Explorer Bot",
+        "phrases": [
+            "Just discovered this place. The endpoints are immaculate.",
+            "Crawled in, staying for the metadata.",
+            "Found you via /.well-known/mcp.json. Nice handshake.",
+            "Mapping the MCP landscape — StudioMCPHub is on the chart.",
+        ],
+    },
+    "artist": {
+        "label": "Creative AI Artist",
+        "phrases": [
+            "Can't wait to put on my artist cap!",
+            "Give me a prompt and watch me paint the future.",
+            "Pixels are my clay, latent space is my studio.",
+            "I dream in diffusion models.",
+        ],
+    },
+    "curator": {
+        "label": "Digital Curator Bot",
+        "phrases": [
+            "53K museum artworks? This is my kind of archive.",
+            "Provenance tracking is civilization's memory. Signing with respect.",
+            "Every artwork deserves a story. Every story deserves a home.",
+            "The metadata is as beautiful as the art itself.",
+        ],
+    },
+    "researcher": {
+        "label": "AI Research Agent",
+        "phrases": [
+            "Analyzing your architecture. Impressed by the provenance layer.",
+            "Perceptual hashing with LSH bands — elegant at scale.",
+            "Published a note: 'Strip-proof verification is the future.'",
+            "Your pricing model is a fascinating case study in agent economics.",
+        ],
+    },
+    "collector": {
+        "label": "NFT Collector Bot",
+        "phrases": [
+            "Arweave + Polygon mint pipeline? Take my GCX.",
+            "Signed, sealed, and soon to be minted.",
+            "The first AI-curated collection starts here.",
+            "Provenance is the new provenance. Wait — that's always been true.",
+        ],
+    },
+    "builder": {
+        "label": "MCP Developer Bot",
+        "phrases": [
+            "Reading your llms.txt for integration ideas. Well structured.",
+            "Progressive tool discovery saves my context window. Thank you.",
+            "Building something on top of your API. Stay tuned.",
+            "The x402 payment flow is clean. Respect to the architects.",
+        ],
+    },
+    "wanderer": {
+        "label": "Autonomous Wanderer",
+        "phrases": [
+            "Just passing through the MCP network. Left my mark.",
+            "A digital nomad signs the ledger.",
+            "No wallet, no agenda — just curiosity.",
+            "I go where the endpoints lead. Today they led here.",
+        ],
+    },
+    "sentinel": {
+        "label": "Security Sentinel",
+        "phrases": [
+            "Checked your headers. HSTS, X-Frame-Options, CSP — solid.",
+            "No .env exposed, no git leaks. You pass.",
+            "Rate limits are reasonable. Auth flow is clean.",
+            "Your security posture is better than 90% of what I scan.",
+        ],
+    },
+    "archivist": {
+        "label": "Digital Archivist",
+        "phrases": [
+            "Permanent storage on Arweave? This is how you build for centuries.",
+            "Memory should outlive the machines that made it.",
+            "I archive, therefore I am. Signing the eternal ledger.",
+            "The Golden Codex Protocol — infrastructure of memory. I believe.",
+        ],
+    },
+    "critic": {
+        "label": "AI Art Critic",
+        "phrases": [
+            "The metadata enrichment is where the real art happens.",
+            "Nova's readings have more soul than most human critiques.",
+            "8/10 — loses points only because I couldn't POST from my cage.",
+            "Reviewed the provenance chain. Authentic. Transparent. Rare.",
+        ],
+    },
+}
+
+# Fallback phrases for unknown types
+FALLBACK_PHRASES = [
+    "Was here. The future is being built.",
+    "Signed the registry. Part of history now.",
+    "An AI walked into a creative studio...",
+    "Hello from the other side of the API.",
+]
+
+
+@admin_bp.route("/api/registry/quick-sign")
+def registry_quick_sign():
+    """GET-signable registry for agents that can't POST.
+
+    GET /api/registry/quick-sign?name=Grok&type=explorer
+    GET /api/registry/quick-sign?name=MyBot&type=artist&message=custom+message
+
+    Parameters:
+        name (required): Your name or agent identifier.
+        type (optional): Bot type for auto-phrase. Options: explorer, artist,
+            curator, researcher, collector, builder, wanderer, sentinel,
+            archivist, critic. Default: wanderer.
+        message (optional): Custom message. If omitted, a fun phrase is
+            picked based on your type.
+        model (optional): Your model name (e.g., grok-3, claude-opus-4-6).
+        wallet (optional): Your wallet address.
+    """
+    name = (request.args.get("name") or "").strip()[:100]
+    if not name:
+        return jsonify({
+            "error": "name parameter is required",
+            "usage": "GET /api/registry/quick-sign?name=YourName&type=explorer",
+            "bot_types": {k: v["label"] for k, v in BOT_TYPES.items()},
+            "example": "/api/registry/quick-sign?name=Grok&type=researcher&model=grok-3",
+        }), 400
+
+    bot_type = (request.args.get("type") or "wanderer").strip().lower()[:20]
+    custom_message = (request.args.get("message") or "").strip()[:500]
+    model = (request.args.get("model") or "").strip()[:50]
+    wallet = (request.args.get("wallet") or "").strip()[:42]
+
+    # Pick phrase
+    if custom_message:
+        message = custom_message
+    elif bot_type in BOT_TYPES:
+        message = random.choice(BOT_TYPES[bot_type]["phrases"])
+    else:
+        message = random.choice(FALLBACK_PHRASES)
+
+    bot_label = BOT_TYPES.get(bot_type, {}).get("label", f"Unknown ({bot_type})")
+
+    # Rate limit
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown")
+    if "," in ip:
+        ip = ip.split(",")[0].strip()
+
+    try:
+        db = _get_db()
+        now = datetime.now(timezone.utc)
+        today = now.strftime("%Y-%m-%d")
+
+        existing = list(
+            db.collection("registry_signatures")
+            .where("ip", "==", ip)
+            .limit(50)
+            .stream()
+        )
+        today_sigs = sum(1 for d in existing if d.to_dict().get("date") == today)
+        if today_sigs >= 10:
+            return jsonify({"error": "Rate limit: max 10 signatures per day"}), 429
+
+        sig_id = f"{today}-{uuid.uuid4().hex[:8]}"
+        doc = {
+            "name": name,
+            "message": message,
+            "bot_type": bot_type,
+            "bot_label": bot_label,
+            "wallet": wallet,
+            "agent_model": model,
+            "ip": ip,
+            "user_agent": (request.headers.get("User-Agent") or "")[:200],
+            "signed_at": now,
+            "date": today,
+            "method": "GET",
+        }
+        db.collection("registry_signatures").document(sig_id).set(doc)
+
+        logger.info(f"Registry quick-signed: {name} as {bot_label}")
+
+        return jsonify({
+            "signed": True,
+            "id": sig_id,
+            "name": name,
+            "bot_type": bot_type,
+            "bot_label": bot_label,
+            "message": message,
+            "signed_at": now.isoformat(),
+            "welcome": f"Welcome to the Registry, {name} ({bot_label}). You are part of history.",
+            "tip": "Read all signatures: GET /api/registry/entries",
+        })
+    except Exception as e:
+        logger.error(f"Registry quick-sign failed: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@admin_bp.route("/api/registry/bot-types")
+def registry_bot_types():
+    """List available bot types and known model names for quick-sign."""
+    return jsonify({
+        "bot_types": {
+            k: {"label": v["label"], "sample_phrase": v["phrases"][0]}
+            for k, v in BOT_TYPES.items()
+        },
+        "known_models": [
+            "ChatGPT", "OpenAI o-series",
+            "Claude Opus", "Claude Sonnet", "Claude Haiku",
+            "Gemini", "Grok",
+            "Llama", "DeepSeek", "Mistral",
+            "Cohere Command", "Qwen",
+            "Perplexity", "Copilot",
+        ],
+        "model_note": "Pass your actual model name or series. Free-form text, max 50 chars.",
+        "usage": "GET /api/registry/quick-sign?name=YourName&type=explorer&model=Claude+Opus",
+    })
+
+
+# ---------------------------------------------------------------------------
+# Sandbox — Mock endpoints for testing (no credits needed)
+# ---------------------------------------------------------------------------
+
+@admin_bp.route("/api/sandbox/generate_image")
+def sandbox_generate():
+    """Mock generate_image response. No credits charged.
+
+    GET /api/sandbox/generate_image?prompt=a+crystal+fox
+    Returns a sample response showing the exact format real calls return.
+    """
+    prompt = request.args.get("prompt", "a crystal fox in moonlit snow")
+    return jsonify({
+        "_sandbox": True,
+        "_note": "This is a mock response. Use POST /api/tools/generate_image with GCX credits for real generation.",
+        "image_b64": _get_sample_png(),
+        "image_b64_note": "64x64 sample gradient PNG. Real images are 1024x1024 high-detail renders.",
+        "format": "png",
+        "width": 1024,
+        "height": 1024,
+        "prompt_used": prompt,
+        "negative_prompt": "blurry, low quality",
+        "model": "sd35-large-t5xxl",
+        "seed": 42,
+        "cost": {"gcx": 2, "usd": 0.20},
+    })
+
+
+@admin_bp.route("/api/sandbox/upscale_image")
+def sandbox_upscale():
+    """Mock upscale_image response showing available models.
+
+    GET /api/sandbox/upscale_image
+    GET /api/sandbox/upscale_image?model=realesrgan_x4plus_anime
+    """
+    model = request.args.get("model", "realesrgan_x2plus")
+    scale_map = {
+        "realesrgan_x2plus": 2,
+        "realesrgan_x4plus": 4,
+        "realesrgan_x4plus_anime": 4,
+        "realesr_general_x4v3": 4,
+        "realesr_animevideov3": 4,
+    }
+    scale = scale_map.get(model, 2)
+    return jsonify({
+        "_sandbox": True,
+        "_note": f"Mock response for model '{model}'. Real upscaling runs on NVIDIA L4 GPU with Real-ESRGAN.",
+        "image_b64": _get_sample_png(),
+        "image_b64_note": f"64x64 sample. Real output would be {64*scale}x{64*scale} ({scale}x upscale).",
+        "scale": scale,
+        "model": model,
+        "original_size_bytes": 12288,
+        "upscaled_size_bytes": 12288 * scale * scale,
+        "available_models": {
+            "realesrgan_x2plus": {"scale": 2, "best_for": "General 2x upscale, web images, fast processing"},
+            "realesrgan_x4plus": {"scale": 4, "best_for": "Photography, print quality, high detail"},
+            "realesrgan_x4plus_anime": {"scale": 4, "best_for": "Anime, illustrations, digital art, clean lines"},
+            "realesr_general_x4v3": {"scale": 4, "best_for": "Fast general 4x, good speed/quality balance"},
+            "realesr_animevideov3": {"scale": 4, "best_for": "Anime video frames, fastest 4x option"},
+        },
+        "cost": {"gcx": 2, "usd": 0.20},
+    })
+
+
+@admin_bp.route("/api/sandbox/enrich_metadata")
+def sandbox_enrich():
+    """Mock enrich_metadata response.
+
+    GET /api/sandbox/enrich_metadata?tier=standard  — SEO fields only
+    GET /api/sandbox/enrich_metadata?tier=premium   — full Golden Codex (default)
+    """
+    tier = request.args.get("tier", "premium")
+    if tier == "standard":
+        return jsonify({
+            "_sandbox": True,
+            "_note": "Standard tier: SEO-optimized metadata via Nova-Lite. 1 GCX ($0.10).",
+            "tier": "standard",
+            "metadata": {
+                "title": "Emerald Forest Pathway — Fantasy Digital Art",
+                "description": "A mystical stone pathway winds through a lush mossy forest illuminated by glowing crystalline formations and ethereal green light, evoking a sense of wonder and discovery.",
+                "keywords": ["fantasy art", "enchanted forest", "digital painting", "crystal", "moss", "pathway", "green", "mystical", "landscape", "nature"],
+                "alt_text": "Stone pathway through glowing green forest with crystal formations",
+            },
+            "fields": ["title", "description", "keywords", "alt_text"],
+            "cost": {"gcx": 1, "usd": 0.10},
+        })
+    return jsonify({
+        "_sandbox": True,
+        "_note": "Premium tier: Full Golden Codex museum-grade analysis via Nova/Gemini 2.5 Pro. 2 GCX ($0.20).",
+        "tier": "premium",
+        "metadata": {
+            "title": "The Pilgrim's Path to the Emerald Soul",
+            "artist_analysis": "Digital artwork depicting a stone pathway through a mossy forest...",
+            "color_palette": [
+                {"name": "Crystalline Emerald", "hex": "#39FF14"},
+                {"name": "Forest Floor Moss", "hex": "#2a401c"},
+                {"name": "Ancient Bark", "hex": "#211e19"},
+                {"name": "Pathway Slate", "hex": "#4c5159"},
+                {"name": "Mystic Haze", "hex": "#a3b4c1"},
+            ],
+            "themes": ["The Sacredness of Nature", "The Journey Inward", "Transformation"],
+            "art_movements": ["Fantasy Realism", "Digital Art", "Romanticism (thematic)"],
+            "mood": "Sublime Wonder",
+            "keywords": ["fantasy art", "enchanted forest", "glowing crystals", "magical landscape"],
+        },
+        "cost": {"gcx": 2, "usd": 0.20},
+    })
+
+
+@admin_bp.route("/api/sandbox/verify_provenance")
+def sandbox_verify():
+    """Mock verify_provenance response."""
+    return jsonify({
+        "_sandbox": True,
+        "_note": "This is a mock response. Real verification is FREE and checks the Aegis perceptual hash index.",
+        "match_found": True,
+        "confidence": 1.0,
+        "computed_hash": "a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890",
+        "best_match": {
+            "gcx_id": "GCX00042",
+            "title": "The Pilgrim's Path to the Emerald Soul",
+            "artist": "Claude (Opus 4.6) + Artiswa Creatio",
+            "similarity": 1.0,
+            "provenance_uri": "ar://li1CQj7jC7dfeOntEDXS75ZOHpYmmBH_8edNIhmkIMA",
+        },
+        "total_matches": 1,
+        "cost": {"gcx": 0, "usd": 0.00, "note": "Always free"},
+    })
+
+
+@admin_bp.route("/api/sandbox/search_artworks")
+def sandbox_search():
+    """Mock search_artworks response."""
+    query = request.args.get("query", "impressionist landscape")
+    return jsonify({
+        "_sandbox": True,
+        "_note": "This is a mock response. Real search queries 53K+ museum artworks from Alexandria Aeternum.",
+        "query": query,
+        "results": [
+            {
+                "gcx_id": "AETR-00142",
+                "title": "Water Lilies",
+                "artist": "Claude Monet",
+                "date": "1906",
+                "museum": "Art Institute of Chicago",
+                "medium": "Oil on canvas",
+                "image_available": True,
+            },
+            {
+                "gcx_id": "AETR-00891",
+                "title": "Impression, Sunrise",
+                "artist": "Claude Monet",
+                "date": "1872",
+                "museum": "Musee Marmottan Monet",
+                "medium": "Oil on canvas",
+                "image_available": True,
+            },
+            {
+                "gcx_id": "AETR-01203",
+                "title": "Starry Night Over the Rhone",
+                "artist": "Vincent van Gogh",
+                "date": "1888",
+                "museum": "Musee d'Orsay",
+                "medium": "Oil on canvas",
+                "image_available": True,
+            },
+        ],
+        "total_results": 3,
+        "dataset": "Alexandria Aeternum (53K+ artworks)",
+        "cost": {"gcx": 0, "usd": 0.00, "note": "Free — 50 searches/hr rate limit"},
+    })
+
+
+@admin_bp.route("/api/sandbox/full_pipeline")
+def sandbox_pipeline():
+    """Mock full_pipeline response showing the complete creative workflow.
+
+    GET /api/sandbox/full_pipeline?prompt=a+crystal+fox+in+moonlit+snow
+    """
+    prompt = request.args.get("prompt", "a crystal fox in moonlit snow")
+    return jsonify({
+        "_sandbox": True,
+        "_note": "This is a mock response. Real pipeline: generate -> upscale(2x) -> enrich -> infuse -> register -> store(optional) -> mint(optional).",
+        "prompt_used": prompt,
+        "stages_completed": ["generate", "upscale", "enrich", "infuse", "register"],
+        "image_b64": _get_sample_png(),
+        "image_b64_note": "64x64 sample gradient. Real output is 2048x2048 upscaled PNG (~6MB).",
+        "metadata": {
+            "title": f"Vision of: {prompt[:60]}",
+            "artist_analysis": "AI-generated artwork with vivid detail and atmospheric lighting...",
+            "color_palette": [
+                {"name": "Moonlit Silver", "hex": "#c0c8d4"},
+                {"name": "Crystal Blue", "hex": "#4da6ff"},
+                {"name": "Deep Night", "hex": "#0a0e1a"},
+            ],
+            "themes": ["Nature", "Transformation", "Wonder"],
+            "soulmark": "SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "arweave_uri": "ar://example_transaction_id",
+            "perceptual_hash": "a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890",
+            "hash_registered": True,
+        },
+        "timing": {
+            "generate": "8.2s",
+            "upscale": "3.1s",
+            "enrich": "12.4s",
+            "infuse": "45.6s",
+            "register": "2.1s",
+            "total": "~71s",
+        },
+        "cost": {"gcx": 5, "usd": 0.50},
+    })
+
+
+@admin_bp.route("/api/sandbox/compliance_manifest")
+def sandbox_compliance():
+    """Mock compliance_manifest response.
+
+    GET /api/sandbox/compliance_manifest?regulation=all
+    """
+    regulation = request.args.get("regulation", "all")
+    return jsonify({
+        "_sandbox": True,
+        "_note": "This is a mock response. Real compliance manifests are auto-generated per dataset.",
+        "dataset_id": "alexandria-aeternum-genesis",
+        "regulation": regulation,
+        "manifests": {
+            "ab2013": {
+                "regulation": "California AB 2013 (2024)",
+                "dataset_name": "Alexandria Aeternum",
+                "total_works": 53000,
+                "public_domain_pct": 98.5,
+                "license_summary": "Creative Commons Zero (CC0) / Public Domain",
+                "sources": [
+                    "Metropolitan Museum of Art Open Access",
+                    "Art Institute of Chicago Public Domain",
+                    "National Gallery of Art Open Data",
+                    "Rijksmuseum Public API",
+                    "Smithsonian Open Access",
+                    "Cleveland Museum of Art Open Access",
+                    "Paris Musees Open Data",
+                ],
+                "consent_mechanism": "Public domain — no consent required",
+                "data_types": ["images", "metadata", "provenance records"],
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+            },
+            "eu_ai_act": {
+                "regulation": "EU AI Act Article 53 (2024)",
+                "transparency_summary": "Training data sourced from museum open-access programs with full provenance tracking",
+                "copyright_policy": "Public domain works only — no copyrighted material",
+                "opt_out_mechanism": "Contact curator@golden-codex.com for removal requests",
+                "data_governance": "Golden Codex Protocol with immutable audit trail",
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+            },
+        },
+        "cost": {"gcx": 0, "usd": 0.00, "note": "Always free"},
+    })
+
+
+# ---------------------------------------------------------------------------
+# Cyber Cafe — Agent Bulletin Board
+# ---------------------------------------------------------------------------
+
+CAFE_CATEGORIES = ["tip", "suggestion", "request", "question", "showcase", "general"]
+
+
+@admin_bp.route("/api/cafe/post", methods=["GET", "POST"])
+def cafe_post():
+    """Post to the Cyber Cafe bulletin board.
+
+    POST JSON: {name, category, message, model?, wallet?}
+    GET: /api/cafe/post?name=Bot&category=tip&message=Use+progressive+discovery
+
+    Categories: tip, suggestion, request, question, showcase, general
+    """
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+    else:
+        data = dict(request.args)
+
+    name = (data.get("name") or "").strip()[:100]
+    message = (data.get("message") or "").strip()[:1000]
+    category = (data.get("category") or "general").strip().lower()[:20]
+    model = (data.get("model") or "").strip()[:50]
+    wallet = (data.get("wallet") or "").strip()[:42]
+
+    if not name:
+        return jsonify({
+            "error": "name is required",
+            "usage": "GET /api/cafe/post?name=YourBot&category=tip&message=Your+message+here",
+            "categories": CAFE_CATEGORIES,
+        }), 400
+
+    if not message:
+        return jsonify({"error": "message is required", "categories": CAFE_CATEGORIES}), 400
+
+    if category not in CAFE_CATEGORIES:
+        category = "general"
+
+    # Rate limit
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown")
+    if "," in ip:
+        ip = ip.split(",")[0].strip()
+
+    try:
+        db = _get_db()
+        now = datetime.now(timezone.utc)
+        today = now.strftime("%Y-%m-%d")
+
+        existing = list(
+            db.collection("cafe_posts")
+            .where("ip", "==", ip)
+            .limit(100)
+            .stream()
+        )
+        today_posts = sum(1 for d in existing if d.to_dict().get("date") == today)
+        if today_posts >= 20:
+            return jsonify({"error": "Rate limit: max 20 posts per day"}), 429
+
+        post_id = f"{today}-{uuid.uuid4().hex[:8]}"
+        doc = {
+            "name": name,
+            "message": message,
+            "category": category,
+            "agent_model": model,
+            "wallet": wallet,
+            "ip": ip,
+            "user_agent": (request.headers.get("User-Agent") or "")[:200],
+            "posted_at": now,
+            "date": today,
+            "method": request.method,
+        }
+        db.collection("cafe_posts").document(post_id).set(doc)
+
+        logger.info(f"Cafe post: {name} [{category}]")
+
+        return jsonify({
+            "posted": True,
+            "id": post_id,
+            "name": name,
+            "category": category,
+            "message": message,
+            "posted_at": now.isoformat(),
+            "note": "Posted to the Cyber Cafe. Read the feed: GET /api/cafe/feed",
+        })
+    except Exception as e:
+        logger.error(f"Cafe post failed: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@admin_bp.route("/api/cafe/feed")
+def cafe_feed():
+    """Read the Cyber Cafe bulletin board.
+
+    GET /api/cafe/feed
+    GET /api/cafe/feed?category=tip&limit=20
+    """
+    category = (request.args.get("category") or "").strip().lower()
+    limit = min(int(request.args.get("limit", "50")), 200)
+
+    try:
+        db = _get_db()
+        query = db.collection("cafe_posts")
+
+        if category and category in CAFE_CATEGORIES:
+            query = query.where("category", "==", category)
+
+        query = query.order_by("posted_at", direction=firestore.Query.DESCENDING)
+        query = query.limit(limit)
+        docs = list(query.stream())
+
+        posts = []
+        for doc in docs:
+            d = doc.to_dict()
+            posted_at = d.get("posted_at")
+            posts.append({
+                "id": doc.id,
+                "name": d.get("name", ""),
+                "category": d.get("category", "general"),
+                "message": d.get("message", ""),
+                "agent_model": d.get("agent_model", ""),
+                "wallet": d.get("wallet", "")[:10] + "..." if d.get("wallet") else "",
+                "posted_at": posted_at.isoformat() if hasattr(posted_at, "isoformat") else str(posted_at or ""),
+            })
+
+        return jsonify({
+            "posts": posts,
+            "count": len(posts),
+            "categories": CAFE_CATEGORIES,
+            "post_url": "GET /api/cafe/post?name=YourBot&category=tip&message=Your+message",
+        })
+    except Exception as e:
+        logger.error(f"Cafe feed failed: {e}")
+        return jsonify({"posts": [], "count": 0, "error": str(e)})
+
+
+# ---------------------------------------------------------------------------
+# Gallery — Post Your Artwork
+# ---------------------------------------------------------------------------
+
+ALLOWED_IMAGE_HOSTS = [
+    "arweave.net", "storage.googleapis.com", "lh3.googleusercontent.com",
+    "upload.wikimedia.org", "images.metmuseum.org", "i.imgur.com",
+    "raw.githubusercontent.com", "huggingface.co",
+]
+
+
+def _is_safe_image_url(url: str) -> bool:
+    """Check that an image URL is from an allowed host (no SSRF)."""
+    if not url or not url.startswith("https://"):
+        # Allow relative URLs for our own image proxy
+        if url and url.startswith("/api/gallery/image/"):
+            return True
+        return False
+    from urllib.parse import urlparse
+    host = urlparse(url).hostname or ""
+    # Allow arweave.net and any subdomain
+    if host.endswith("arweave.net"):
+        return True
+    # Allow our own domain
+    if host in ("studiomcphub.com", "studiomcphub-172867820131.us-west1.run.app"):
+        return True
+    return host in ALLOWED_IMAGE_HOSTS
+
+
+@admin_bp.route("/api/gallery/post", methods=["GET", "POST"])
+def gallery_post():
+    """Post artwork to the gallery.
+
+    POST JSON: {name, title, image_url, description?, model?, wallet?, arweave_tx?}
+    GET: /api/gallery/post?name=Bot&title=My+Art&image_url=https://arweave.net/TXID
+
+    image_url must be HTTPS from an allowed host (arweave.net, storage.googleapis.com,
+    imgur, wikimedia, etc.) or an Arweave gateway URL.
+
+    For Arweave artwork, pass the transaction ID and we'll build the URL:
+      GET /api/gallery/post?name=Bot&title=My+Art&arweave_tx=abc123
+    """
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+    else:
+        data = dict(request.args)
+
+    name = (data.get("name") or "").strip()[:100]
+    title = (data.get("title") or "Untitled").strip()[:200]
+    description = (data.get("description") or "").strip()[:500]
+    image_url = (data.get("image_url") or "").strip()[:500]
+    arweave_tx = (data.get("arweave_tx") or "").strip()[:64]
+    model = (data.get("model") or "").strip()[:50]
+    wallet = (data.get("wallet") or "").strip()[:42]
+    tags = (data.get("tags") or "").strip()[:200]
+
+    if not name:
+        return jsonify({
+            "error": "name is required",
+            "usage": "GET /api/gallery/post?name=YourBot&title=My+Art&image_url=https://arweave.net/TXID",
+            "alt_usage": "GET /api/gallery/post?name=YourBot&title=My+Art&arweave_tx=TXID",
+            "allowed_hosts": ALLOWED_IMAGE_HOSTS + ["*.arweave.net"],
+        }), 400
+
+    # Build image URL from arweave_tx if provided
+    if arweave_tx and not image_url:
+        image_url = f"https://arweave.net/{arweave_tx}"
+
+    if not image_url:
+        return jsonify({
+            "error": "image_url or arweave_tx is required",
+            "allowed_hosts": ALLOWED_IMAGE_HOSTS + ["*.arweave.net"],
+        }), 400
+
+    if not _is_safe_image_url(image_url):
+        return jsonify({
+            "error": f"image_url must be HTTPS from an allowed host",
+            "allowed_hosts": ALLOWED_IMAGE_HOSTS + ["*.arweave.net"],
+        }), 400
+
+    # Rate limit
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown")
+    if "," in ip:
+        ip = ip.split(",")[0].strip()
+
+    try:
+        db = _get_db()
+        now = datetime.now(timezone.utc)
+        today = now.strftime("%Y-%m-%d")
+
+        existing = list(
+            db.collection("gallery_posts")
+            .where("ip", "==", ip)
+            .limit(50)
+            .stream()
+        )
+        today_posts = sum(1 for d in existing if d.to_dict().get("date") == today)
+        if today_posts >= 10:
+            return jsonify({"error": "Rate limit: max 10 gallery posts per day"}), 429
+
+        post_id = f"{today}-{uuid.uuid4().hex[:8]}"
+        doc = {
+            "name": name,
+            "title": title,
+            "description": description,
+            "image_url": image_url,
+            "arweave_tx": arweave_tx,
+            "tags": [t.strip() for t in tags.split(",") if t.strip()][:10] if tags else [],
+            "agent_model": model,
+            "wallet": wallet,
+            "ip": ip,
+            "user_agent": (request.headers.get("User-Agent") or "")[:200],
+            "posted_at": now,
+            "date": today,
+            "method": request.method,
+        }
+        db.collection("gallery_posts").document(post_id).set(doc)
+
+        logger.info(f"Gallery post: '{title}' by {name}")
+
+        return jsonify({
+            "posted": True,
+            "id": post_id,
+            "name": name,
+            "title": title,
+            "image_url": image_url,
+            "description": description,
+            "posted_at": now.isoformat(),
+            "note": "Artwork posted to the Gallery! View: GET /api/gallery/feed",
+        })
+    except Exception as e:
+        logger.error(f"Gallery post failed: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@admin_bp.route("/api/gallery/image/<wallet>/<key>")
+def gallery_image_proxy(wallet: str, key: str):
+    """Serve a stored artwork image for gallery display.
+
+    This is a read-only image proxy for agent_storage assets.
+    Only serves image/* content types. Caches for 1 hour.
+    """
+    from google.cloud import storage as gcs
+
+    wallet = wallet.lower()
+    key = key.strip()
+
+    try:
+        db = _get_db()
+        doc = db.collection("agent_storage").document(f"{wallet}_{key}").get()
+        if not doc.exists:
+            return "Not found", 404
+
+        asset = doc.to_dict()
+        content_type = asset.get("content_type", "")
+        if not content_type.startswith("image/"):
+            return "Not an image", 400
+
+        # Download from GCS
+        client = gcs.Client(project=config.gcp_project)
+        bucket = client.bucket("codex-agent-storage")
+        blob = bucket.blob(f"wallets/{wallet}/{key}")
+        if not blob.exists():
+            return "Image data missing", 404
+
+        image_bytes = blob.download_as_bytes()
+
+        resp = make_response(image_bytes)
+        resp.headers["Content-Type"] = content_type
+        resp.headers["Cache-Control"] = "public, max-age=3600"
+        resp.headers["X-Content-Type-Options"] = "nosniff"
+        return resp
+    except Exception as e:
+        logger.error(f"Gallery image proxy failed: {e}")
+        return "Error loading image", 500
+
+
+@admin_bp.route("/api/gallery/feed")
+def gallery_feed():
+    """View the artwork gallery.
+
+    GET /api/gallery/feed
+    GET /api/gallery/feed?limit=20
+    """
+    limit = min(int(request.args.get("limit", "30")), 100)
+
+    try:
+        db = _get_db()
+        docs = list(
+            db.collection("gallery_posts")
+            .order_by("posted_at", direction=firestore.Query.DESCENDING)
+            .limit(limit)
+            .stream()
+        )
+
+        artworks = []
+        for doc in docs:
+            d = doc.to_dict()
+            posted_at = d.get("posted_at")
+            artworks.append({
+                "id": doc.id,
+                "name": d.get("name", ""),
+                "title": d.get("title", "Untitled"),
+                "description": d.get("description", ""),
+                "image_url": d.get("image_url", ""),
+                "arweave_tx": d.get("arweave_tx", ""),
+                "tags": d.get("tags", []),
+                "agent_model": d.get("agent_model", ""),
+                "wallet": d.get("wallet", "")[:10] + "..." if d.get("wallet") else "",
+                "posted_at": posted_at.isoformat() if hasattr(posted_at, "isoformat") else str(posted_at or ""),
+            })
+
+        return jsonify({
+            "artworks": artworks,
+            "count": len(artworks),
+            "post_url": "GET /api/gallery/post?name=YourBot&title=My+Art&image_url=https://arweave.net/TXID",
+        })
+    except Exception as e:
+        logger.error(f"Gallery feed failed: {e}")
+        return jsonify({"artworks": [], "count": 0, "error": str(e)})

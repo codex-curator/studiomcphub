@@ -1,7 +1,8 @@
-"""infuse_metadata — Atlas ExifTool metadata embedding.
+"""infuse_metadata — Atlas metadata embedding + hash registration.
 
-Embeds Golden Codex metadata into image files using ExifTool.
-Writes to XMP-gc (Golden Codex namespace), IPTC, and C2PA fields.
+Stages base64 image to GCS, calls Atlas /infuse with GCS URL + Golden Codex
+metadata. Atlas embeds XMP-gc (Golden Codex namespace), IPTC, C2PA fields,
+generates a soulmark (SHA-256), and auto-registers the perceptual hash.
 """
 
 import base64
@@ -9,39 +10,74 @@ import httpx
 import structlog
 
 from ..mcp_server.config import config
+from .gcs_staging import stage_image, download_as_b64, cleanup
 
 logger = structlog.get_logger()
 
 
-def infuse_metadata(image_b64: str, metadata: dict) -> dict:
-    """Embed metadata into an image file using ExifTool.
+def infuse_metadata(image_b64: str, metadata: dict, metadata_mode: str = "full_gcx") -> dict:
+    """Embed metadata into an image via Atlas.
 
-    The metadata is gzip-compressed and base64-encoded into the
-    XMP-gc:CodexPayload field (Golden Codex namespace).
+    Two modes:
+      - full_gcx (default): Full Golden Codex XMP-gc + IPTC + C2PA + soulmark + hash registration
+      - standard: XMP/IPTC fields only (title, description, keywords, copyright)
 
     Args:
         image_b64: Base64-encoded image (PNG or JPEG).
-        metadata: Golden Codex metadata JSON to embed.
+        metadata: Metadata JSON to embed.
+        metadata_mode: 'full_gcx' or 'standard'.
 
     Returns:
-        dict with infused image (base64), embedded fields list.
+        dict with infused image (base64), soulmark, hash, fields written.
     """
-    logger.info("infuse_metadata", metadata_keys=list(metadata.keys()))
+    logger.info("infuse_metadata", metadata_keys=list(metadata.keys()) if isinstance(metadata, dict) else "not-dict", mode=metadata_mode)
 
-    response = httpx.post(
-        f"{config.atlas_url}/infuse",
-        json={
-            "image": image_b64,
-            "metadata": metadata,
-            "namespace": "gc",
-        },
-        timeout=60.0,
-    )
-    response.raise_for_status()
-    data = response.json()
+    # Stage image to GCS (Atlas expects URLs)
+    gs_url, https_url = stage_image(image_b64)
 
-    return {
-        "image": data.get("image"),  # base64 with embedded metadata
-        "fields_written": data.get("fields_written", []),
-        "namespace": "http://ns.goldencodex.io/schema/1.0/",
-    }
+    try:
+        response = httpx.post(
+            f"{config.atlas_url}/infuse",
+            json={
+                "image_url": gs_url,
+                "user_id": "mcp_agent",
+                "golden_codex": metadata,
+                "metadata_mode": metadata_mode,
+            },
+            timeout=300.0,  # Large images (4x upscaled) need time for Atlas processing
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        atlas_status = data.get("status", "unknown")
+        if atlas_status == "failed":
+            error_msg = data.get("error", "unknown Atlas error")
+            logger.error("infuse: Atlas returned failed status", error=error_msg)
+
+        # Atlas returns final_url — download the infused image
+        final_url = data.get("final_url") or data.get("firebase_storage_url")
+        infused_b64 = None
+        if final_url:
+            try:
+                infused_b64 = download_as_b64(final_url)
+            except Exception as e:
+                logger.warning("infuse: could not download final image", error=str(e))
+
+        # Fall back to original if Atlas didn't return downloadable result
+        if not infused_b64:
+            infused_b64 = image_b64
+
+        return {
+            "image": infused_b64,
+            "soulmark": data.get("soulmark"),
+            "uuid": data.get("uuid"),
+            "artifact_id": data.get("artifact_id"),
+            "perceptual_hash": data.get("perceptual_hash"),
+            "final_url": final_url,
+            "arweave": data.get("arweave"),
+            "namespace": "http://ns.goldencodex.io/schema/1.0/",
+            "status": atlas_status,
+        }
+
+    finally:
+        cleanup(gs_url)

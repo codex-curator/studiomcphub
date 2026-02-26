@@ -1,6 +1,6 @@
 """verify_provenance — Aegis strip-proof provenance verification (FREE).
 
-Checks an image against the Aegis perceptual hash index.
+Stages base64 image to GCS, calls Atlas /lookup-image endpoint.
 Works even if all metadata has been stripped from the image.
 """
 
@@ -9,6 +9,7 @@ import httpx
 import structlog
 
 from ..mcp_server.config import config
+from .gcs_staging import stage_image, cleanup
 
 logger = structlog.get_logger()
 
@@ -23,25 +24,38 @@ def verify_provenance(image_b64: str) -> dict:
         image_b64: Base64-encoded image (PNG or JPEG).
 
     Returns:
-        dict with match_found, confidence, original_metadata (if found),
-        registration_date, arweave_url (if stored).
+        dict with match_found, confidence, original_metadata (if found).
     """
     logger.info("verify_provenance")
 
-    response = httpx.post(
-        f"{config.atlas_url}/verify",
-        json={"image": image_b64},
-        timeout=30.0,
-    )
-    response.raise_for_status()
-    data = response.json()
+    # Stage image to GCS (Atlas expects URLs)
+    gs_url, https_url = stage_image(image_b64)
 
-    return {
-        "match_found": data.get("match_found", False),
-        "confidence": data.get("confidence", 0.0),
-        "phash_distance": data.get("distance"),
-        "original_metadata": data.get("metadata"),
-        "registration_date": data.get("registered_at"),
-        "arweave_url": data.get("arweave_url"),
-        "golden_codex_url": data.get("codex_url"),
-    }
+    try:
+        response = httpx.post(
+            f"{config.atlas_url}/lookup-image",
+            json={"image_url": gs_url},
+            timeout=120.0,
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        best = data.get("best_match") or {}
+
+        return {
+            "match_found": data.get("match_found", False),
+            "confidence": best.get("similarity", 0.0),
+            "computed_hash": data.get("computed_hash"),
+            "best_match": {
+                "gcx_id": best.get("gcx_id"),
+                "title": best.get("title"),
+                "artist": best.get("artist"),
+                "similarity": best.get("similarity"),
+                "provenance_uri": best.get("provenance_uri"),
+            } if best else None,
+            "total_matches": len(data.get("matches", [])),
+            "index_stats": data.get("index_stats"),
+        }
+
+    finally:
+        cleanup(gs_url)

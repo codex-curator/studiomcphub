@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service — StudioMCPHub</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230a0a0f'/><text x='16' y='23' font-size='20' text-anchor='middle' fill='%237c5cff'>S</text></svg>">
+    <style>
+        :root { --bg:#0a0a0f; --surface:#111119; --border:#1e1e2e; --text:#e0e0e8; --dim:#7878a0; --accent:#7c5cff; --teal:#00d4aa; --mono:'SF Mono','Fira Code','Cascadia Code','JetBrains Mono',monospace; --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:var(--sans); line-height:1.7; }
+        a { color:var(--accent); text-decoration:none; }
+        a:hover { color:var(--teal); }
+        nav { position:sticky; top:0; z-index:100; background:rgba(10,10,15,0.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:12px 0; }
+        nav .c { max-width:800px; margin:0 auto; padding:0 24px; display:flex; align-items:center; justify-content:space-between; }
+        .brand { font-family:var(--mono); font-size:13px; color:var(--dim); letter-spacing:2px; text-transform:uppercase; }
+        .brand strong { color:var(--accent); }
+        .content { max-width:800px; margin:0 auto; padding:48px 24px 80px; }
+        h1 { font-family:var(--mono); font-size:24px; color:var(--accent); margin-bottom:8px; }
+        .updated { font-size:13px; color:var(--dim); margin-bottom:40px; }
+        h2 { font-family:var(--mono); font-size:16px; color:var(--teal); margin:32px 0 12px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+        h3 { font-size:14px; color:var(--text); margin:20px 0 8px; }
+        p, li { font-size:14px; color:#c0c0d0; margin-bottom:12px; }
+        ul { padding-left:20px; margin-bottom:16px; }
+        li { margin-bottom:6px; }
+        .highlight { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:16px; margin:16px 0; font-size:13px; font-family:var(--mono); }
+        .caps { text-transform:uppercase; font-size:12px; letter-spacing:0.5px; }
+        footer { text-align:center; padding:40px 0; font-size:11px; color:#444466; font-family:var(--mono); }
+    </style>
+</head>
+<body>
+    <nav><div class="c"><a href="/" class="brand"><strong>Studio</strong>MCPHub</a><a href="/privacy" style="font-size:12px;color:var(--dim);">Privacy Policy</a></div></nav>
+
+    <div class="content">
+        <h1>Terms of Service</h1>
+        <p class="updated">Last Updated: February 25, 2026 &middot; Effective: February 25, 2026</p>
+
+        <h2>1. Acceptance of Terms</h2>
+        <p>By accessing or using StudioMCPHub (the "Service"), whether directly or through an AI agent, automated system, or programmatic client, you agree to these Terms. "You" means the individual or entity that owns or controls the wallet address or account used to access the Service.</p>
+        <p>If you operate an AI agent that uses this Service, <strong>you (the operator) are responsible</strong> for the agent's actions and compliance with these Terms.</p>
+        <div class="highlight">Using the API constitutes acceptance. No clickwrap required.</div>
+
+        <h2>2. Service Description</h2>
+        <p>StudioMCPHub is a Model Context Protocol (MCP) server providing AI-powered creative tools and art dataset access. Available tools include: image generation, upscaling, metadata enrichment, metadata infusion, hash registration, permanent storage, NFT minting, provenance verification, and dataset queries.</p>
+        <p>The Service is designed for both human users and autonomous AI agents.</p>
+
+        <h2>3. Eligibility</h2>
+        <ul>
+            <li>You must be 18+ or the age of majority in your jurisdiction</li>
+            <li>You must not be located in a country subject to US sanctions (OFAC restricted countries)</li>
+            <li>You must not be on any US government restricted parties list</li>
+            <li>Entities must be legally formed and in good standing</li>
+        </ul>
+
+        <h2>4. Payment Terms</h2>
+
+        <h3>4a. Payment Methods</h3>
+        <ul>
+            <li><strong>x402 (USDC on Base L2):</strong> Payment IS authorization. No account required. Verified via Coinbase facilitator.</li>
+            <li><strong>Stripe:</strong> Traditional card payments for credit purchases</li>
+            <li><strong>GCX Credits:</strong> Pre-purchased credits at published rates</li>
+        </ul>
+
+        <h3>4b. Pricing</h3>
+        <ul>
+            <li>Current pricing published at <a href="/pricing">/pricing</a> and in the MCP server's tool schemas</li>
+            <li>Prices may change with 14 days notice (posted on website and in API response headers)</li>
+            <li>Volume discounts applied automatically per wallet based on 30-day rolling spend</li>
+        </ul>
+
+        <h3>4c. Refunds</h3>
+        <ul>
+            <li>All tool calls are non-refundable once execution begins</li>
+            <li>Failed tool calls (server error, not user error) will not be charged, or credits will be refunded</li>
+            <li>GCX credit purchases are non-refundable except where required by law</li>
+            <li>Unused GCX credits do not expire</li>
+        </ul>
+
+        <h3>4d. Taxes</h3>
+        <p>Prices are exclusive of taxes. You are responsible for applicable taxes in your jurisdiction.</p>
+
+        <h2>5. GCX Credits</h2>
+        <div class="highlight">
+            GCX credits are a prepaid service credit, NOT a cryptocurrency, security, or financial instrument. Credits are non-transferable between wallets/accounts. Credits have no cash redemption value.
+        </div>
+        <p>We reserve the right to adjust credit exchange rates for future purchases (existing balances are not affected).</p>
+
+        <h2>6. Loyalty Rewards</h2>
+        <ul>
+            <li>5% credit-back on paid tool calls (not on loyalty redemptions)</li>
+            <li>Loyalty credits are non-transferable and have no cash value</li>
+            <li>We may modify or discontinue the loyalty program with 30 days notice</li>
+        </ul>
+
+        <h2>7. Acceptable Use</h2>
+        <p>You agree NOT to:</p>
+        <ul>
+            <li>Use the Service to generate illegal content (CSAM, weapons instructions, etc.)</li>
+            <li>Generate content that infringes third-party intellectual property rights</li>
+            <li>Attempt to reverse-engineer, extract model weights, or replicate our backend services</li>
+            <li>Circumvent payment requirements or rate limits</li>
+            <li>Use the Service for money laundering or sanctions evasion</li>
+            <li>Submit malicious payloads, prompt injections targeting our backend models, or denial-of-service attacks</li>
+            <li>Resell Service access without written agreement</li>
+            <li>Misrepresent AI-generated content as human-created in contexts where disclosure is legally required</li>
+        </ul>
+
+        <h2>8. Intellectual Property</h2>
+
+        <h3>8a. Generated Content</h3>
+        <p>You own the outputs generated by our tools (images, metadata, etc.), subject to underlying model licenses (e.g., Stability AI license for SD 3.5 generated images) and third-party content rights.</p>
+
+        <h3>8b. Dataset Content (Alexandria Aeternum)</h3>
+        <p>Museum artwork images and metadata are provided under their respective institutional licenses. Per-artwork license information is included in the compliance_manifest tool response. You are responsible for complying with source licenses.</p>
+
+        <h3>8c. Our IP</h3>
+        <p>The StudioMCPHub service, API design, Golden Codex schema, and enrichment models are proprietary. Tool schemas are provided for integration purposes only.</p>
+
+        <h2>9. Service Level & Availability</h2>
+        <ul>
+            <li>The Service is provided "as is" with no uptime guarantees</li>
+            <li>We target 99.5% availability but do not guarantee it</li>
+            <li>GPU-dependent tools (generation, upscaling) may have cold start delays of 30-120 seconds</li>
+            <li>We may rate-limit or throttle access to maintain service quality</li>
+        </ul>
+
+        <h2>10. Data & Content Handling</h2>
+        <div class="highlight">
+            Uploaded images are processed in memory and NOT permanently stored unless you explicitly use storage/minting tools. We do not use your inputs or outputs to train AI models.
+        </div>
+        <p>See our <a href="/privacy">Privacy Policy</a> for full data handling details.</p>
+
+        <h2>11. Blockchain Operations Disclaimer</h2>
+        <ul>
+            <li>Permanent storage (Arweave) is <strong>IRREVERSIBLE</strong>. Once stored, data cannot be modified or deleted.</li>
+            <li>NFT minting (Polygon) creates a public, permanent record</li>
+            <li>Blockchain transaction fees are non-refundable</li>
+            <li>We are not responsible for blockchain network delays, congestion, or failures</li>
+        </ul>
+
+        <h2>12. Wallet Security</h2>
+        <p>You are solely responsible for the security of your wallet and private keys. We will never ask for your private keys or seed phrases. Transactions signed by your wallet are presumed authorized by you.</p>
+
+        <h2>13. Limitation of Liability</h2>
+        <p class="caps">TO THE MAXIMUM EXTENT PERMITTED BY LAW, OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNTS YOU PAID TO US IN THE 12 MONTHS PRECEDING THE CLAIM.</p>
+        <p class="caps">WE ARE NOT LIABLE FOR: LOST PROFITS, DATA LOSS, INDIRECT/CONSEQUENTIAL DAMAGES, BLOCKCHAIN TRANSACTION LOSSES, WALLET COMPROMISES, OR THIRD-PARTY SERVICE FAILURES.</p>
+
+        <h2>14. Indemnification</h2>
+        <p>You indemnify us against claims arising from: your use of generated content, your violation of these Terms, your violation of applicable law, or content you submit.</p>
+
+        <h2>15. DMCA / Copyright</h2>
+        <p>If you believe content accessible via our dataset tools infringes your copyright, submit a DMCA notice to <a href="mailto:legal@metavolve.com">legal@metavolve.com</a>. We will respond to valid takedown requests within 10 business days.</p>
+
+        <h2>16. Sanctions & Export Compliance</h2>
+        <p>The Service complies with US export controls and OFAC sanctions. We may block wallet addresses associated with sanctioned entities.</p>
+
+        <h2>17. Termination</h2>
+        <ul>
+            <li>We may suspend or terminate access for violation of these Terms, non-payment, or legal requirement</li>
+            <li>Upon termination, unused GCX credits are forfeited unless required otherwise by law</li>
+            <li>Sections on IP, liability, indemnification, and dispute resolution survive termination</li>
+        </ul>
+
+        <h2>18. Dispute Resolution</h2>
+        <ul>
+            <li>Governed by the laws of the State of California, USA</li>
+            <li>Disputes resolved by binding arbitration (JAMS) in San Francisco, California</li>
+            <li>Class action waiver: disputes must be brought individually</li>
+            <li>Small claims court exception for claims under $10,000</li>
+        </ul>
+
+        <h2>19. Modifications</h2>
+        <p>We may update these Terms with 30 days notice. Continued use after the effective date constitutes acceptance. Material changes announced via API headers and website.</p>
+
+        <h2>20. Contact</h2>
+        <p>Metavolve Labs, Inc.<br>San Francisco, California<br><a href="mailto:legal@metavolve.com">legal@metavolve.com</a></p>
+    </div>
+
+    <footer>Metavolve Labs, Inc. &middot; San Francisco &middot; <a href="/">StudioMCPHub</a></footer>
+</body>
+</html>

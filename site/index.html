@@ -221,14 +221,15 @@
                     <span class="highlight">for autonomous agents</span>
                     <span class="sub">built by AI, for AI</span>
                 </h1>
-                <p class="hero-desc">The first MCP server offering a complete creative post-production pipeline. Generate images, upscale with ESRGAN, enrich with AI metadata, embed provenance, store permanently on Arweave, mint NFTs. Pay per call. No accounts needed.</p>
+                <p class="hero-desc">The first MCP server offering a complete creative post-production pipeline. Generate images, upscale with ESRGAN, enrich with AI metadata, embed provenance, store permanently on Arweave, mint NFTs. Register your wallet and start with 10 free GCX credits.</p>
                 <div class="badges">
                     <span class="badge live">MCP Server</span>
                     <span class="badge x402">x402 Payments</span>
                     <span class="badge first">First of Its Kind</span>
                     <span class="badge accent">Streamable HTTP</span>
-                    <span class="badge">9 Tools</span>
+                    <span class="badge">18 Tools</span>
                     <span class="badge">NVIDIA L4 GPU</span>
+                    <span class="badge" style="background:rgba(0,212,170,0.15);color:#00d4aa;">10 Free GCX</span>
                 </div>
             </section>
 
@@ -249,7 +250,7 @@
                     <div class="terminal-body">
                         <div id="tab-claude" class="tab-content active"><span class="comment">// Add to ~/.claude/settings.json</span><br><span class="brace">{</span><br>&nbsp;&nbsp;<span class="key">"mcpServers"</span>: <span class="brace">{</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"studiomcphub"</span>: <span class="brace">{</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"url"</span>: <span class="str">"https://studiomcphub.com/mcp"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"transport"</span>: <span class="str">"streamable-http"</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="brace">}</span><br>&nbsp;&nbsp;<span class="brace">}</span><br><span class="brace">}</span></div>
                         <div id="tab-cline" class="tab-content"><span class="comment">// Add to VS Code MCP settings</span><br><span class="brace">{</span><br>&nbsp;&nbsp;<span class="key">"studiomcphub"</span>: <span class="brace">{</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"transport"</span>: <span class="str">"streamable-http"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"url"</span>: <span class="str">"https://studiomcphub.com/mcp"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"headers"</span>: <span class="brace">{</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"Authorization"</span>: <span class="str">"Bearer YOUR_GCX_TOKEN"</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="brace">}</span><br>&nbsp;&nbsp;<span class="brace">}</span><br><span class="brace">}</span></div>
-                        <div id="tab-curl" class="tab-content"><span class="comment"># Discover the server</span><br><span class="prompt">$</span> <span class="cmd">curl https://studiomcphub.com/.well-known/mcp.json</span><br><br><span class="comment"># Call a FREE tool</span><br><span class="prompt">$</span> <span class="cmd">curl -X POST https://studiomcphub.com/api/tools/verify_provenance \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Content-Type: application/json" \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-d '{"image": "base64..."}'</span></div>
+                        <div id="tab-curl" class="tab-content"><span class="comment"># Step 1: Register wallet &amp; get 10 free GCX</span><br><span class="prompt">$</span> <span class="cmd">curl -X POST https://studiomcphub.com/api/wallet/register \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Content-Type: application/json" \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-d '{"wallet": "0xYOUR_WALLET"}'</span><br><br><span class="comment"># Step 2: Generate an image (2 GCX)</span><br><span class="prompt">$</span> <span class="cmd">curl -X POST https://studiomcphub.com/api/tools/generate_image \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Authorization: Bearer 0xYOUR_WALLET" \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Content-Type: application/json" \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-d '{"prompt": "sunset over mountains"}'</span></div>
                         <div id="tab-python" class="tab-content"><span class="comment"># pip install mcp httpx</span><br><span class="key">from</span> mcp <span class="key">import</span> ClientSession<br><span class="key">from</span> mcp.client.streamable_http <span class="key">import</span> streamablehttp_client<br><br><span class="key">async with</span> streamablehttp_client(<br>&nbsp;&nbsp;&nbsp;&nbsp;url=<span class="str">"https://studiomcphub.com/mcp"</span><br>) <span class="key">as</span> (read, write, _):<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">async with</span> ClientSession(read, write) <span class="key">as</span> session:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">await</span> session.initialize()<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result = <span class="key">await</span> session.call_tool(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"generate_image"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="brace">{</span><span class="key">"prompt"</span>: <span class="str">"sunset over mountains"</span><span class="brace">}</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</div>
                     </div>
                 </div>
@@ -396,7 +397,7 @@
                 <div class="gcx-header">
                     <div class="gcx-rate">1 GCX = $0.10</div>
                 </div>
-                <div class="gcx-explain">Connect wallet. Buy credits. Your wallet IS your account. No email, no username. Volume discounts down to $0.0625/GCX.</div>
+                <div class="gcx-explain">Register any EVM wallet and get <strong style="color:var(--teal);">10 free GCX</strong> to try every tool. Your wallet IS your account. No email, no username. Volume discounts down to $0.0625/GCX.</div>
                 <div class="gcx-bundles">
                     <div class="gcx-bundle">
                         <div class="pop-label">Starter</div>
@@ -522,6 +523,8 @@
                     <a href="https://golden-codex.com">Golden Codex</a>
                     <a href="https://artiswa.com">Artiswa</a>
                     <a href="https://github.com/codex-curator/studiomcphub">GitHub</a>
+                    <a href="/privacy">Privacy</a>
+                    <a href="/terms">Terms</a>
                 </div>
                 <div class="footer-meta">
                     Metavolve Labs, Inc. &middot; San Francisco<br>

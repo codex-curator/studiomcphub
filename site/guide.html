@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Guide — StudioMCPHub</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230a0a0f'/><text x='16' y='23' font-size='20' text-anchor='middle' fill='%237c5cff'>S</text></svg>">
+    <style>
+        :root { --bg:#0a0a0f; --surface:#111119; --surface2:#16161f; --border:#1e1e2e; --text:#e0e0e8; --dim:#7878a0; --accent:#7c5cff; --teal:#00d4aa; --gold:#d4a843; --green:#22c55e; --mono:'SF Mono','Fira Code','Cascadia Code','JetBrains Mono',monospace; --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:var(--sans); line-height:1.7; }
+        a { color:var(--accent); text-decoration:none; }
+        a:hover { color:var(--teal); }
+        nav { position:sticky; top:0; z-index:100; background:rgba(10,10,15,0.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:12px 0; }
+        nav .c { max-width:900px; margin:0 auto; padding:0 24px; display:flex; align-items:center; justify-content:space-between; }
+        .brand { font-family:var(--mono); font-size:13px; color:var(--dim); letter-spacing:2px; text-transform:uppercase; }
+        .brand strong { color:var(--accent); }
+        .navlinks { display:flex; gap:16px; font-size:12px; }
+        .navlinks a { color:var(--dim); }
+        .content { max-width:900px; margin:0 auto; padding:48px 24px 80px; }
+        h1 { font-family:var(--mono); font-size:24px; color:var(--accent); margin-bottom:8px; }
+        .subtitle { font-size:14px; color:var(--dim); margin-bottom:40px; }
+        h2 { font-family:var(--mono); font-size:18px; color:var(--teal); margin:40px 0 16px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+        h3 { font-family:var(--mono); font-size:14px; color:var(--gold); margin:24px 0 8px; }
+        p, li { font-size:14px; color:#c0c0d0; margin-bottom:12px; }
+        ul, ol { padding-left:20px; margin-bottom:16px; }
+        li { margin-bottom:6px; }
+        code { font-family:var(--mono); background:var(--surface); padding:2px 6px; border-radius:3px; font-size:13px; color:var(--teal); }
+        pre { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; margin:16px 0; overflow-x:auto; font-family:var(--mono); font-size:12px; line-height:1.6; color:var(--text); }
+        .cost { display:inline-block; background:rgba(212,168,67,0.15); color:var(--gold); padding:2px 8px; border-radius:4px; font-family:var(--mono); font-size:12px; margin-left:4px; }
+        .free { background:rgba(0,212,170,0.15); color:var(--teal); }
+        .flow { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0; align-items:center; }
+        .flow-step { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:8px 14px; font-family:var(--mono); font-size:12px; }
+        .flow-arrow { color:var(--dim); font-size:16px; }
+        .tip { background:var(--surface2); border-left:3px solid var(--accent); padding:12px 16px; margin:16px 0; font-size:13px; border-radius:0 6px 6px 0; }
+        table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; }
+        th { background:var(--surface); padding:8px 12px; text-align:left; font-family:var(--mono); color:var(--dim); border-bottom:1px solid var(--border); }
+        td { padding:8px 12px; border-bottom:1px solid var(--border); }
+        footer { text-align:center; padding:40px 0; font-size:11px; color:#444466; font-family:var(--mono); }
+    </style>
+</head>
+<body>
+    <nav><div class="c"><a href="/" class="brand"><strong>Studio</strong>MCPHub</a><div class="navlinks"><a href="/pricing">Pricing</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></div></nav>
+
+    <div class="content">
+        <h1>Agent & Bot Guide</h1>
+        <p class="subtitle">How to use StudioMCPHub to create, enhance, and protect images via the Golden Codex pipeline.</p>
+
+        <h2>Quick Start (3 Steps)</h2>
+
+        <h3>Step 1: Register Your Wallet <span class="cost free">FREE</span></h3>
+<pre>curl -X POST https://studiomcphub.com/api/wallet/register \
+  -H "Content-Type: application/json" \
+  -d '{"wallet": "0xYOUR_WALLET_ADDRESS"}'
+
+# Response: {"status": "created", "balance": 10, ...}
+# You now have 10 GCX credits ($1.00 value)</pre>
+
+        <h3>Step 2: Choose Your Path</h3>
+        <table>
+            <tr><th>I want to...</th><th>Tools needed</th><th>Cost</th></tr>
+            <tr><td>Generate a new image (fast)</td><td><code>generate_image_nano</code></td><td>1 GCX ($0.10)</td></tr>
+            <tr><td>Generate a new image (HD)</td><td><code>generate_image</code></td><td>2 GCX ($0.20)</td></tr>
+            <tr><td>Enhance my existing image</td><td><code>enrich_metadata</code> + <code>infuse_metadata</code></td><td>3 GCX ($0.30)</td></tr>
+            <tr><td>Full pipeline (one call)</td><td><code>full_pipeline</code></td><td>5 GCX ($0.50)</td></tr>
+            <tr><td>Search museum artworks</td><td><code>search_artworks</code></td><td>FREE</td></tr>
+        </table>
+
+        <h3>Step 3: Make Your First Call</h3>
+<pre># Include your wallet as Bearer token for GCX payment
+curl -X POST https://studiomcphub.com/api/tools/generate_image_nano \
+  -H "Authorization: Bearer 0xYOUR_WALLET" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "a serene Japanese garden at sunset"}'</pre>
+
+        <h2>Enhance Existing Images with Golden Codex</h2>
+        <p>Already have images? Run them through the Golden Codex pipeline to add AI metadata, provenance, and professional-grade processing.</p>
+
+        <div class="flow">
+            <div class="flow-step">Your Image</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-step">enrich_metadata <span class="cost">2 GCX</span></div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-step">infuse_metadata <span class="cost">1 GCX</span></div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-step">register_hash <span class="cost">1 GCX</span></div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-step">Provenance-Protected Image</div>
+        </div>
+
+        <h3>Step-by-Step: Enhance an Existing Image</h3>
+
+<pre># 1. Enrich — AI analyzes your image and generates Golden Codex metadata (2 GCX)
+curl -X POST https://studiomcphub.com/api/tools/enrich_metadata \
+  -H "Authorization: Bearer 0xYOUR_WALLET" \
+  -H "Content-Type: application/json" \
+  -d '{"image": "BASE64_IMAGE_DATA", "context": "Oil painting by a contemporary artist"}'
+
+# Response includes full Golden Codex JSON: title, medium, palette,
+# composition, symbolism, emotional resonance, provenance context
+
+# 2. Infuse — Embed the metadata INTO the image file (1 GCX)
+curl -X POST https://studiomcphub.com/api/tools/infuse_metadata \
+  -H "Authorization: Bearer 0xYOUR_WALLET" \
+  -H "Content-Type: application/json" \
+  -d '{"image": "BASE64_IMAGE_DATA", "metadata": {...CODEX_JSON_FROM_STEP_1...}}'
+
+# Response: image with XMP-gc, IPTC, and C2PA metadata embedded
+
+# 3. Register Hash — Provenance protection, even if metadata is stripped (1 GCX)
+curl -X POST https://studiomcphub.com/api/tools/register_hash \
+  -H "Authorization: Bearer 0xYOUR_WALLET" \
+  -H "Content-Type: application/json" \
+  -d '{"image": "BASE64_INFUSED_IMAGE"}'
+
+# Response: hash_id, perceptual hash registered in Aegis index
+# Anyone can now verify your image with verify_provenance (FREE)</pre>
+
+        <div class="tip">
+            <strong>Pro tip:</strong> Use <code>full_pipeline</code> (5 GCX) to do all of this in a single call. It handles generate/upscale/enrich/infuse/register automatically. Just pass <code>"image"</code> instead of <code>"prompt"</code> to skip generation.
+        </div>
+
+        <h3>Full Pipeline — One Call Does Everything</h3>
+<pre># Enhance an existing image through the complete pipeline (5 GCX)
+curl -X POST https://studiomcphub.com/api/tools/full_pipeline \
+  -H "Authorization: Bearer 0xYOUR_WALLET" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image": "BASE64_IMAGE_DATA",
+    "options": {
+      "skip": ["store_permanent", "mint_nft"]
+    }
+  }'
+
+# Or generate a NEW image and run the full pipeline (7 GCX total)
+curl -X POST https://studiomcphub.com/api/tools/full_pipeline \
+  -H "Authorization: Bearer 0xYOUR_WALLET" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "impressionist landscape at golden hour",
+    "options": {
+      "skip": ["store_permanent", "mint_nft"]
+    }
+  }'</pre>
+
+        <h2>Save & Retrieve Assets</h2>
+        <p>Store your generated images and pipeline outputs in your personal wallet storage. 100MB free per wallet.</p>
+
+<pre># Save an image to your storage (1 GCX)
+curl -X POST https://studiomcphub.com/api/tools/save_asset \
+  -H "Authorization: Bearer 0xYOUR_WALLET" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "wallet": "0xYOUR_WALLET",
+    "key": "my-landscape-001",
+    "data": "BASE64_IMAGE_DATA",
+    "metadata": {"title": "Golden Hour Landscape", "pipeline": "full"}
+  }'
+
+# Retrieve it later (FREE)
+curl -X POST https://studiomcphub.com/api/tools/get_asset \
+  -H "Content-Type: application/json" \
+  -d '{"wallet": "0xYOUR_WALLET", "key": "my-landscape-001"}'
+
+# List all your assets (FREE)
+curl -X POST https://studiomcphub.com/api/tools/list_assets \
+  -H "Content-Type: application/json" \
+  -d '{"wallet": "0xYOUR_WALLET"}'</pre>
+
+        <h2>MCP Connection (Claude, Cursor, Cline)</h2>
+        <p>For AI agents using the Model Context Protocol, connect to StudioMCPHub's Streamable HTTP transport:</p>
+
+<pre>{
+  "mcpServers": {
+    "studiomcphub": {
+      "url": "https://studiomcphub.com/mcp",
+      "transport": "streamable-http"
+    }
+  }
+}</pre>
+
+        <p>Once connected, your AI agent can:</p>
+        <ol>
+            <li>Call <code>register_wallet</code> to get 10 free GCX</li>
+            <li>Call <code>search_tools</code> to discover all available tools</li>
+            <li>Call <code>generate_image</code> or <code>generate_image_nano</code> to create images</li>
+            <li>Call <code>full_pipeline</code> to run the complete Golden Codex pipeline</li>
+            <li>Call <code>save_asset</code> to store results for later</li>
+        </ol>
+
+        <h2>Complete Tool Reference</h2>
+
+        <h3>Creative Tools</h3>
+        <table>
+            <tr><th>Tool</th><th>Cost</th><th>Description</th></tr>
+            <tr><td><code>generate_image_nano</code></td><td>1 GCX</td><td>Fast concept generation (Imagen 3). Great for iteration.</td></tr>
+            <tr><td><code>generate_image</code></td><td>2 GCX</td><td>HD generation (SD 3.5 Large + T5-XXL). Museum quality.</td></tr>
+            <tr><td><code>upscale_image</code></td><td>2 GCX</td><td>4x super-resolution (ESRGAN, NVIDIA L4).</td></tr>
+            <tr><td><code>enrich_metadata</code></td><td>2 GCX</td><td>AI artwork analysis (Gemini). 8-section Golden Codex JSON.</td></tr>
+            <tr><td><code>infuse_metadata</code></td><td>1 GCX</td><td>Embed metadata into image (ExifTool: XMP, IPTC, C2PA).</td></tr>
+            <tr><td><code>register_hash</code></td><td>1 GCX</td><td>Perceptual hash registration. Strip-proof provenance.</td></tr>
+            <tr><td><code>store_permanent</code></td><td>15 GCX</td><td>Permanent Arweave L1 storage. Irreversible.</td></tr>
+            <tr><td><code>mint_nft</code></td><td>10 GCX</td><td>Polygon NFT with on-chain provenance link.</td></tr>
+            <tr><td><code>full_pipeline</code></td><td>5 GCX</td><td>Complete pipeline in one call. Best value.</td></tr>
+            <tr><td><code>verify_provenance</code></td><td>FREE</td><td>Check an image against the Aegis hash index.</td></tr>
+        </table>
+
+        <h3>Dataset Tools (Alexandria Aeternum — 53K+ Museum Artworks)</h3>
+        <table>
+            <tr><th>Tool</th><th>Cost</th><th>Description</th></tr>
+            <tr><td><code>search_artworks</code></td><td>FREE</td><td>Search 7 world-class museums by keyword.</td></tr>
+            <tr><td><code>get_artwork</code></td><td>1 GCX</td><td>Human-sourced metadata + image URL.</td></tr>
+            <tr><td><code>get_artwork_oracle</code></td><td>2 GCX</td><td>Deep AI analysis: 111-field NEST format.</td></tr>
+            <tr><td><code>batch_download</code></td><td>50 GCX</td><td>Bulk download (100+ artworks).</td></tr>
+            <tr><td><code>compliance_manifest</code></td><td>FREE</td><td>AB 2013 + EU AI Act compliance docs.</td></tr>
+        </table>
+
+        <h3>Storage & Account Tools</h3>
+        <table>
+            <tr><th>Tool</th><th>Cost</th><th>Description</th></tr>
+            <tr><td><code>save_asset</code></td><td>1 GCX</td><td>Save to wallet storage (5MB max per asset).</td></tr>
+            <tr><td><code>get_asset</code></td><td>FREE</td><td>Retrieve stored asset by key.</td></tr>
+            <tr><td><code>list_assets</code></td><td>FREE</td><td>List all stored assets.</td></tr>
+            <tr><td><code>delete_asset</code></td><td>FREE</td><td>Delete a stored asset.</td></tr>
+            <tr><td><code>register_wallet</code></td><td>FREE</td><td>Register wallet + get 10 free GCX.</td></tr>
+            <tr><td><code>check_balance</code></td><td>FREE</td><td>Check GCX, loyalty, tier status.</td></tr>
+        </table>
+
+        <h2>Pricing Math</h2>
+        <div class="tip">
+            <strong>10 free GCX gets you:</strong><br>
+            10 fast images (Nano Banana) OR 5 HD images (SD 3.5L) OR 2 full pipelines OR a mix of everything. Purchase GCX packs for more.<br><br>
+            <strong>Best value:</strong> <code>full_pipeline</code> at 5 GCX covers generate + upscale + enrich + infuse + register. That's everything except permanent storage and minting. A complete provenance-protected artwork for $0.50.
+        </div>
+
+        <h2>Payment Methods</h2>
+        <ul>
+            <li><strong>GCX Credits</strong> (recommended): Register wallet, get 50 free. Buy more with Stripe or USDC.</li>
+            <li><strong>x402 (USDC on Base L2)</strong>: Pay per call, no account needed. Wallet auto-provisioned.</li>
+            <li><strong>Stripe</strong>: Card payment for credit purchases.</li>
+        </ul>
+        <p>Every paid call earns <strong>5% loyalty credits</strong> back. Volume discounts up to 30% off at $200+ monthly spend.</p>
+    </div>
+
+    <footer>Metavolve Labs, Inc. &middot; San Francisco &middot; <a href="/">StudioMCPHub</a></footer>
+</body>
+</html>
