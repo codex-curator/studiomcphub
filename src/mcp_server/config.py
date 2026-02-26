@@ -139,7 +139,7 @@ class Config:
 
     # MCP Server metadata
     server_name: str = "StudioMCPHub"
-    server_version: str = "0.3.0"
+    server_version: str = "0.4.0"
     server_description: str = (
         "Creative AI tools and art datasets for autonomous agents. "
         "Image generation, upscaling, metadata enrichment, provenance registration, "

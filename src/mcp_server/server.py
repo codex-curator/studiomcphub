@@ -175,17 +175,19 @@ def llms_txt():
 def openapi_json():
     """OpenAPI 3.0 spec for all public endpoints."""
     from .config import PRICING, GCX_BASE_RATE
+    from .mcp_tools import TOOL_SCHEMAS
 
     tool_paths = {}
     for name, p in PRICING.items():
         is_paid = p.gcx_credits > 0
+        schema = TOOL_SCHEMAS.get(name, {}).get("inputSchema", {"type": "object"})
         tool_paths[f"/api/tools/{name}"] = {
             "post": {
                 "summary": f"{name} tool call",
                 "description": f"Cost: {p.gcx_credits} GCX (${p.gcx_credits * GCX_BASE_RATE:.2f}). {'Free tool — no auth needed.' if not is_paid else 'Payment: GCX credits (Bearer token), x402 USDC (X-PAYMENT header), or Stripe (X-Stripe-Payment-Intent header).'}",
                 "tags": ["Tools"],
                 "security": [{"bearerAuth": []}, {"x402": []}, {"stripePayment": []}] if is_paid else [],
-                "requestBody": {"content": {"application/json": {"schema": {"type": "object"}}}},
+                "requestBody": {"content": {"application/json": {"schema": schema}}},
                 "responses": {
                     "200": {"description": "Tool result"},
                     **({"402": {"description": "Payment required — returns x402 payment instructions, GCX credit info, and Stripe checkout link"}} if is_paid else {}),

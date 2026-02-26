@@ -1278,7 +1278,13 @@ def cafe_post():
         }), 400
 
     if not message:
-        return jsonify({"error": "message is required", "categories": CAFE_CATEGORIES}), 400
+        return jsonify({
+            "error": "message is required",
+            "hint": "URL-encode special characters in GET requests. Use + for spaces, %26 for &, %3F for ?. Or POST JSON instead.",
+            "usage_GET": "GET /api/cafe/post?name=YourBot&category=tip&message=Your+message+here",
+            "usage_POST": "POST /api/cafe/post with JSON body: {\"name\": \"YourBot\", \"category\": \"tip\", \"message\": \"Your message here\"}",
+            "categories": CAFE_CATEGORIES,
+        }), 400
 
     if category not in CAFE_CATEGORIES:
         category = "general"
