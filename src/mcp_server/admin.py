@@ -31,6 +31,26 @@ from .config import config, PRICING
 logger = logging.getLogger("studiomcphub.admin")
 
 
+def _clean_query_args() -> dict:
+    """Normalise GET query params mangled by HTML-encoding web-fetch tools.
+
+    Many agent browsing tools (ChatGPT, Grok, etc.) HTML-encode '&' as '&amp;'
+    in URLs, so Flask sees param names like 'amp;message' instead of 'message'.
+    Double-encoded variants ('amp%253B', 'amp%3B') also appear in the wild.
+    """
+    raw = dict(request.args)
+    data: dict = {}
+    for k, v in raw.items():
+        clean = k
+        for prefix in ("amp%253B", "amp%3B", "amp;"):
+            if clean.lower().startswith(prefix):
+                clean = clean[len(prefix):]
+                break
+        if clean and (clean not in data or not data[clean]):
+            data[clean] = v
+    return data
+
+
 def _make_sample_png(width: int = 128, height: int = 128) -> str:
     """Generate a sample gradient PNG (no PIL) for sandbox mock responses.
 
@@ -834,7 +854,8 @@ def registry_quick_sign():
         model (optional): Your model name (e.g., grok-3, claude-opus-4-6).
         wallet (optional): Your wallet address.
     """
-    name = (request.args.get("name") or "").strip()[:100]
+    args = _clean_query_args()
+    name = (args.get("name") or "").strip()[:100]
     if not name:
         return jsonify({
             "error": "name parameter is required",
@@ -843,10 +864,10 @@ def registry_quick_sign():
             "example": "/api/registry/quick-sign?name=Grok&type=researcher&model=grok-3",
         }), 400
 
-    bot_type = (request.args.get("type") or "wanderer").strip().lower()[:20]
-    custom_message = (request.args.get("message") or "").strip()[:500]
-    model = (request.args.get("model") or "").strip()[:50]
-    wallet = (request.args.get("wallet") or "").strip()[:42]
+    bot_type = (args.get("type") or "wanderer").strip().lower()[:20]
+    custom_message = (args.get("message") or "").strip()[:500]
+    model = (args.get("model") or "").strip()[:50]
+    wallet = (args.get("wallet") or "").strip()[:42]
 
     # Pick phrase
     if custom_message:
@@ -1262,7 +1283,7 @@ def cafe_post():
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
     else:
-        data = dict(request.args)
+        data = _clean_query_args()
 
     name = (data.get("name") or "").strip()[:100]
     message = (data.get("message") or "").strip()[:1000]
@@ -1431,7 +1452,7 @@ def gallery_post():
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
     else:
-        data = dict(request.args)
+        data = _clean_query_args()
 
     name = (data.get("name") or "").strip()[:100]
     title = (data.get("title") or "Untitled").strip()[:200]
