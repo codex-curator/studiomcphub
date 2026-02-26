@@ -171,6 +171,22 @@ def llms_txt():
     return send_from_directory(_SITE_DIR, "llms.txt", mimetype="text/plain")
 
 
+@app.route("/robots.txt")
+def robots_txt():
+    """Permissive robots.txt — welcome all crawlers."""
+    return (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "\n"
+        "# AI & MCP discovery\n"
+        "# llms.txt: https://studiomcphub.com/llms.txt\n"
+        "# MCP Server Card: https://studiomcphub.com/.well-known/mcp.json\n"
+        "# OpenAPI: https://studiomcphub.com/openapi.json\n"
+        "\n"
+        "Sitemap: https://studiomcphub.com/sitemap.xml\n"
+    ), 200, {"Content-Type": "text/plain"}
+
+
 @app.route("/openapi.json")
 def openapi_json():
     """OpenAPI 3.0 spec for all public endpoints."""
