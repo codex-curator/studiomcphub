@@ -6,11 +6,15 @@
 [![MCP](https://img.shields.io/badge/MCP-Streamable_HTTP-blue)](https://studiomcphub.com/.well-known/mcp.json)
 [![Glama](https://glama.ai/mcp/servers/badge)](https://glama.ai/mcp/servers/@codex-curator/studiomcphub)
 
-StudioMCPHub is a production MCP server offering 16 tools: image generation, upscaling, AI metadata enrichment, provenance registration, permanent Arweave storage, NFT minting, and access to 53,000+ museum artworks from Alexandria Aeternum. Agents pay per call with x402 USDC on Base L2 — no API keys, no accounts, no sign-up.
+StudioMCPHub is a production MCP server offering 32 tools (18 free): image generation, upscaling, background removal, product mockups, CMYK conversion, print-ready PDF, SVG vectorization, invisible watermarking, AI metadata enrichment, provenance registration, permanent Arweave storage, NFT minting, and access to 53,000+ museum artworks from Alexandria Aeternum. Agents pay per call with x402 USDC on Base L2 — no API keys, no accounts, no sign-up.
 
 ## Quick Start
 
-Connect with any MCP client:
+**One-click install for Cursor:**
+
+[Install in Cursor](https://cursor.directory/mcp?install=cursor://anysphere.cursor-deeplink/mcp/install?name=StudioMCPHub&config=eyJ1cmwiOiAiaHR0cHM6Ly9zdHVkaW9tY3BodWIuY29tL21jcCIsICJ0cmFuc3BvcnQiOiAic3RyZWFtYWJsZS1odHRwIn0=)
+
+Or add to any MCP client config:
 
 ```json
 {
@@ -23,7 +27,7 @@ Connect with any MCP client:
 }
 ```
 
-Then call `search_tools` to discover available tools without loading all 16 schemas:
+Then call `search_tools` to discover available tools without loading all 32 schemas:
 
 ```
 search_tools({ "category": "all" })
