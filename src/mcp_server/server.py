@@ -113,7 +113,7 @@ def mcp_server_card():
             "schemes": [
                 {"type": "x402", "description": "Pay per call with USDC on Base L2"},
                 {"type": "bearer", "description": "API key or GCX credit token"},
-                {"type": "none", "description": "Free tools (10 of 24 — verify_provenance, search_artworks, compliance_manifest, get_asset, list_assets, delete_asset, register_wallet, check_balance, search_tools, get_tool_schema)"},
+                {"type": "none", "description": "Free tools (18 of 32 — verify_provenance, search_artworks, compliance_manifest, get_asset, list_assets, delete_asset, register_wallet, check_balance, search_tools, get_tool_schema, resize_image, extract_palette, remove_background, convert_color_profile, print_ready, vectorize_image, watermark_embed, watermark_detect). Rate limited: 10/hr anonymous, 60/hr registered."},
             ]
         },
         "tools": [
@@ -666,7 +666,42 @@ def require_payment(tool_name: str):
 # delegates to these)
 # ---------------------------------------------------------------------------
 
-_tool_rate = limiter.limit("100/minute") if limiter else lambda f: f
+# Free tools that get tiered rate limits to prevent exploitation.
+_FREE_TOOLS = {
+    name for name, p in PRICING.items() if p.gcx_credits == 0
+}
+
+
+def _tool_rate_key():
+    """Rate-limit key: wallet (if present) or IP address."""
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Bearer ") and len(auth) > 10:
+        return f"wallet:{auth[7:]}"
+    return f"ip:{get_remote_address()}"
+
+
+def _dynamic_tool_limit():
+    """Return rate limit string based on tool type and auth status.
+
+    Tiered rate limiting:
+      - Anonymous + free tool:   10/hour  per IP     (prevent enterprise abuse)
+      - Registered + free tool:  60/hour  per wallet  (fair use for creators)
+      - Paid tools:             100/minute per wallet  (paying customers, generous)
+    """
+    tool_name = request.view_args.get("tool_name", "")
+    auth = request.headers.get("Authorization", "")
+    has_wallet = auth.startswith("Bearer ") and len(auth) > 10
+
+    if tool_name in _FREE_TOOLS:
+        return "60/hour" if has_wallet else "10/hour"
+    return "100/minute"
+
+
+_tool_rate = (
+    limiter.limit(_dynamic_tool_limit, key_func=_tool_rate_key)
+    if limiter else lambda f: f
+)
+
 
 @app.route("/api/tools/<tool_name>", methods=["POST"])
 @_tool_rate
@@ -679,6 +714,9 @@ def execute_tool(tool_name: str):
     _image_required = {
         "upscale_image", "enrich_metadata", "infuse_metadata",
         "register_hash", "store_permanent", "mint_nft", "verify_provenance",
+        "extract_palette", "remove_background", "mockup_image",
+        "convert_color_profile", "print_ready", "vectorize_image",
+        "watermark_embed", "watermark_detect", "resize_image",
     }
     params_preview = request.get_json(silent=True) or {}
     if tool_name in _image_required and "image" not in params_preview:
@@ -726,10 +764,22 @@ def execute_tool(tool_name: str):
         })
     except Exception as e:
         logger.error(f"Tool {tool_name} failed: {e}")
+        # Auto-refund GCX credits on tool failure — service not rendered
+        if method == "gcx":
+            try:
+                from ..payment.gcx_credits import refund_credits
+                token = details.get("token", "")
+                gcx_amount = details.get("gcx_deducted", 0)
+                if token and gcx_amount > 0:
+                    refund_credits(user_id=token, amount=gcx_amount, tool_name=tool_name)
+                    logger.info(f"Auto-refunded {gcx_amount} GCX to {token} for failed {tool_name}")
+            except Exception as refund_err:
+                logger.error(f"Refund failed for {tool_name}: {refund_err}")
         return jsonify({
             "tool": tool_name,
             "status": "error",
             "error": str(e),
+            "refunded": method == "gcx",
         }), 500
 
 
@@ -1018,6 +1068,12 @@ def privacy_page():
 def terms_page():
     """Terms of Service."""
     return send_from_directory(_SITE_DIR, "terms.html")
+
+
+@app.route("/support")
+def support_page():
+    """Support & contact page."""
+    return send_from_directory(_SITE_DIR, "support.html")
 
 
 @app.route("/guide")

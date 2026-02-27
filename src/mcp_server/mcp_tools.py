@@ -1,6 +1,6 @@
 """MCP tool registrations for StudioMCPHub Streamable HTTP transport.
 
-Registers all 24 tools as proper MCP tools with payment gating.
+Registers all 32 tools as proper MCP tools with payment gating.
 Each tool checks payment, dispatches to the existing tool implementation,
 and returns MCP-formatted results.
 """
@@ -112,15 +112,30 @@ TOOL_SCHEMAS = {
         },
     },
     "mint_nft": {
-        "description": "Mint as NFT on Polygon with on-chain provenance link.",
+        "description": "Mint as NFT on Base L2 (Aeternum Collection) or Polygon. Image stored permanently on Arweave. Auto-listed on OpenSea.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "image": {"type": "string", "description": "Base64-encoded PNG/JPEG image"},
-                "metadata": {"type": "object", "description": "Golden Codex metadata JSON"},
-                "collection": {"type": "string", "description": "Optional collection name or ID"},
+                "recipient_wallet": {"type": "string", "description": "EVM wallet address (0x...) to receive the NFT"},
+                "chain": {"type": "string", "description": "Blockchain to mint on", "default": "base", "enum": ["base", "polygon"]},
+                "title": {"type": "string", "description": "NFT title/name"},
+                "description": {"type": "string", "description": "NFT description"},
+                "attributes": {
+                    "type": "array",
+                    "description": "OpenSea-compatible attributes",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "trait_type": {"type": "string"},
+                            "value": {"type": "string"},
+                        },
+                    },
+                },
+                "metadata": {"type": "object", "description": "Golden Codex metadata JSON (optional, for provenance)"},
+                "collection": {"type": "string", "description": "Optional collection name or ID (Polygon only)"},
             },
-            "required": ["image"],
+            "required": ["image", "recipient_wallet"],
         },
     },
     "verify_provenance": {
@@ -214,7 +229,7 @@ TOOL_SCHEMAS = {
     },
     # --- Image Utilities ---
     "resize_image": {
-        "description": "Resize an image to target dimensions. Supports fit modes: 'cover' (crop to fill), 'contain' (fit within, letterbox), 'stretch' (exact size). Useful for preparing images for specific platforms, thumbnails, or social media.",
+        "description": "Resize an image to target dimensions. Supports fit modes: 'cover' (crop to fill), 'contain' (fit within, letterbox), 'stretch' (exact size). Useful for preparing images for specific platforms, thumbnails, or social media. FREE.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -226,6 +241,106 @@ TOOL_SCHEMAS = {
                 "quality": {"type": "integer", "description": "JPEG/WebP quality (1-100)", "default": 90, "minimum": 1, "maximum": 100},
             },
             "required": ["image", "width", "height"],
+        },
+    },
+    # --- Creative Processing Tools ---
+    "extract_palette": {
+        "description": "Extract dominant color palette from an image. Returns hex/RGB/HSL colors with percentages, CSS names, and complementary colors. Great for design systems, mood boards, and color matching. FREE.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "image": {"type": "string", "description": "Base64-encoded PNG/JPEG image"},
+                "num_colors": {"type": "integer", "description": "Number of colors to extract (3-12)", "default": 6, "minimum": 3, "maximum": 12},
+                "format": {"type": "string", "description": "Color format in output", "default": "hex", "enum": ["hex", "rgb", "hsl"]},
+            },
+            "required": ["image"],
+        },
+    },
+    "remove_background": {
+        "description": "Remove image background using AI (U2-Net). Returns RGBA PNG/WebP with transparent background. Perfect for product photos, portraits, and design assets. FREE.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "image": {"type": "string", "description": "Base64-encoded PNG/JPEG image"},
+                "output_format": {"type": "string", "description": "Output format", "default": "png", "enum": ["png", "webp"]},
+            },
+            "required": ["image"],
+        },
+    },
+    "mockup_image": {
+        "description": "Place your design onto product mockups (t-shirt, poster, canvas, phone case, mug, tote bag). Instant product visualization for e-commerce and print-on-demand. FREE.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "image": {"type": "string", "description": "Base64-encoded design image"},
+                "product": {"type": "string", "description": "Product type", "default": "tshirt", "enum": ["tshirt", "poster", "canvas", "phone_case", "mug", "tote_bag"]},
+                "background_color": {"type": "string", "description": "Background hex color", "default": "#f5f5f5"},
+            },
+            "required": ["image"],
+        },
+    },
+    "convert_color_profile": {
+        "description": "Convert between sRGB and CMYK color profiles. Essential for print production. CMYK output as TIFF with embedded DPI. FREE.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "image": {"type": "string", "description": "Base64-encoded PNG/JPEG image"},
+                "target_profile": {"type": "string", "description": "Target color profile", "default": "cmyk", "enum": ["cmyk", "srgb"]},
+                "dpi": {"type": "integer", "description": "Output DPI (72-1200)", "default": 300, "minimum": 72, "maximum": 1200},
+            },
+            "required": ["image"],
+        },
+    },
+    "print_ready": {
+        "description": "Prepare images for professional printing with DPI, bleed margins, crop marks. Supports A4, A3, Letter, poster (24x36), custom sizes. Output as TIFF or PDF. FREE.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "image": {"type": "string", "description": "Base64-encoded PNG/JPEG image"},
+                "dpi": {"type": "integer", "description": "Output DPI", "default": 300, "enum": [150, 300, 600]},
+                "bleed_mm": {"type": "number", "description": "Bleed margin in mm (0-10)", "default": 3.0},
+                "crop_marks": {"type": "boolean", "description": "Draw crop marks in bleed area", "default": True},
+                "output_format": {"type": "string", "description": "Output format", "default": "tiff", "enum": ["tiff", "pdf"]},
+                "product_size": {"type": "string", "description": "Standard paper size", "default": "a4", "enum": ["a4", "a3", "letter", "poster_24x36", "custom"]},
+                "custom_width_mm": {"type": "number", "description": "Custom width in mm (required if product_size=custom)"},
+                "custom_height_mm": {"type": "number", "description": "Custom height in mm (required if product_size=custom)"},
+            },
+            "required": ["image"],
+        },
+    },
+    "vectorize_image": {
+        "description": "Convert raster images to SVG vector format. Supports color and binary modes with precision controls. Returns raw SVG XML string. FREE.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "image": {"type": "string", "description": "Base64-encoded PNG/JPEG image"},
+                "color_precision": {"type": "integer", "description": "Color clustering precision (1-10, higher = more colors)", "default": 6, "minimum": 1, "maximum": 10},
+                "filter_speckle": {"type": "integer", "description": "Speckle filter (0-100, higher = fewer small artifacts)", "default": 4, "minimum": 0, "maximum": 100},
+                "mode": {"type": "string", "description": "Vectorization mode", "default": "color", "enum": ["color", "binary"]},
+            },
+            "required": ["image"],
+        },
+    },
+    "watermark_embed": {
+        "description": "Embed invisible DCT-domain watermark into an image. Encodes a text payload into luminance channel frequency coefficients. Survives light compression. FREE.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "image": {"type": "string", "description": "Base64-encoded PNG/JPEG image"},
+                "payload": {"type": "string", "description": "Text payload to embed (max 256 chars)", "maxLength": 256},
+                "strength": {"type": "number", "description": "Embedding strength (0.1-1.0, higher = more robust but more visible)", "default": 0.5, "minimum": 0.1, "maximum": 1.0},
+            },
+            "required": ["image", "payload"],
+        },
+    },
+    "watermark_detect": {
+        "description": "Detect and extract invisible DCT watermark from an image. Returns the embedded text payload if found. FREE.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "image": {"type": "string", "description": "Base64-encoded PNG/JPEG image"},
+            },
+            "required": ["image"],
         },
     },
     # --- Agent Storage ---

@@ -2,9 +2,9 @@
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "maintainers": ["codex-curator"],
   "name": "studiomcphub",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "title": "StudioMCPHub",
-  "description": "Creative AI tools and museum art datasets for autonomous agents. 24 MCP tools: image generation (SD 3.5 + Imagen 3), 5-model ESRGAN upscaling, tiered metadata enrichment (standard SEO + premium museum-grade), resize/convert, provenance registration, Arweave permanent storage, NFT minting, wallet storage, and 53K+ museum artworks from Alexandria Aeternum. Three payment rails: x402 USDC micropayments, Stripe per-call, and GCX credits with volume discounts.",
+  "description": "Creative AI tools and museum art datasets for autonomous agents. 32 MCP tools (18 free): image generation (SD 3.5 + Imagen 3), 5-model ESRGAN upscaling, tiered metadata enrichment, background removal, product mockups (6 products), CMYK color conversion, print-ready PDF/TIFF with bleed and crop marks, SVG vectorization, invisible DCT watermarking, palette extraction, resize/convert, provenance registration, Arweave permanent storage, NFT minting, wallet storage, and 53K+ museum artworks from Alexandria Aeternum. Three payment rails: x402 USDC micropayments, Stripe per-call, and GCX credits with volume discounts. Rate limited: 10/hr anonymous, 60/hr registered.",
   "license": "MIT",
   "repository": "https://github.com/codex-curator/studiomcphub",
   "homepage": "https://studiomcphub.com",
@@ -13,6 +13,7 @@
     "mcp", "creative-ai", "image-generation", "upscaling", "esrgan",
     "metadata", "art", "datasets", "museum", "x402", "provenance",
     "arweave", "nft", "stable-diffusion", "imagen", "resize",
-    "alexandria-aeternum", "golden-codex"
+    "background-removal", "mockup", "cmyk", "print-ready", "vectorize",
+    "watermark", "palette", "svg", "alexandria-aeternum", "golden-codex"
   ]
 }

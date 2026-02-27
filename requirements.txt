@@ -28,6 +28,11 @@ requests>=2.31.0
 
 # Image Processing
 Pillow>=10.2.0
+numpy>=1.26.0
+rembg[cpu]>=2.0.50
+vtracer>=0.6.0
+reportlab>=4.0
+scipy>=1.12.0
 
 # Crypto / Wallet
 eth-account>=0.11.0

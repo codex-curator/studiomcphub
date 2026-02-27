@@ -7,9 +7,14 @@ RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-download U2-Net model for rembg (avoid cold-start download)
+# Model downloads to ~/.u2net/ — do this before switching to appuser
+RUN python -c "from rembg import new_session; new_session('u2net')" || true
+RUN mkdir -p /home/appuser && cp -r /root/.u2net /home/appuser/.u2net 2>/dev/null || true
+
 COPY . .
 
-RUN chown -R appuser:appuser /app
+RUN chown -R appuser:appuser /app /home/appuser
 
 USER appuser
 

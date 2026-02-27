@@ -21,6 +21,14 @@ _TOOL_CATEGORIES: dict[str, str] = {
     "compliance_manifest": "dataset",
     "generate_image_nano": "creative",
     "resize_image": "creative",
+    "extract_palette": "creative",
+    "remove_background": "creative",
+    "mockup_image": "creative",
+    "convert_color_profile": "creative",
+    "print_ready": "creative",
+    "vectorize_image": "creative",
+    "watermark_embed": "creative",
+    "watermark_detect": "creative",
     "save_asset": "storage",
     "get_asset": "storage",
     "list_assets": "storage",
@@ -81,6 +89,36 @@ _TOOL_EXAMPLES: dict[str, list[dict]] = {
         {"image": "<base64-encoded-image>", "width": 512, "height": 512, "mode": "contain"},
         {"image": "<base64-encoded-image>", "width": 1200, "height": 630, "mode": "cover", "format": "jpeg", "quality": 85},
     ],
+    "extract_palette": [
+        {"image": "<base64-encoded-image>", "num_colors": 6, "format": "hex"},
+        {"image": "<base64-encoded-image>", "num_colors": 8, "format": "rgb"},
+    ],
+    "remove_background": [
+        {"image": "<base64-encoded-image>"},
+        {"image": "<base64-encoded-image>", "output_format": "webp"},
+    ],
+    "mockup_image": [
+        {"image": "<base64-encoded-image>", "product": "tshirt"},
+        {"image": "<base64-encoded-image>", "product": "poster", "background_color": "#ffffff"},
+    ],
+    "convert_color_profile": [
+        {"image": "<base64-encoded-image>", "target_profile": "cmyk", "dpi": 300},
+        {"image": "<base64-encoded-image>", "target_profile": "srgb"},
+    ],
+    "print_ready": [
+        {"image": "<base64-encoded-image>", "dpi": 300, "product_size": "a4", "output_format": "tiff"},
+        {"image": "<base64-encoded-image>", "dpi": 300, "product_size": "poster_24x36", "bleed_mm": 5, "output_format": "pdf"},
+    ],
+    "vectorize_image": [
+        {"image": "<base64-encoded-image>", "mode": "color", "color_precision": 6},
+        {"image": "<base64-encoded-image>", "mode": "binary"},
+    ],
+    "watermark_embed": [
+        {"image": "<base64-encoded-image>", "payload": "Created by MyBot 2026", "strength": 0.5},
+    ],
+    "watermark_detect": [
+        {"image": "<base64-encoded-image>"},
+    ],
 }
 
 
@@ -106,6 +144,14 @@ def dispatch_tool(tool_name: str, params: dict) -> dict[str, Any]:
         "generate_image_nano": _generate_image_nano,
         # Image utilities
         "resize_image": _resize_image,
+        "extract_palette": _extract_palette,
+        "remove_background": _remove_background,
+        "mockup_image": _mockup_image,
+        "convert_color_profile": _convert_color_profile,
+        "print_ready": _print_ready,
+        "vectorize_image": _vectorize_image,
+        "watermark_embed": _watermark_embed,
+        "watermark_detect": _watermark_detect,
         # Storage tools
         "save_asset": _save_asset,
         "get_asset": _get_asset,
@@ -188,11 +234,12 @@ def _store_permanent(params: dict) -> dict:
 
 
 def _mint_nft(params: dict) -> dict:
-    from .mint import mint_nft
-    return mint_nft(
-        image_b64=params["image"],
-        metadata=params.get("metadata", {}),
-        collection=params.get("collection"),
+    # Minting disabled until hot wallets funded (AR + POL/ETH) and
+    # OpenSea integration wired. Re-enable by removing this gate.
+    raise ValueError(
+        "mint_nft is temporarily disabled while we wire up Base L2 contract "
+        "deployment, Arweave storage, and OpenSea integration. "
+        "Follow @StudioMCPHub for launch announcement. ETA: coming soon."
     )
 
 
@@ -272,6 +319,81 @@ def _resize_image(params: dict) -> dict:
         fmt=params.get("format", "png"),
         quality=params.get("quality", 90),
     )
+
+
+# --- Creative processing tools ---
+
+def _extract_palette(params: dict) -> dict:
+    from .palette import extract_palette
+    return extract_palette(
+        image_b64=params["image"],
+        num_colors=params.get("num_colors", 6),
+        fmt=params.get("format", "hex"),
+    )
+
+
+def _remove_background(params: dict) -> dict:
+    from .remove_bg import remove_background
+    return remove_background(
+        image_b64=params["image"],
+        output_format=params.get("output_format", "png"),
+    )
+
+
+def _mockup_image(params: dict) -> dict:
+    from .mockup import mockup_image
+    return mockup_image(
+        image_b64=params["image"],
+        product=params.get("product", "tshirt"),
+        background_color=params.get("background_color", "#f5f5f5"),
+    )
+
+
+def _convert_color_profile(params: dict) -> dict:
+    from .color_profile import convert_color_profile
+    return convert_color_profile(
+        image_b64=params["image"],
+        target_profile=params.get("target_profile", "cmyk"),
+        dpi=params.get("dpi", 300),
+    )
+
+
+def _print_ready(params: dict) -> dict:
+    from .print_ready import print_ready
+    return print_ready(
+        image_b64=params["image"],
+        dpi=params.get("dpi", 300),
+        bleed_mm=params.get("bleed_mm", 3.0),
+        crop_marks=params.get("crop_marks", True),
+        output_format=params.get("output_format", "tiff"),
+        product_size=params.get("product_size", "a4"),
+        custom_width_mm=params.get("custom_width_mm"),
+        custom_height_mm=params.get("custom_height_mm"),
+    )
+
+
+def _vectorize_image(params: dict) -> dict:
+    from .vectorize import vectorize_image
+    return vectorize_image(
+        image_b64=params["image"],
+        color_precision=params.get("color_precision", 6),
+        filter_speckle=params.get("filter_speckle", 4),
+        mode=params.get("mode", "color"),
+    )
+
+
+def _watermark_embed(params: dict) -> dict:
+    from .watermark import watermark_embed
+    return watermark_embed(
+        image_b64=params["image"],
+        payload=params["payload"],
+        strength=params.get("strength", 0.5),
+    )
+
+
+def _watermark_detect(params: dict) -> dict:
+    from .watermark import watermark_detect
+    return watermark_detect(image_b64=params["image"])
 
 
 # --- Storage tools ---

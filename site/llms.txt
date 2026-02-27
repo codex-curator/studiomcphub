@@ -1,10 +1,11 @@
 # StudioMCPHub
 ## Creative AI Tools + Art Datasets for Autonomous Agents
 
-StudioMCPHub is an MCP server offering creative AI tools and museum art
-datasets as paid services. Generate images, upscale them, enrich metadata,
-embed provenance, store on Arweave, mint NFTs, and access 53K+ museum
-artworks from Alexandria Aeternum — all via the Model Context Protocol.
+StudioMCPHub is an MCP server offering 32 creative AI tools and museum art
+datasets as paid services. Generate images, upscale, remove backgrounds,
+create product mockups, convert color profiles, prep for print, vectorize,
+watermark, enrich metadata, embed provenance, store on Arweave, mint NFTs
+on Base L2, and access 53K+ museum artworks — all via the Model Context Protocol.
 
 ## MCP Endpoint
 Transport: Streamable HTTP
@@ -30,7 +31,7 @@ Input: wallet (string, 0x...)
 Output: gcx_balance, loyalty_credits, tier, discount_pct
 
 ## Progressive Discovery
-Call search_tools first to discover tools without loading all 24 schemas.
+Call search_tools first to discover tools without loading all 32 schemas.
 Then call get_tool_schema for only the tools you need. ~98% token savings.
 
 ### search_tools (FREE)
@@ -63,7 +64,7 @@ Output: Base64-encoded upscaled PNG, model used, scale factor
 
 ### enrich_metadata ($0.20 / 2 GCX)
 AI-powered metadata generation with two tiers:
-- tier="standard" (2 GCX): SEO-optimized title, description, keywords, alt_text via Nova-Lite. Fast, lightweight, great for basic tagging.
+- tier="standard" (1 GCX): SEO-optimized title, description, keywords, alt_text via Nova-Lite. Fast, lightweight, great for basic tagging.
 - tier="premium" (2 GCX, default): Full 8-section Golden Codex museum-grade analysis via Nova/Gemini 2.5 Pro — palette, composition, symbolism, emotional resonance, provenance context.
 Also accepts content_type: "artwork" or "photo" to adjust analysis style.
 Input: image (base64 PNG/JPEG), tier (string), content_type (string)
@@ -88,9 +89,12 @@ Input: image (base64), metadata (optional JSON)
 Output: arweave_tx_id, arweave_url
 
 ### mint_nft ($1.00 / 10 GCX)
-Mint as NFT on Polygon with on-chain provenance link.
-Input: image (base64), metadata (Golden Codex JSON), collection (optional)
-Output: token_id, contract_address, tx_hash
+Mint as NFT on Base L2 (Aeternum Collection) or Polygon. Image + metadata
+stored permanently on Arweave. Auto-listed on OpenSea.
+Input: image (base64), recipient_wallet (0x..., required), chain ("base"|"polygon"),
+  title, description, attributes (trait_type/value array), metadata (Golden Codex JSON)
+Output: token_id, contract_address, tx_hash, arweave_image_url, arweave_metadata_url,
+  opensea_url, explorer_url, chain
 
 ### verify_provenance (FREE)
 Check an image against the Aegis hash index for provenance.
@@ -104,12 +108,65 @@ before committing to HD renders. Prompts are enhanced by AI for quality.
 Input: prompt (string), width (1024 or 2048), height (1024 or 2048), enhance_prompt (bool)
 Output: Base64-encoded PNG image
 
-### resize_image ($0.10 / 1 GCX)
+### resize_image (FREE)
 Resize images to target dimensions with three fit modes.
 Modes: 'contain' (fit within bounds), 'cover' (crop to fill), 'stretch' (exact size).
 Output formats: PNG, JPEG, WebP. Max 8192x8192.
 Input: image (base64), width (int), height (int), mode (string), format (string), quality (int)
 Output: Base64-encoded resized image + dimensions
+
+### extract_palette (FREE)
+Extract dominant color palette from an image using K-means quantization.
+Returns colors in hex/RGB/HSL with percentages and closest CSS color name.
+Great for design systems, mood boards, color matching, and theming.
+Input: image (base64), num_colors (3-12, default 6), format ("hex"|"rgb"|"hsl")
+Output: colors[] (hex, rgb, hsl, percentage, css_name), dominant_color, complementary_colors
+
+### remove_background (FREE)
+Remove image background using AI (U2-Net neural network). Returns RGBA
+image with transparent background. Perfect for product photos, portraits,
+design assets, and e-commerce listings.
+Input: image (base64), output_format ("png"|"webp", default "png")
+Output: Base64-encoded RGBA image + dimensions
+
+### mockup_image (1 GCX / $0.10)
+Place your design onto product mockups for instant visualization.
+Products: tshirt, poster, canvas, phone_case, mug, tote_bag.
+Great for print-on-demand previews and e-commerce.
+Input: image (base64 design), product (string), background_color (hex)
+Output: Base64-encoded mockup image + product info
+
+### convert_color_profile (FREE)
+Convert between sRGB and CMYK color profiles. Essential for print production.
+CMYK output as TIFF with embedded ICC profile and DPI.
+Input: image (base64), target_profile ("cmyk"|"srgb"), dpi (72-1200)
+Output: Base64-encoded image (TIFF for CMYK, PNG for sRGB) + profile info
+
+### print_ready (FREE)
+Prepare images for professional printing. Adds bleed margins, crop marks,
+sets DPI, sizes to standard paper formats. Output as TIFF or PDF.
+Sizes: a4, a3, letter, poster_24x36, custom.
+Input: image (base64), dpi (150/300/600), bleed_mm (0-10), crop_marks (bool),
+  output_format ("tiff"|"pdf"), product_size, custom_width_mm, custom_height_mm
+Output: Base64-encoded print-ready file + specs
+
+### vectorize_image (FREE)
+Convert raster images to SVG vector format using vtracer.
+Supports color and binary (monochrome) modes with precision controls.
+Input: image (base64), color_precision (1-10), filter_speckle (0-100), mode ("color"|"binary")
+Output: SVG XML string (raw, not base64), path_count, dimensions
+
+### watermark_embed (FREE)
+Embed invisible DCT-domain watermark into an image's luminance channel.
+Encodes a text payload into mid-frequency coefficients. Survives light compression.
+Input: image (base64), payload (string, max 256 chars), strength (0.1-1.0)
+Output: Base64-encoded watermarked image + embedding info
+
+### watermark_detect (FREE)
+Detect and extract invisible DCT watermark from an image.
+Returns the embedded text payload if found, with confidence score.
+Input: image (base64)
+Output: payload_detected (string|null), confidence (float), watermark_found (bool)
 
 ### full_pipeline ($0.50 / 5 GCX)
 Run the complete creative pipeline: generate, upscale, enrich, infuse,
@@ -121,7 +178,7 @@ Output: All stage outputs + final artifact URLs
 
 ### save_asset ($0.10 / 1 GCX)
 Save an image or data to your personal wallet storage. 100MB free per wallet, 500 assets max.
-Input: wallet (string, 0x...), key (string, unique name), data (base64, max 5MB), content_type (string), metadata (optional JSON)
+Input: wallet (string, 0x...), key (string, unique name), data (base64, max 10MB), content_type (string), metadata (optional JSON)
 Output: key, size_bytes, wallet, storage_url
 
 ### get_asset (FREE)

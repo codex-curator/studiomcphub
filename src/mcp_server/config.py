@@ -45,8 +45,16 @@ PRICING = {
     "compliance_manifest":   ToolPricing(gcx_credits=0),   # FREE  — AB 2013 + EU AI Act compliance
     # --- Nano Banana Pro (Imagen 3) ---
     "generate_image_nano":   ToolPricing(gcx_credits=1),   # $0.10 — Imagen 3 fast (concept iteration)
-    # --- Image Utilities ---
-    "resize_image":          ToolPricing(gcx_credits=1),   # $0.10 — resize/crop/fit to target dimensions
+    # --- Image Utilities (ALL FREE — zero marginal cost, local Pillow/numpy) ---
+    "resize_image":          ToolPricing(gcx_credits=0),   # FREE  — resize/crop/fit
+    "extract_palette":       ToolPricing(gcx_credits=0),   # FREE  — color extraction
+    "remove_background":     ToolPricing(gcx_credits=0),   # FREE  — AI bg removal (U2-Net, local)
+    "mockup_image":          ToolPricing(gcx_credits=1),   # $0.10 — product mockup compositing (compute-heavy)
+    "convert_color_profile": ToolPricing(gcx_credits=0),   # FREE  — sRGB/CMYK conversion
+    "print_ready":           ToolPricing(gcx_credits=0),   # FREE  — print prep (DPI/bleed/marks)
+    "vectorize_image":       ToolPricing(gcx_credits=0),   # FREE  — raster to SVG
+    "watermark_embed":       ToolPricing(gcx_credits=0),   # FREE  — DCT watermark embedding
+    "watermark_detect":      ToolPricing(gcx_credits=0),   # FREE  — watermark detection
     # --- Agent Storage ---
     "save_asset":            ToolPricing(gcx_credits=1),   # $0.10 — save to wallet storage (10MB max)
     "get_asset":             ToolPricing(gcx_credits=0),   # FREE  — retrieve stored asset
@@ -126,6 +134,11 @@ class Config:
     x402_wallet: str = os.getenv("X402_WALLET", "0xFE141943a93c184606F3060103D975662327063B")
     x402_chain: str = os.getenv("X402_CHAIN", "base")  # Base L2
 
+    # Base L2 minting (Aeternum Collection)
+    base_rpc_url: str = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
+    base_contract_address: str = os.getenv("BASE_CONTRACT_ADDRESS", "")
+    minter_private_key: str = os.getenv("MINTER_PRIVATE_KEY", "")  # From GCP Secret Manager
+
     # Stripe
     stripe_secret_key: str = os.getenv("STRIPE_SECRET_KEY", "")
 
@@ -139,12 +152,12 @@ class Config:
 
     # MCP Server metadata
     server_name: str = "StudioMCPHub"
-    server_version: str = "0.4.0"
+    server_version: str = "0.5.0"
     server_description: str = (
-        "Creative AI tools and art datasets for autonomous agents. "
-        "Image generation, upscaling, metadata enrichment, provenance registration, "
-        "permanent storage, NFT minting, and access to 53K+ museum artworks "
-        "from the Alexandria Aeternum dataset."
+        "32 creative AI tools and art datasets for autonomous agents. "
+        "Image generation, upscaling, background removal, mockups, color conversion, "
+        "print prep, vectorization, watermarking, metadata enrichment, provenance, "
+        "Arweave storage, Base L2 NFT minting, and 53K+ museum artworks."
     )
 
 

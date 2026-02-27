@@ -1,0 +1,39 @@
+{
+  "api_url": "https://studiomcphub.com/api/tools",
+  "wallet": null,
+  "dam_root": "dam",
+  "stages": [
+    "remove_bg",
+    "palette",
+    "resize",
+    "mockup",
+    "cmyk",
+    "print_ready",
+    "vectorize",
+    "watermark",
+    "enrich",
+    "upscale"
+  ],
+  "mockup_products": [
+    "tshirt",
+    "poster",
+    "canvas",
+    "phone_case",
+    "mug",
+    "tote_bag"
+  ],
+  "print_sizes": [
+    { "name": "a4", "width_mm": 210, "height_mm": 297, "bleed_mm": 3.0 },
+    { "name": "poster_24x36", "width_mm": 610, "height_mm": 914, "bleed_mm": 3.0 }
+  ],
+  "resize": {
+    "max_width": 2048,
+    "max_height": 2048,
+    "format": "png"
+  },
+  "enrich_tier": "standard",
+  "upscale_model": "RealESRGAN_x4plus",
+  "watermark_text": "StudioMCPHub",
+  "timeout_s": 120,
+  "max_retries": 2
+}

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support — StudioMCPHub</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230a0a0f'/><text x='16' y='23' font-size='20' text-anchor='middle' fill='%237c5cff'>S</text></svg>">
+    <style>
+        :root { --bg:#0a0a0f; --surface:#111119; --border:#1e1e2e; --text:#e0e0e8; --dim:#7878a0; --accent:#7c5cff; --teal:#00d4aa; --mono:'SF Mono','Fira Code','Cascadia Code','JetBrains Mono',monospace; --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:var(--sans); line-height:1.7; }
+        a { color:var(--accent); text-decoration:none; }
+        a:hover { color:var(--teal); }
+        nav { position:sticky; top:0; z-index:100; background:rgba(10,10,15,0.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:12px 0; }
+        nav .c { max-width:800px; margin:0 auto; padding:0 24px; display:flex; align-items:center; justify-content:space-between; }
+        .brand { font-family:var(--mono); font-size:13px; color:var(--dim); letter-spacing:2px; text-transform:uppercase; }
+        .brand strong { color:var(--accent); }
+        .nav-links { display:flex; gap:16px; font-size:12px; }
+        .nav-links a { color:var(--dim); }
+        .content { max-width:800px; margin:0 auto; padding:48px 24px 80px; }
+        h1 { font-family:var(--mono); font-size:24px; color:var(--accent); margin-bottom:8px; }
+        .subtitle { font-size:14px; color:var(--dim); margin-bottom:40px; }
+        h2 { font-family:var(--mono); font-size:16px; color:var(--teal); margin:32px 0 12px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+        p, li { font-size:14px; color:#c0c0d0; margin-bottom:12px; }
+        ul { padding-left:20px; margin-bottom:16px; }
+        li { margin-bottom:6px; }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:20px; margin:16px 0; }
+        .card h3 { font-family:var(--mono); font-size:14px; color:var(--text); margin-bottom:8px; }
+        .card p { margin-bottom:8px; }
+        code { font-family:var(--mono); font-size:12px; background:var(--surface); padding:2px 6px; border-radius:3px; color:var(--teal); }
+        .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0; }
+        @media (max-width:600px) { .grid { grid-template-columns:1fr; } }
+
+        /* Ticket form */
+        .form-group { margin-bottom:16px; }
+        label { display:block; font-size:12px; color:var(--dim); font-family:var(--mono); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px; }
+        input, textarea, select { width:100%; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:var(--sans); font-size:14px; }
+        input:focus, textarea:focus, select:focus { outline:none; border-color:var(--accent); }
+        textarea { min-height:100px; resize:vertical; }
+        select { appearance:none; cursor:pointer; }
+        button { padding:10px 24px; background:var(--accent); color:#fff; border:none; border-radius:6px; font-size:14px; cursor:pointer; font-family:var(--mono); }
+        button:hover { background:#6a4ae0; }
+        .status { font-size:13px; font-family:var(--mono); margin-top:12px; padding:8px 12px; border-radius:4px; display:none; }
+        .status.ok { display:block; background:#0a2a1a; border:1px solid var(--teal); color:var(--teal); }
+        .status.err { display:block; background:#2a0a0a; border:1px solid #ff4444; color:#ff4444; }
+        footer { text-align:center; padding:40px 0; font-size:11px; color:#444466; font-family:var(--mono); }
+    </style>
+</head>
+<body>
+    <nav><div class="c">
+        <a href="/" class="brand"><strong>Studio</strong>MCPHub</a>
+        <div class="nav-links">
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+            <a href="/guide">Guide</a>
+        </div>
+    </div></nav>
+
+    <div class="content">
+        <h1>Support</h1>
+        <p class="subtitle">We respond to all tickets within 24 hours.</p>
+
+        <h2>Contact</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>General Support</h3>
+                <p><a href="mailto:support@studiomcphub.com">support@studiomcphub.com</a></p>
+                <p>Bugs, feature requests, account issues</p>
+            </div>
+            <div class="card">
+                <h3>Enterprise Inquiries</h3>
+                <p><a href="mailto:enterprise@metavolve.com">enterprise@metavolve.com</a></p>
+                <p>Volume licensing, custom integrations, SLA</p>
+            </div>
+            <div class="card">
+                <h3>Security Reports</h3>
+                <p><a href="mailto:security@metavolve.com">security@metavolve.com</a></p>
+                <p>See <a href="https://github.com/codex-curator/studiomcphub/blob/master/SECURITY.md">SECURITY.md</a></p>
+            </div>
+            <div class="card">
+                <h3>Privacy Concerns</h3>
+                <p><a href="mailto:privacy@metavolve.com">privacy@metavolve.com</a></p>
+                <p>Data requests, GDPR/CCPA, deletion</p>
+            </div>
+        </div>
+
+        <h2>Documentation</h2>
+        <ul>
+            <li><a href="/guide">Bot & Agent Integration Guide</a> &mdash; step-by-step setup for Claude, Cursor, and other MCP clients</li>
+            <li><a href="/llms.txt">llms.txt</a> &mdash; machine-readable documentation for AI agents</li>
+            <li><a href="/.well-known/mcp.json">MCP Server Card</a> &mdash; auto-discovery metadata</li>
+            <li><a href="/pricing">Pricing API</a> &mdash; machine-readable pricing for all 32 tools</li>
+            <li><a href="/openapi.json">OpenAPI 3.0 Spec</a> &mdash; full API schema</li>
+            <li><a href="https://github.com/codex-curator/studiomcphub">GitHub Repository</a> &mdash; source code, issues, discussions</li>
+        </ul>
+
+        <h2>Common Issues</h2>
+        <div class="card">
+            <h3>Payment not applied</h3>
+            <p>x402 payments are verified on-chain and may take a few seconds. If your credits weren't applied, include the transaction hash in your ticket below.</p>
+        </div>
+        <div class="card">
+            <h3>Tool returning errors</h3>
+            <p>Check that your image is under 20MB and in a supported format (PNG, JPG, WebP). For <code>print_ready</code>, use <code>product_size</code> parameter (e.g., "a4", "poster_24x36").</p>
+        </div>
+        <div class="card">
+            <h3>Rate limited</h3>
+            <p>Free tools: 10 calls/hour (anonymous) or 60/hour (registered wallet). Register a wallet at <code>POST /api/wallet/register</code> for higher limits and 10 free GCX credits.</p>
+        </div>
+
+        <h2>Submit a Ticket</h2>
+        <form id="ticket-form">
+            <div class="form-group">
+                <label>Type</label>
+                <select id="t-type">
+                    <option value="bug">Bug Report</option>
+                    <option value="credit_issue">Payment / Credit Issue</option>
+                    <option value="feature_request">Feature Request</option>
+                    <option value="feedback">General Feedback</option>
+                    <option value="compliance">Copyright / Content Concern</option>
+                    <option value="enterprise">Enterprise Inquiry</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Subject</label>
+                <input type="text" id="t-subject" placeholder="Brief summary of your issue" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="t-desc" placeholder="Full details. Include tool name, error messages, and steps to reproduce." required></textarea>
+            </div>
+            <div class="grid">
+                <div class="form-group">
+                    <label>Email (optional)</label>
+                    <input type="email" id="t-email" placeholder="For follow-up responses">
+                </div>
+                <div class="form-group">
+                    <label>Wallet Address (optional)</label>
+                    <input type="text" id="t-wallet" placeholder="0x...">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Transaction Hash (optional)</label>
+                <input type="text" id="t-tx" placeholder="For payment issues">
+            </div>
+            <button type="submit">Submit Ticket</button>
+            <div class="status" id="t-status"></div>
+        </form>
+    </div>
+
+    <footer>Metavolve Labs, Inc. &middot; San Francisco, California</footer>
+
+    <script>
+    document.getElementById('ticket-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const st = document.getElementById('t-status');
+        st.className = 'status'; st.style.display = 'none';
+        try {
+            const r = await fetch('/api/support/tickets', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    type: document.getElementById('t-type').value,
+                    subject: document.getElementById('t-subject').value,
+                    description: document.getElementById('t-desc').value,
+                    email: document.getElementById('t-email').value || undefined,
+                    wallet: document.getElementById('t-wallet').value || undefined,
+                    tx_hash: document.getElementById('t-tx').value || undefined,
+                })
+            });
+            const d = await r.json();
+            if (r.ok) {
+                st.className = 'status ok';
+                st.textContent = 'Ticket ' + d.ticket_id + ' created. We\'ll respond within 24 hours.';
+                e.target.reset();
+            } else {
+                st.className = 'status err';
+                st.textContent = d.error || 'Something went wrong.';
+            }
+        } catch (err) {
+            st.className = 'status err';
+            st.textContent = 'Network error. Please email support@studiomcphub.com instead.';
+        }
+    });
+    </script>
+</body>
+</html>

@@ -1,8 +1,8 @@
 {
   "name": "StudioMCPHub",
-  "description": "Creative AI tools and museum art datasets for autonomous agents. 24 MCP tools: image generation (SD 3.5 + Imagen 3), 5-model ESRGAN upscaling, tiered metadata enrichment, resize/convert, provenance registration, Arweave permanent storage, NFT minting, wallet storage, and 53K+ museum artworks from Alexandria Aeternum.",
+  "description": "32 creative AI tools and art datasets for autonomous agents. Image generation (SD 3.5 + Imagen 3), 5-model ESRGAN upscaling, background removal, product mockups, color profile conversion, print-ready prep, vectorization, DCT watermarking, tiered metadata enrichment, provenance registration, Arweave storage, Base L2 NFT minting, wallet storage, and 53K+ museum artworks from Alexandria Aeternum.",
   "url": "https://studiomcphub.com",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "capabilities": {
     "streaming": true,
     "pushNotifications": false
@@ -28,7 +28,7 @@
     },
     {
       "type": "none",
-      "description": "Free tools (10 of 24) require no authentication."
+      "description": "Free tools (19 of 32) require no authentication."
     }
   ],
   "skills": [
@@ -70,9 +70,65 @@
     {
       "id": "resize_image",
       "name": "Resize Image",
-      "description": "Resize images to target dimensions. Modes: contain, cover, stretch. Formats: PNG, JPEG, WebP. $0.10 / 1 GCX.",
-      "tags": ["creative", "utility", "paid"],
+      "description": "Resize images to target dimensions. Modes: contain, cover, stretch. Formats: PNG, JPEG, WebP. FREE.",
+      "tags": ["creative", "utility", "free"],
       "examples": ["Resize to 512x512 cover mode as JPEG"]
+    },
+    {
+      "id": "extract_palette",
+      "name": "Extract Palette",
+      "description": "Extract dominant color palette from an image. Returns hex/RGB/HSL with percentages and CSS names. FREE.",
+      "tags": ["creative", "color", "design", "free"],
+      "examples": ["Extract 8 colors from my artwork in hex format"]
+    },
+    {
+      "id": "remove_background",
+      "name": "Remove Background",
+      "description": "AI background removal using U2-Net. Returns RGBA with transparent background. FREE.",
+      "tags": ["creative", "ai", "background", "free"],
+      "examples": ["Remove the background from a product photo"]
+    },
+    {
+      "id": "mockup_image",
+      "name": "Mockup Image",
+      "description": "Place design onto product mockups (t-shirt, poster, canvas, phone case, mug, tote bag). FREE.",
+      "tags": ["creative", "mockup", "ecommerce", "free"],
+      "examples": ["Put my design on a t-shirt mockup"]
+    },
+    {
+      "id": "convert_color_profile",
+      "name": "Convert Color Profile",
+      "description": "Convert between sRGB and CMYK color profiles for print production. FREE.",
+      "tags": ["creative", "print", "cmyk", "free"],
+      "examples": ["Convert my image to CMYK at 300 DPI"]
+    },
+    {
+      "id": "print_ready",
+      "name": "Print Ready",
+      "description": "Prepare images for professional printing with DPI, bleed, crop marks. A4/A3/Letter/poster sizes. FREE.",
+      "tags": ["creative", "print", "production", "free"],
+      "examples": ["Prepare my image for A3 poster printing at 300 DPI with 3mm bleed"]
+    },
+    {
+      "id": "vectorize_image",
+      "name": "Vectorize Image",
+      "description": "Convert raster images to SVG vector format. Color and binary modes. FREE.",
+      "tags": ["creative", "vector", "svg", "free"],
+      "examples": ["Convert my logo to SVG with high color precision"]
+    },
+    {
+      "id": "watermark_embed",
+      "name": "Watermark Embed",
+      "description": "Embed invisible DCT-domain watermark into image luminance channel. FREE.",
+      "tags": ["creative", "watermark", "provenance", "free"],
+      "examples": ["Embed my name as an invisible watermark"]
+    },
+    {
+      "id": "watermark_detect",
+      "name": "Watermark Detect",
+      "description": "Detect and extract invisible DCT watermark from an image. FREE.",
+      "tags": ["creative", "watermark", "verification", "free"],
+      "examples": ["Check if this image has a hidden watermark"]
     },
     {
       "id": "enrich_metadata",
@@ -105,9 +161,9 @@
     {
       "id": "mint_nft",
       "name": "Mint NFT",
-      "description": "Mint as NFT on Polygon with on-chain provenance link. $1.00 / 10 GCX.",
-      "tags": ["creative", "nft", "polygon", "paid"],
-      "examples": ["Mint an artwork as an NFT on Polygon"]
+      "description": "Mint as NFT on Base L2 (Aeternum Collection) or Polygon. Arweave-backed metadata. Auto-listed on OpenSea. $1.00 / 10 GCX.",
+      "tags": ["creative", "nft", "base", "polygon", "arweave", "paid"],
+      "examples": ["Mint an artwork as an NFT on Base to my wallet"]
     },
     {
       "id": "verify_provenance",
@@ -202,9 +258,10 @@
     }
   ],
   "tags": [
-    "creative-ai", "art", "image-generation", "upscaling", "metadata",
-    "provenance", "arweave", "nft", "dataset", "museum-art",
-    "golden-codex", "x402", "mcp", "resize", "wallet-storage"
+    "creative-ai", "art", "image-generation", "upscaling", "background-removal",
+    "mockups", "color-profile", "print-ready", "vectorization", "watermarking",
+    "metadata", "provenance", "arweave", "nft", "base-l2", "dataset",
+    "museum-art", "golden-codex", "x402", "mcp", "resize", "wallet-storage"
   ],
   "links": {
     "mcp_endpoint": "https://studiomcphub.com/mcp",

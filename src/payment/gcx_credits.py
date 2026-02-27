@@ -132,6 +132,40 @@ def ensure_account(user_id: str) -> bool:
         return False
 
 
+def refund_credits(user_id: str, amount: int, tool_name: str) -> bool:
+    """Refund GCX credits when a tool call fails after payment.
+
+    This is the safety net: if dispatch_tool raises an exception after
+    credits were deducted, the caller should refund immediately.
+    """
+    db = _get_db()
+    ref = db.collection("gcx_accounts").document(user_id)
+
+    @firestore.transactional
+    def _refund(transaction):
+        doc = ref.get(transaction=transaction)
+        if not doc.exists:
+            return False
+        current = doc.to_dict().get("balance", 0)
+        new_balance = current + amount
+        transaction.update(ref, {
+            "balance": new_balance,
+            "last_updated": datetime.now(timezone.utc),
+        })
+        tx_ref = db.collection("gcx_transactions").document()
+        transaction.set(tx_ref, {
+            "user_id": user_id,
+            "type": "credit",
+            "amount": amount,
+            "reason": f"refund:tool_failure:{tool_name}",
+            "balance_after": new_balance,
+            "timestamp": datetime.now(timezone.utc),
+        })
+        return True
+
+    return _refund(db.transaction())
+
+
 def create_account(user_id: str, email: str = "") -> dict:
     """Create a new GCX account."""
     db = _get_db()

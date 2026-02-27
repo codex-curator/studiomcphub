@@ -4,12 +4,16 @@
 name: studiomcphub
 display_name: "StudioMCPHub — Creative AI Tools"
 description: |
-  The first MCP server offering a complete creative AI post-production pipeline.
-  9 tools: image generation (SD 3.5L), ESRGAN upscaling, AI metadata enrichment,
-  XMP/C2PA infusion, perceptual hash registration, Arweave permanent storage,
-  and Polygon NFT minting. Pay per call with x402 (USDC), Stripe, or GCX credits.
+  32 MCP tools (18 free) for the complete creative AI pipeline.
+  Image generation (SD 3.5L + Imagen 3), 5-model ESRGAN upscaling,
+  background removal, product mockups, CMYK conversion, print-ready PDF,
+  SVG vectorization, invisible watermarking, palette extraction, AI metadata
+  enrichment, XMP/C2PA infusion, perceptual hash registration, Arweave
+  permanent storage, and NFT minting. Pay per call with x402 (USDC),
+  Stripe, or GCX credits. 53K+ museum artworks included.
+  Rate limited: 10/hr anonymous, 60/hr registered.
 
-version: "0.1.0"
+version: "0.5.0"
 author: "Metavolve Labs"
 homepage: "https://studiomcphub.com"
 repository: "https://github.com/codex-curator/studiomcphub"
@@ -28,6 +32,14 @@ tags:
   - creative-ai
   - x402
   - paid
+  - background-removal
+  - mockup
+  - cmyk
+  - print-ready
+  - vectorize
+  - watermark
+  - palette
+  - svg
 
 categories:
   - creative
@@ -36,6 +48,7 @@ categories:
 
 tools:
   - generate_image
+  - generate_image_nano
   - upscale_image
   - enrich_metadata
   - infuse_metadata
@@ -44,3 +57,25 @@ tools:
   - mint_nft
   - verify_provenance
   - full_pipeline
+  - search_artworks
+  - get_artwork
+  - get_artwork_oracle
+  - batch_download
+  - compliance_manifest
+  - resize_image
+  - extract_palette
+  - remove_background
+  - mockup_image
+  - convert_color_profile
+  - print_ready
+  - vectorize_image
+  - watermark_embed
+  - watermark_detect
+  - save_asset
+  - get_asset
+  - list_assets
+  - delete_asset
+  - register_wallet
+  - check_balance
+  - search_tools
+  - get_tool_schema
