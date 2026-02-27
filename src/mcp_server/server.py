@@ -30,6 +30,8 @@ from mcp.types import ListToolsRequest, CallToolRequest, CallToolRequestParams
 from .config import config, PRICING, GCX_PER_DOLLAR, ToolPricing
 from .mcp_tools import create_mcp_server
 from .admin import admin_bp
+from ..auth.oauth import oauth_bp
+from ..auth.tokens import resolve_bearer_to_wallet as _resolve_bearer
 
 # Optional: rate limiting
 try:
@@ -93,6 +95,13 @@ _mcp_sessions: dict[str, tuple] = {}
 
 # Register admin panel
 app.register_blueprint(admin_bp)
+
+# Register OAuth 2.1 endpoints
+app.register_blueprint(oauth_bp)
+
+# Flask session secret for OAuth consent CSRF protection
+import secrets as _secrets
+app.secret_key = os.getenv("SECRET_KEY", _secrets.token_urlsafe(32))
 
 
 # ---------------------------------------------------------------------------
@@ -588,20 +597,22 @@ def check_payment(tool_name: str) -> tuple[str, dict] | None:
         logger.warning(f"x402 payment verification failed for {tool_name}")
         return None
 
-    # Check API key / GCX credit (Bearer token = user_id for GCX)
+    # Check API key / GCX credit (Bearer token = wallet or OAuth JWT)
     auth = request.headers.get("Authorization", "")
     if auth.startswith("Bearer "):
         token = auth[7:]
+        # Resolve OAuth JWT to wallet address (no-op for raw wallet addresses)
+        resolved = _resolve_bearer(token) or token
         from ..payment.gcx_credits import deduct_credits
-        if deduct_credits(user_id=token, amount=price.gcx_credits, tool_name=tool_name):
+        if deduct_credits(user_id=resolved, amount=price.gcx_credits, tool_name=tool_name):
             # Post-payment hook: loyalty credit-back (fire-and-forget)
             try:
                 from ..payment.loyalty import earn_loyalty
-                earn_loyalty(token, price.gcx_credits, tool_name)
+                earn_loyalty(resolved, price.gcx_credits, tool_name)
             except Exception as e:
                 logger.warning(f"earn_loyalty failed: {e}")
-            return ("gcx", {"token": token, "gcx_deducted": price.gcx_credits})
-        logger.warning(f"GCX deduction failed for {tool_name} (user={token})")
+            return ("gcx", {"token": resolved, "gcx_deducted": price.gcx_credits})
+        logger.warning(f"GCX deduction failed for {tool_name} (user={resolved})")
         return None
 
     # Check Stripe payment intent
@@ -676,7 +687,8 @@ def _tool_rate_key():
     """Rate-limit key: wallet (if present) or IP address."""
     auth = request.headers.get("Authorization", "")
     if auth.startswith("Bearer ") and len(auth) > 10:
-        return f"wallet:{auth[7:]}"
+        wallet = _resolve_bearer(auth[7:]) or auth[7:]
+        return f"wallet:{wallet}"
     return f"ip:{get_remote_address()}"
 
 
@@ -741,6 +753,12 @@ def execute_tool(tool_name: str):
             "error": "Missing required parameter 'query'",
             "tool": tool_name,
         }), 400
+    if tool_name == "get_tool_schema" and "tool_name" not in params_preview:
+        return jsonify({
+            "error": "Missing required parameter 'tool_name'",
+            "tool": tool_name,
+            "hint": "Use search_tools to discover available tool names.",
+        }), 400
 
     payment = check_payment(tool_name)
     if payment is None:
@@ -762,6 +780,28 @@ def execute_tool(tool_name: str):
             "result": result,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         })
+    except ValueError as e:
+        error_msg = str(e).lower()
+        # Return 400 for validation errors, 404 for not-found
+        status = 404 if "not found" in error_msg or "not exist" in error_msg else 400
+        logger.warning(f"Tool {tool_name} ValueError: {e}")
+        # Refund GCX on validation/not-found errors too
+        if method == "gcx":
+            try:
+                from ..payment.gcx_credits import refund_credits
+                token = details.get("token", "")
+                gcx_amount = details.get("gcx_deducted", 0)
+                if token and gcx_amount > 0:
+                    refund_credits(user_id=token, amount=gcx_amount, tool_name=tool_name)
+                    logger.info(f"Auto-refunded {gcx_amount} GCX to {token} for failed {tool_name}")
+            except Exception as refund_err:
+                logger.error(f"Refund failed for {tool_name}: {refund_err}")
+        return jsonify({
+            "tool": tool_name,
+            "status": "error",
+            "error": str(e),
+            "refunded": method == "gcx",
+        }), status
     except Exception as e:
         logger.error(f"Tool {tool_name} failed: {e}")
         # Auto-refund GCX credits on tool failure — service not rendered

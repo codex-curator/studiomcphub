@@ -77,6 +77,9 @@ def extract_palette(
     img = Image.open(io.BytesIO(raw)).convert("RGB")
     logger.info("extract_palette: %dx%d, %d colors, format=%s", img.width, img.height, num_colors, fmt)
 
+    if img.width < 4 or img.height < 4:
+        raise ValueError(f"Image too small ({img.width}x{img.height}). Minimum 4x4 pixels for palette extraction.")
+
     # Resize to 256x256 for speed
     img = img.resize((256, 256), Image.LANCZOS)
 

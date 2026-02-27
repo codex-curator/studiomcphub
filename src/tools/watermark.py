@@ -110,6 +110,9 @@ def watermark_embed(
     y_channel = np.array(img)[:, :, 0].astype(np.float64)
     h, w = y_channel.shape
 
+    if w < BLOCK_SIZE or h < BLOCK_SIZE:
+        raise ValueError(f"Image too small ({w}x{h}). Minimum {BLOCK_SIZE}x{BLOCK_SIZE} pixels for DCT watermarking.")
+
     bits = _text_to_bits(payload)
     logger.info("watermark_embed: %dx%d, payload=%d chars, %d bits, strength=%.2f", w, h, len(payload), len(bits), strength)
 

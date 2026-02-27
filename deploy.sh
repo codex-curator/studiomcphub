@@ -31,7 +31,7 @@ gcloud run deploy "${SERVICE_NAME}" \
     --max-instances=10 \
     --timeout=300 \
     --set-env-vars="GCP_PROJECT=${PROJECT_ID},GCP_REGION=${REGION},FIRESTORE_DATABASE=golden-codex-database,DATA_PORTAL_URL=https://data-portal-172867820131.us-west1.run.app" \
-    --set-secrets="STRIPE_SECRET_KEY=stripe_secret_api:latest,ADMIN_SECRET=ADMIN_SECRET:latest"
+    --set-secrets="STRIPE_SECRET_KEY=stripe_secret_api:latest,ADMIN_SECRET=ADMIN_SECRET:latest,JWT_SECRET=JWT_SECRET:latest,SECRET_KEY=SECRET_KEY:latest"
 
 # Get URL
 echo "[3/3] Getting service URL..."

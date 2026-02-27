@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Authorize — StudioMCPHub</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.consent-box{background:#12121a;border:1px solid #2a2a3a;border-radius:12px;padding:40px;width:420px}
+.consent-box h1{font-size:1.4rem;margin-bottom:4px;color:#7c5cff}
+.consent-box .subtitle{font-size:0.85rem;color:#888;margin-bottom:24px}
+.client-info{background:#1a1a2e;border:1px solid #2a2a3a;border-radius:8px;padding:16px;margin-bottom:20px}
+.client-name{font-weight:600;font-size:1.1rem;color:#e0e0e0}
+.client-untrusted{background:#3a2a1a;border-color:#6a4a2a}
+.client-untrusted .warning{color:#f0a040;font-size:0.8rem;margin-top:8px}
+.scopes{margin-bottom:20px}
+.scopes h3{font-size:0.85rem;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em}
+.scopes ul{list-style:none;padding:0}
+.scopes li{padding:6px 0;font-size:0.9rem;color:#ccc}
+.scopes li::before{content:"✓ ";color:#7c5cff;font-weight:bold}
+label.wallet-label{display:block;font-size:0.85rem;color:#888;margin-bottom:6px}
+input[type=text]{width:100%;padding:12px 16px;background:#1a1a2e;border:1px solid #2a2a3a;border-radius:8px;color:#e0e0e0;font-size:0.95rem;font-family:monospace;margin-bottom:6px;outline:none}
+input[type=text]:focus{border-color:#7c5cff}
+.wallet-hint{font-size:0.75rem;color:#666;margin-bottom:20px}
+.wallet-hint a{color:#7c5cff;text-decoration:none}
+.wallet-hint a:hover{text-decoration:underline}
+.buttons{display:flex;gap:12px}
+.btn{flex:1;padding:12px;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600}
+.btn-approve{background:#7c5cff;color:#fff}
+.btn-approve:hover{background:#6a4de0}
+.btn-deny{background:#2a2a3a;color:#aaa}
+.btn-deny:hover{background:#3a3a4a;color:#e0e0e0}
+.error{background:#2a1a1a;border:1px solid #4a2a2a;border-radius:8px;padding:12px;color:#ff6b6b;font-size:0.85rem;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="consent-box">
+  <h1>StudioMCPHub</h1>
+  <p class="subtitle">Authorization Request</p>
+
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+
+  <div class="client-info {% if not is_trusted %}client-untrusted{% endif %}">
+    <div class="client-name">{{ client_name }}</div>
+    <div style="font-size:0.8rem;color:#888;margin-top:4px">wants to access your account</div>
+    {% if not is_trusted %}
+    <div class="warning">This is an unverified third-party client. Only authorize if you trust this application.</div>
+    {% endif %}
+  </div>
+
+  <div class="scopes">
+    <h3>This will allow {{ client_name }} to:</h3>
+    <ul>
+      {% if "tools:free" in scope %}
+      <li>Call free creative AI tools (18 tools)</li>
+      {% endif %}
+      {% if "tools:paid" in scope %}
+      <li>Call paid tools using your GCX credit balance</li>
+      {% endif %}
+      {% if "account:read" in scope %}
+      <li>View your account balance and tier</li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <form method="POST" action="/authorize/submit">
+    <input type="hidden" name="auth_request_id" value="{{ auth_request_id }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <label class="wallet-label" for="wallet">Your EVM Wallet Address</label>
+    <input type="text" id="wallet" name="wallet" placeholder="0x..." autocomplete="off" required
+           pattern="0x[0-9a-fA-F]{40}" title="Enter a valid EVM wallet address (0x + 40 hex characters)">
+    <div class="wallet-hint">
+      Don't have a wallet? <a href="/api/wallet/register" target="_blank">Register for free</a> and get 10 GCX credits.
+    </div>
+
+    <div class="buttons">
+      <button type="submit" name="action" value="deny" class="btn btn-deny">Deny</button>
+      <button type="submit" name="action" value="approve" class="btn btn-approve">Authorize</button>
+    </div>
+  </form>
+</div>
+</body>
+</html>

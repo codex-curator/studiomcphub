@@ -38,6 +38,20 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // OAuth 2.1 collections - server-side only (Admin SDK)
+    match /oauth_clients/{clientId} {
+      allow read, write: if false;
+    }
+    match /oauth_auth_codes/{codeId} {
+      allow read, write: if false;
+    }
+    match /oauth_refresh_tokens/{tokenId} {
+      allow read, write: if false;
+    }
+    match /oauth_auth_requests/{requestId} {
+      allow read, write: if false;
+    }
+
     // Default deny everything else
     match /{document=**} {
       allow read, write: if false;

@@ -13,11 +13,155 @@ from mcp.server import Server
 from mcp.types import (
     TextContent,
     Tool,
+    ToolAnnotations,
 )
 
 from .config import PRICING
 
 logger = logging.getLogger("studiomcphub.mcp")
+
+# --- MCP Tool Safety Annotations (per MCP spec 2025-11) ---
+# readOnlyHint:    true = no side effects, false = writes data
+# destructiveHint: true = may delete/overwrite, false = additive only
+# idempotentHint:  true = same args → same effect, false = may differ
+# openWorldHint:   true = calls external services, false = closed domain
+TOOL_ANNOTATIONS: dict[str, ToolAnnotations] = {
+    # --- Creative pipeline (writes/transforms, calls GPU services) ---
+    "generate_image": ToolAnnotations(
+        title="Generate Image (SD 3.5 Large)",
+        readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True,
+    ),
+    "upscale_image": ToolAnnotations(
+        title="Upscale Image (ESRGAN)",
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=True,
+    ),
+    "enrich_metadata": ToolAnnotations(
+        title="AI Metadata Enrichment",
+        readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True,
+    ),
+    "infuse_metadata": ToolAnnotations(
+        title="Metadata Infusion (ExifTool)",
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "register_hash": ToolAnnotations(
+        title="Perceptual Hash Registration",
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=True,
+    ),
+    "store_permanent": ToolAnnotations(
+        title="Arweave Permanent Storage",
+        readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True,
+    ),
+    "mint_nft": ToolAnnotations(
+        title="NFT Minting",
+        readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True,
+    ),
+    "verify_provenance": ToolAnnotations(
+        title="Provenance Verification",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True,
+    ),
+    "full_pipeline": ToolAnnotations(
+        title="Full Creative Pipeline",
+        readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True,
+    ),
+    # --- Dataset tools (read-only queries against Alexandria Aeternum) ---
+    "search_artworks": ToolAnnotations(
+        title="Search Artworks",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True,
+    ),
+    "get_artwork": ToolAnnotations(
+        title="Get Artwork Metadata",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True,
+    ),
+    "get_artwork_oracle": ToolAnnotations(
+        title="Get Artwork Oracle Analysis",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True,
+    ),
+    "batch_download": ToolAnnotations(
+        title="Batch Download",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True,
+    ),
+    "compliance_manifest": ToolAnnotations(
+        title="Compliance Manifest",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    # --- Nano generation ---
+    "generate_image_nano": ToolAnnotations(
+        title="Generate Image (Imagen 3)",
+        readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True,
+    ),
+    # --- Image utilities (pure transforms, no external calls) ---
+    "resize_image": ToolAnnotations(
+        title="Resize Image",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "extract_palette": ToolAnnotations(
+        title="Extract Color Palette",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "remove_background": ToolAnnotations(
+        title="Remove Background",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "mockup_image": ToolAnnotations(
+        title="Product Mockup",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "convert_color_profile": ToolAnnotations(
+        title="Convert Color Profile",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "print_ready": ToolAnnotations(
+        title="Print-Ready Preparation",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "vectorize_image": ToolAnnotations(
+        title="Vectorize to SVG",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "watermark_embed": ToolAnnotations(
+        title="Embed Invisible Watermark",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "watermark_detect": ToolAnnotations(
+        title="Detect Watermark",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    # --- Storage tools (wallet-scoped CRUD) ---
+    "save_asset": ToolAnnotations(
+        title="Save Asset to Storage",
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "get_asset": ToolAnnotations(
+        title="Retrieve Asset",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "list_assets": ToolAnnotations(
+        title="List Stored Assets",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "delete_asset": ToolAnnotations(
+        title="Delete Asset",
+        readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False,
+    ),
+    # --- Account tools (wallet registration + balance) ---
+    "register_wallet": ToolAnnotations(
+        title="Register Wallet",
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "check_balance": ToolAnnotations(
+        title="Check Balance",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    # --- Meta-tools (discovery) ---
+    "search_tools": ToolAnnotations(
+        title="Search Tools",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+    "get_tool_schema": ToolAnnotations(
+        title="Get Tool Schema",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    ),
+}
 
 # Tool input schemas for MCP discovery
 TOOL_SCHEMAS = {
@@ -460,6 +604,7 @@ def create_mcp_server(check_payment_fn) -> Server:
                 name=name,
                 description=schema["description"] + price_note,
                 inputSchema=schema["inputSchema"],
+                annotations=TOOL_ANNOTATIONS.get(name),
             ))
         return tools
 

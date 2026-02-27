@@ -150,6 +150,10 @@ class Config:
     # Admin panel
     admin_secret: str = os.getenv("ADMIN_SECRET", "")
 
+    # OAuth 2.1
+    jwt_secret: str = os.getenv("JWT_SECRET", "")
+    oauth_issuer: str = os.getenv("OAUTH_ISSUER", "https://studiomcphub.com")
+
     # MCP Server metadata
     server_name: str = "StudioMCPHub"
     server_version: str = "0.5.0"

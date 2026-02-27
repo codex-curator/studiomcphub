@@ -28,7 +28,7 @@
     },
     {
       "type": "none",
-      "description": "Free tools (19 of 32) require no authentication."
+      "description": "Free tools (18 of 32) require no authentication."
     }
   ],
   "skills": [
@@ -91,8 +91,8 @@
     {
       "id": "mockup_image",
       "name": "Mockup Image",
-      "description": "Place design onto product mockups (t-shirt, poster, canvas, phone case, mug, tote bag). FREE.",
-      "tags": ["creative", "mockup", "ecommerce", "free"],
+      "description": "Place design onto product mockups (t-shirt, poster, canvas, phone case, mug, tote bag). $0.10 / 1 GCX.",
+      "tags": ["creative", "mockup", "ecommerce"],
       "examples": ["Put my design on a t-shirt mockup"]
     },
     {

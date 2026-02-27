@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Authorization Error — StudioMCPHub</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.error-box{background:#12121a;border:1px solid #2a2a3a;border-radius:12px;padding:40px;width:420px;text-align:center}
+.error-box h1{font-size:1.4rem;margin-bottom:8px;color:#ff6b6b}
+.error-box .code{font-size:0.85rem;color:#888;margin-bottom:20px}
+.error-box .message{font-size:0.95rem;color:#ccc;margin-bottom:24px;line-height:1.5}
+.back-link{color:#7c5cff;text-decoration:none;font-size:0.9rem}
+.back-link:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="error-box">
+  <h1>Authorization Error</h1>
+  <div class="code">{{ error_code }}</div>
+  <div class="message">{{ error_description }}</div>
+  <a href="https://studiomcphub.com" class="back-link">Return to StudioMCPHub</a>
+</div>
+</body>
+</html>

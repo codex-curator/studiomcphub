@@ -3,6 +3,23 @@
 from typing import Any
 
 
+def _resolve_wallet_from_params(params: dict) -> str:
+    """Extract wallet address from params body or Bearer header fallback."""
+    wallet = params.get("wallet", "").strip().lower()
+    if not wallet:
+        try:
+            from flask import request as _req
+            auth = _req.headers.get("Authorization", "")
+            if auth.startswith("Bearer "):
+                from ..auth.tokens import resolve_bearer_to_wallet
+                wallet = (resolve_bearer_to_wallet(auth[7:]) or "").lower()
+        except RuntimeError:
+            pass
+    if not wallet:
+        raise ValueError("Missing 'wallet'. Provide in body or use Authorization: Bearer header.")
+    return wallet
+
+
 # Category mapping for progressive discovery
 _TOOL_CATEGORIES: dict[str, str] = {
     "generate_image": "creative",
@@ -270,12 +287,18 @@ def _search_artworks(params: dict) -> dict:
 
 def _get_artwork(params: dict) -> dict:
     from .dataset import get_artwork
-    return get_artwork(artifact_id=params["artifact_id"])
+    artifact_id = params.get("artifact_id") or params.get("artwork_id")
+    if not artifact_id:
+        raise ValueError("Missing required parameter 'artifact_id'. Use search_artworks to find IDs.")
+    return get_artwork(artifact_id=artifact_id)
 
 
 def _get_artwork_oracle(params: dict) -> dict:
     from .dataset import get_artwork_oracle
-    return get_artwork_oracle(artifact_id=params["artifact_id"])
+    artifact_id = params.get("artifact_id") or params.get("artwork_id")
+    if not artifact_id:
+        raise ValueError("Missing required parameter 'artifact_id'. Use search_artworks to find IDs.")
+    return get_artwork_oracle(artifact_id=artifact_id)
 
 
 def _batch_download(params: dict) -> dict:
@@ -411,17 +434,20 @@ def _save_asset(params: dict) -> dict:
 
 def _get_asset(params: dict) -> dict:
     from .storage import get_asset
-    return get_asset(wallet=params["wallet"], key=params["key"])
+    wallet = _resolve_wallet_from_params(params)
+    return get_asset(wallet=wallet, key=params.get("key", params.get("asset_id", "")))
 
 
 def _list_assets(params: dict) -> dict:
     from .storage import list_assets
-    return list_assets(wallet=params["wallet"])
+    wallet = _resolve_wallet_from_params(params)
+    return list_assets(wallet=wallet)
 
 
 def _delete_asset(params: dict) -> dict:
     from .storage import delete_asset
-    return delete_asset(wallet=params["wallet"], key=params["key"])
+    wallet = _resolve_wallet_from_params(params)
+    return delete_asset(wallet=wallet, key=params.get("key", params.get("asset_id", "")))
 
 
 # --- Account tools ---
@@ -479,9 +505,7 @@ def _register_wallet(params: dict) -> dict:
 
 
 def _check_balance(params: dict) -> dict:
-    wallet = params.get("wallet", "").strip().lower()
-    if not wallet:
-        raise ValueError("Missing 'wallet' parameter")
+    wallet = _resolve_wallet_from_params(params)
 
     from ..payment.gcx_credits import get_balance
     from ..payment.loyalty import get_loyalty_balance
