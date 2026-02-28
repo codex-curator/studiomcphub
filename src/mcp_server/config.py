@@ -154,14 +154,17 @@ class Config:
     jwt_secret: str = os.getenv("JWT_SECRET", "")
     oauth_issuer: str = os.getenv("OAUTH_ISSUER", "https://studiomcphub.com")
 
+    # Tool profile: "full" = all 32 tools, "directory" = Anthropic-safe subset (no generation/minting)
+    tool_profile: str = os.getenv("TOOL_PROFILE", "full")
+
     # MCP Server metadata
     server_name: str = "StudioMCPHub"
     server_version: str = "0.5.0"
     server_description: str = (
-        "32 creative AI tools and art datasets for autonomous agents. "
-        "Image generation, upscaling, background removal, mockups, color conversion, "
-        "print prep, vectorization, watermarking, metadata enrichment, provenance, "
-        "Arweave storage, Base L2 NFT minting, and 53K+ museum artworks."
+        "Creative AI tools, compliance infrastructure, and museum art datasets "
+        "for autonomous agents. C2PA provenance, EU AI Act compliance, ESRGAN upscaling, "
+        "background removal, mockups, color conversion, print prep, vectorization, "
+        "watermarking, metadata enrichment, and 53K+ museum artworks."
     )
 
 

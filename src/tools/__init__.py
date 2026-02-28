@@ -532,7 +532,7 @@ _META_TOOLS = {"search_tools", "get_tool_schema"}
 
 
 def _search_tools(params: dict) -> dict:
-    from ..mcp_server.mcp_tools import TOOL_SCHEMAS
+    from ..mcp_server.mcp_tools import TOOL_SCHEMAS, _is_tool_enabled
     from ..mcp_server.config import PRICING
 
     query = params.get("query", "").lower()
@@ -541,8 +541,8 @@ def _search_tools(params: dict) -> dict:
 
     results = []
     for name, schema in TOOL_SCHEMAS.items():
-        # Exclude meta-tools from results (no meta-recursion)
-        if name in _META_TOOLS:
+        # Exclude meta-tools and profile-disabled tools
+        if name in _META_TOOLS or not _is_tool_enabled(name):
             continue
 
         tool_cat = _TOOL_CATEGORIES.get(name, "creative")
@@ -583,11 +583,11 @@ def _search_tools(params: dict) -> dict:
 
 
 def _get_tool_schema(params: dict) -> dict:
-    from ..mcp_server.mcp_tools import TOOL_SCHEMAS
+    from ..mcp_server.mcp_tools import TOOL_SCHEMAS, _is_tool_enabled
     from ..mcp_server.config import PRICING
 
     tool_name = params.get("tool_name", "")
-    if not tool_name or tool_name not in TOOL_SCHEMAS:
+    if not tool_name or tool_name not in TOOL_SCHEMAS or not _is_tool_enabled(tool_name):
         raise ValueError(f"Unknown tool: {tool_name}. Use search_tools to discover available tools.")
 
     schema = TOOL_SCHEMAS[tool_name]

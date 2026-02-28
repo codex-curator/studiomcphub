@@ -16,9 +16,28 @@ from mcp.types import (
     ToolAnnotations,
 )
 
-from .config import PRICING
+from .config import PRICING, config
 
 logger = logging.getLogger("studiomcphub.mcp")
+
+# Tools excluded from "directory" profile (Anthropic policy 4A/4B compliance)
+# 4B: AI image generation prohibited unless design-focused
+# 4A: Financial/crypto transactions prohibited
+_DIRECTORY_EXCLUDED = {
+    "generate_image",       # 4B — standalone AI image generation
+    "generate_image_nano",  # 4B — standalone AI image generation
+    "mint_nft",             # 4A — crypto/financial transaction
+    "store_permanent",      # Arweave blockchain storage
+    "full_pipeline",        # Orchestrates generation
+}
+
+
+def _is_tool_enabled(name: str) -> bool:
+    """Check if a tool is enabled under the current TOOL_PROFILE."""
+    if config.tool_profile == "directory" and name in _DIRECTORY_EXCLUDED:
+        return False
+    return True
+
 
 # --- MCP Tool Safety Annotations (per MCP spec 2025-11) ---
 # readOnlyHint:    true = no side effects, false = writes data
@@ -598,6 +617,8 @@ def create_mcp_server(check_payment_fn) -> Server:
     async def list_tools() -> list[Tool]:
         tools = []
         for name, schema in TOOL_SCHEMAS.items():
+            if not _is_tool_enabled(name):
+                continue
             price = PRICING.get(name)
             price_note = f" (${price.x402_cents / 100:.2f} / {price.gcx_credits} GCX)" if price and price.gcx_credits > 0 else " (FREE)"
             tools.append(Tool(
@@ -610,7 +631,7 @@ def create_mcp_server(check_payment_fn) -> Server:
 
     @server.call_tool()
     async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-        if name not in TOOL_SCHEMAS:
+        if name not in TOOL_SCHEMAS or not _is_tool_enabled(name):
             return [TextContent(type="text", text=json.dumps({"error": f"Unknown tool: {name}"}))]
 
         # Payment gating is handled at the HTTP layer (check_payment in server.py).

@@ -719,7 +719,8 @@ _tool_rate = (
 @_tool_rate
 def execute_tool(tool_name: str):
     """Generic tool execution endpoint with payment gating."""
-    if tool_name not in PRICING:
+    from .mcp_tools import _is_tool_enabled
+    if tool_name not in PRICING or not _is_tool_enabled(tool_name):
         return jsonify({"error": f"Unknown tool: {tool_name}"}), 404
 
     # Input validation: tools that require 'image' param
