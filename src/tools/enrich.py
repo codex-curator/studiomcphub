@@ -144,12 +144,19 @@ def enrich_metadata_standard(
         },
     }
 
-    response = httpx.post(
-        f"{_NOVA_LITE_URL}/enrich",
-        json=payload,
-        timeout=120.0,
-    )
-    response.raise_for_status()
+    try:
+        response = httpx.post(
+            f"{_NOVA_LITE_URL}/enrich",
+            json=payload,
+            timeout=120.0,
+        )
+        response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        raise ValueError(
+            f"Nova-Lite enrichment service returned {e.response.status_code}. "
+            "The upstream service may be temporarily unavailable. Please try again later "
+            "or use tier='premium' for the full Gemini-powered analysis."
+        )
     data = response.json()
 
     # Nova-Lite returns {title, description, keywords, alt_text} in golden_codex

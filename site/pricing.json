@@ -1,7 +1,7 @@
 {
   "service": "StudioMCPHub",
   "currency": "USD",
-  "updated": "2026-02-25",
+  "updated": "2026-02-27",
   "pricing_version": "v2",
   "gcx_token": {
     "base_rate": 0.10,
@@ -20,19 +20,36 @@
     "gallery": {"price_usd": 99, "gcx_monthly": 1600, "per_gcx": 0.0625, "name": "Gallery"}
   },
   "tools": {
-    "generate_image":    {"gcx": 8,  "base_usd": 0.80, "engine": "SD 3.5 Large"},
     "upscale_image":     {"gcx": 2,  "base_usd": 0.20, "engine": "Real-ESRGAN x4"},
     "enrich_metadata":   {"gcx": 2,  "base_usd": 0.20, "engine": "Nova / Gemini"},
     "infuse_metadata":   {"gcx": 1,  "base_usd": 0.10, "engine": "Atlas / ExifTool"},
     "register_hash":     {"gcx": 1,  "base_usd": 0.10, "engine": "Aegis LSH"},
-    "store_permanent":   {"gcx": 15, "base_usd": 1.50, "engine": "Archivus / Arweave"},
-    "mint_nft":          {"gcx": 10, "base_usd": 1.00, "engine": "Mintra / Polygon"},
     "verify_provenance": {"gcx": 0,  "base_usd": 0.00, "engine": "Aegis"},
-    "full_pipeline":     {"gcx": 5,  "base_usd": 0.50, "engine": "Enrich + Upscale + Infuse"}
+    "search_artworks":   {"gcx": 0,  "base_usd": 0.00, "engine": "Alexandria Aeternum"},
+    "get_artwork":       {"gcx": 1,  "base_usd": 0.10, "engine": "Alexandria Aeternum"},
+    "get_artwork_oracle":{"gcx": 2,  "base_usd": 0.20, "engine": "NEST Analysis"},
+    "batch_download":    {"gcx": 50, "base_usd": 5.00, "engine": "Alexandria Aeternum"},
+    "compliance_manifest":{"gcx": 0, "base_usd": 0.00, "engine": "Compliance"},
+    "resize_image":      {"gcx": 0,  "base_usd": 0.00, "engine": "Pillow"},
+    "extract_palette":   {"gcx": 0,  "base_usd": 0.00, "engine": "K-means"},
+    "remove_background": {"gcx": 0,  "base_usd": 0.00, "engine": "U2-Net"},
+    "mockup_image":      {"gcx": 1,  "base_usd": 0.10, "engine": "Pillow"},
+    "convert_color_profile":{"gcx": 0,"base_usd": 0.00, "engine": "Pillow"},
+    "print_ready":       {"gcx": 0,  "base_usd": 0.00, "engine": "Pillow"},
+    "vectorize_image":   {"gcx": 0,  "base_usd": 0.00, "engine": "vtracer"},
+    "watermark_embed":   {"gcx": 0,  "base_usd": 0.00, "engine": "DCT"},
+    "watermark_detect":  {"gcx": 0,  "base_usd": 0.00, "engine": "DCT"},
+    "save_asset":        {"gcx": 1,  "base_usd": 0.10, "engine": "GCS"},
+    "get_asset":         {"gcx": 0,  "base_usd": 0.00, "engine": "GCS"},
+    "list_assets":       {"gcx": 0,  "base_usd": 0.00, "engine": "GCS"},
+    "delete_asset":      {"gcx": 0,  "base_usd": 0.00, "engine": "GCS"},
+    "register_wallet":   {"gcx": 0,  "base_usd": 0.00, "engine": "Account"},
+    "check_balance":     {"gcx": 0,  "base_usd": 0.00, "engine": "Account"},
+    "search_tools":      {"gcx": 0,  "base_usd": 0.00, "engine": "Meta"},
+    "get_tool_schema":   {"gcx": 0,  "base_usd": 0.00, "engine": "Meta"}
   },
   "combos": {
-    "creative_pipeline": {"gcx": 14, "includes": "generate + upscale + enrich + infuse + register"},
-    "full_with_mint":    {"gcx": 39, "includes": "creative_pipeline + store + mint"}
+    "provenance_pipeline": {"gcx": 6, "includes": "upscale + enrich + infuse + register"}
   },
   "volume_discounts": {
     "description": "30-day rolling per wallet",

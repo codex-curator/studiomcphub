@@ -1,6 +1,6 @@
 {
   "name": "StudioMCPHub",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "description": "Creative AI tools and art datasets for autonomous agents. Image generation, upscaling, metadata enrichment, provenance registration, permanent storage, NFT minting, and access to 53K+ museum artworks from Alexandria Aeternum.",
   "url": "https://studiomcphub.com",
   "transport": "streamable-http",

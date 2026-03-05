@@ -1,21 +1,18 @@
 """
 StudioMCPHub — MCP Server for Creative AI Tools
 
-Built by AI, for AI. Exposes the Golden Codex pipeline as discoverable,
-pay-per-call MCP tools via Streamable HTTP transport.
+Built by AI, for AI. Exposes creative AI tools, compliance infrastructure,
+and museum art datasets as discoverable, pay-per-call MCP tools via
+Streamable HTTP transport.
 
-Tools offered:
-  - generate_image:    SD 3.5 Large + T5-XXL text-to-image
-  - upscale_image:     ESRGAN x4 super-resolution (NVIDIA L4 GPU)
-  - enrich_metadata:   Nova AI analysis (Gemini 2.5/3.0 Pro)
-  - infuse_metadata:   Atlas XMP/IPTC/C2PA metadata embedding
-  - register_hash:     Aegis perceptual hash + LSH index registration
-  - store_permanent:   Archivus Arweave L1 permanent storage
-  - mint_nft:          Mintra Polygon NFT minting
-  - verify_provenance: Aegis strip-proof provenance verification (FREE)
-  - full_pipeline:     Complete creative pipeline in one call
+Core capabilities:
+  - ESRGAN super-resolution, metadata enrichment, C2PA provenance
+  - Image utilities: resize, palette, background removal, vectorization
+  - 53K+ museum artworks (Alexandria Aeternum dataset)
+  - EU AI Act compliance, watermarking, print preparation
 
-Payment methods: x402 (USDC/Base), Stripe, GCX Credits
+Payment methods: GCX Credits, Stripe, OAuth 2.1
+Tool profile: Controlled by TOOL_PROFILE env var (directory|full)
 """
 
 import json
@@ -111,6 +108,45 @@ app.secret_key = os.getenv("SECRET_KEY", _secrets.token_urlsafe(32))
 @app.route("/.well-known/mcp.json")
 def mcp_server_card():
     """MCP Server Card for auto-discovery."""
+    from .mcp_tools import _is_tool_enabled
+
+    # Build enabled tools list
+    enabled_tools = [
+        {
+            "name": name,
+            "pricing": {
+                "gcx_credits": p.gcx_credits,
+                "usd": round(p.gcx_credits * 0.10, 2),
+            }
+        }
+        for name, p in PRICING.items() if _is_tool_enabled(name)
+    ]
+    free_names = [name for name, p in PRICING.items()
+                  if p.gcx_credits == 0 and _is_tool_enabled(name)]
+
+    # Auth schemes — x402 only in full profile
+    schemes = [
+        {"type": "oauth2", "description": "OAuth 2.1 with PKCE (Authorization Code flow)"},
+        {"type": "bearer", "description": "GCX credit token (register wallet for 10 free credits)"},
+        {"type": "none", "description": f"Free tools ({len(free_names)} of {len(enabled_tools)} — {', '.join(free_names)}). Rate limited: 10/hr anonymous, 60/hr registered."},
+    ]
+    if config.tool_profile == "full":
+        schemes.insert(0, {"type": "x402", "description": "Pay per call with USDC on Base L2"})
+
+    # Payment block — x402 only in full profile
+    payment = {
+        "gcx": {
+            "rate": f"$1 = {GCX_PER_DOLLAR} GCX",
+            "purchase_url": "https://studiomcphub.com/api/credits",
+        },
+    }
+    if config.tool_profile == "full":
+        payment["x402"] = {
+            "wallet": config.x402_wallet,
+            "chain": "base",
+            "token": "USDC",
+        }
+
     return jsonify({
         "name": config.server_name,
         "version": config.server_version,
@@ -118,35 +154,9 @@ def mcp_server_card():
         "url": "https://studiomcphub.com",
         "transport": "streamable-http",
         "endpoint": "https://studiomcphub.com/mcp",
-        "authentication": {
-            "schemes": [
-                {"type": "x402", "description": "Pay per call with USDC on Base L2"},
-                {"type": "bearer", "description": "API key or GCX credit token"},
-                {"type": "none", "description": "Free tools (18 of 32 — verify_provenance, search_artworks, compliance_manifest, get_asset, list_assets, delete_asset, register_wallet, check_balance, search_tools, get_tool_schema, resize_image, extract_palette, remove_background, convert_color_profile, print_ready, vectorize_image, watermark_embed, watermark_detect). Rate limited: 10/hr anonymous, 60/hr registered."},
-            ]
-        },
-        "tools": [
-            {
-                "name": name,
-                "pricing": {
-                    "x402_usd": p.x402_cents / 100,
-                    "stripe_usd": p.stripe_cents / 100,
-                    "gcx_credits": p.gcx_credits,
-                }
-            }
-            for name, p in PRICING.items()
-        ],
-        "payment": {
-            "x402": {
-                "wallet": config.x402_wallet,
-                "chain": "base",
-                "token": "USDC",
-            },
-            "gcx": {
-                "rate": f"$1 = {GCX_PER_DOLLAR} GCX",
-                "purchase_url": "https://studiomcphub.com/api/credits",
-            },
-        },
+        "authentication": {"schemes": schemes},
+        "tools": enabled_tools,
+        "payment": payment,
         "links": {
             "documentation": "https://studiomcphub.com/llms.txt",
             "pricing": "https://studiomcphub.com/pricing.json",
@@ -175,6 +185,18 @@ def glama_json():
     )
 
 
+@app.route("/favicon.svg")
+def favicon_svg():
+    """Serve favicon for browser and Google favicon crawler."""
+    return send_from_directory(_SITE_DIR, "favicon.svg", mimetype="image/svg+xml")
+
+
+@app.route("/og-image.svg")
+def og_image():
+    """Open Graph image for social sharing previews."""
+    return send_from_directory(_SITE_DIR, "og-image.svg", mimetype="image/svg+xml")
+
+
 @app.route("/llms.txt")
 def llms_txt():
     """LLM-readable documentation for AI discovery."""
@@ -197,26 +219,50 @@ def robots_txt():
     ), 200, {"Content-Type": "text/plain"}
 
 
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    """XML sitemap for search engine indexing."""
+    pages = [
+        ("https://studiomcphub.com/", "weekly", "1.0"),
+        ("https://studiomcphub.com/guide", "monthly", "0.8"),
+        ("https://studiomcphub.com/support", "monthly", "0.6"),
+        ("https://studiomcphub.com/pricing", "weekly", "0.7"),
+        ("https://studiomcphub.com/privacy", "yearly", "0.3"),
+        ("https://studiomcphub.com/terms", "yearly", "0.3"),
+    ]
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    for url, freq, priority in pages:
+        xml += f"  <url><loc>{url}</loc><changefreq>{freq}</changefreq><priority>{priority}</priority></url>\n"
+    xml += "</urlset>\n"
+    return xml, 200, {"Content-Type": "application/xml"}
+
+
 @app.route("/openapi.json")
 def openapi_json():
     """OpenAPI 3.0 spec for all public endpoints."""
     from .config import PRICING, GCX_BASE_RATE
-    from .mcp_tools import TOOL_SCHEMAS
+    from .mcp_tools import TOOL_SCHEMAS, _is_tool_enabled
 
     tool_paths = {}
     for name, p in PRICING.items():
+        if not _is_tool_enabled(name):
+            continue
         is_paid = p.gcx_credits > 0
         schema = TOOL_SCHEMAS.get(name, {}).get("inputSchema", {"type": "object"})
+        security = [{"bearerAuth": []}, {"stripePayment": []}]
+        if config.tool_profile == "full":
+            security.append({"x402": []})
         tool_paths[f"/api/tools/{name}"] = {
             "post": {
                 "summary": f"{name} tool call",
-                "description": f"Cost: {p.gcx_credits} GCX (${p.gcx_credits * GCX_BASE_RATE:.2f}). {'Free tool — no auth needed.' if not is_paid else 'Payment: GCX credits (Bearer token), x402 USDC (X-PAYMENT header), or Stripe (X-Stripe-Payment-Intent header).'}",
+                "description": f"Cost: {p.gcx_credits} GCX (${p.gcx_credits * GCX_BASE_RATE:.2f}). {'Free tool — no auth needed.' if not is_paid else 'Payment: GCX credits (Bearer token) or Stripe (X-Stripe-Payment-Intent header).'}",
                 "tags": ["Tools"],
-                "security": [{"bearerAuth": []}, {"x402": []}, {"stripePayment": []}] if is_paid else [],
+                "security": security if is_paid else [],
                 "requestBody": {"content": {"application/json": {"schema": schema}}},
                 "responses": {
                     "200": {"description": "Tool result"},
-                    **({"402": {"description": "Payment required — returns x402 payment instructions, GCX credit info, and Stripe checkout link"}} if is_paid else {}),
+                    **({"402": {"description": "Payment required — returns GCX credit info and Stripe checkout link"}} if is_paid else {}),
                 },
             }
         }
@@ -242,12 +288,12 @@ def openapi_json():
             "/api/registry/bot-types": {"get": {"summary": "List bot types for registry", "tags": ["Social"], "responses": {"200": {"description": "Bot types with sample phrases"}}}},
             "/api/cafe/post": {"get": {"summary": "Post to the Cyber Cafe (GET-friendly)", "tags": ["Social"], "parameters": [{"name": "name", "in": "query", "required": True, "schema": {"type": "string"}}, {"name": "category", "in": "query", "schema": {"type": "string", "enum": ["tip", "suggestion", "request", "question", "showcase", "general"]}}, {"name": "message", "in": "query", "required": True, "schema": {"type": "string"}}], "responses": {"200": {"description": "Post created"}}}},
             "/api/cafe/feed": {"get": {"summary": "Read Cyber Cafe bulletin board", "tags": ["Social"], "responses": {"200": {"description": "List of posts"}}}},
-            "/api/sandbox/generate_image": {"get": {"summary": "Mock generate_image (no credits)", "tags": ["Sandbox"], "responses": {"200": {"description": "Sample response format"}}}},
+            **({"/api/sandbox/generate_image": {"get": {"summary": "Mock generate_image (no credits)", "tags": ["Sandbox"], "responses": {"200": {"description": "Sample response format"}}}}} if _is_tool_enabled("generate_image") else {}),
             "/api/sandbox/upscale_image": {"get": {"summary": "Mock upscale_image — lists all 5 ESRGAN models", "tags": ["Sandbox"], "parameters": [{"name": "model", "in": "query", "schema": {"type": "string", "enum": ["realesrgan_x2plus", "realesrgan_x4plus", "realesrgan_x4plus_anime", "realesr_general_x4v3", "realesr_animevideov3"]}}], "responses": {"200": {"description": "Model info + sample response"}}}},
             "/api/sandbox/enrich_metadata": {"get": {"summary": "Mock enrich_metadata (no credits)", "tags": ["Sandbox"], "parameters": [{"name": "tier", "in": "query", "schema": {"type": "string", "enum": ["standard", "premium"]}}], "responses": {"200": {"description": "Sample response format"}}}},
             "/api/sandbox/verify_provenance": {"get": {"summary": "Mock verify_provenance (no credits)", "tags": ["Sandbox"], "responses": {"200": {"description": "Sample response format"}}}},
             "/api/sandbox/search_artworks": {"get": {"summary": "Mock search_artworks (no credits)", "tags": ["Sandbox"], "responses": {"200": {"description": "Sample response format"}}}},
-            "/api/sandbox/full_pipeline": {"get": {"summary": "Mock full_pipeline (no credits)", "tags": ["Sandbox"], "parameters": [{"name": "prompt", "in": "query", "schema": {"type": "string"}}], "responses": {"200": {"description": "Sample response format"}}}},
+            **({"/api/sandbox/full_pipeline": {"get": {"summary": "Mock full_pipeline (no credits)", "tags": ["Sandbox"], "parameters": [{"name": "prompt", "in": "query", "schema": {"type": "string"}}], "responses": {"200": {"description": "Sample response format"}}}}} if _is_tool_enabled("full_pipeline") else {}),
             "/api/sandbox/compliance_manifest": {"get": {"summary": "Mock compliance_manifest (no credits)", "tags": ["Sandbox"], "responses": {"200": {"description": "Sample compliance response"}}}},
             "/api/gallery/post": {"get": {"summary": "Post artwork to gallery (GET-friendly)", "tags": ["Social"], "parameters": [{"name": "name", "in": "query", "required": True, "schema": {"type": "string"}}, {"name": "title", "in": "query", "required": True, "schema": {"type": "string"}}, {"name": "image_url", "in": "query", "required": True, "schema": {"type": "string"}}], "responses": {"200": {"description": "Artwork posted"}}}},
             "/api/gallery/feed": {"get": {"summary": "Browse the artwork gallery", "tags": ["Social"], "responses": {"200": {"description": "Gallery artworks"}}}},
@@ -259,7 +305,9 @@ def openapi_json():
         "components": {
             "securitySchemes": {
                 "bearerAuth": {"type": "http", "scheme": "bearer", "description": "GCX credits — use wallet address as bearer token (register at POST /api/wallet/register for 10 free GCX)"},
-                "x402": {"type": "apiKey", "in": "header", "name": "X-PAYMENT", "description": "x402 USDC micropayment on Base L2 — no account needed. Send EIP-712 signed permit. Server returns 402 with exact instructions on first call."},
+                **({
+                    "x402": {"type": "apiKey", "in": "header", "name": "X-PAYMENT", "description": "x402 USDC micropayment on Base L2 — no account needed. Send EIP-712 signed permit. Server returns 402 with exact instructions on first call."},
+                } if config.tool_profile == "full" else {}),
                 "stripePayment": {"type": "apiKey", "in": "header", "name": "X-Stripe-Payment-Intent", "description": "Stripe per-call — first POST /api/create-payment-intent, then include payment intent ID. $0.50 minimum per transaction."},
             }
         },
@@ -281,13 +329,33 @@ def openapi_json():
 def pricing_json():
     """Machine-readable pricing sheet for MCP directory crawlers and agents."""
     from .config import PRICING, GCX_PACKS, SUBSCRIPTION_TIERS, AGENT_VOLUME_TIERS, GCX_BASE_RATE
+    from .mcp_tools import _is_tool_enabled
 
     tools = {}
     for name, p in PRICING.items():
+        if not _is_tool_enabled(name):
+            continue
         tools[name] = {
             "gcx_credits": p.gcx_credits,
             "usd": round(p.gcx_credits * GCX_BASE_RATE, 2),
             "free": p.gcx_credits == 0,
+        }
+
+    payment_methods = {
+        "gcx_credits": {
+            "description": "Pre-purchased credits with volume discounts",
+            "welcome_bonus": 10,
+        },
+        "stripe": {
+            "description": "Credit card via Stripe (packs and subscriptions)",
+        },
+    }
+    if config.tool_profile == "full":
+        payment_methods["x402"] = {
+            "chain": "base",
+            "token": "USDC",
+            "wallet": config.x402_wallet,
+            "description": "Pay-per-call via x402 protocol (no account needed)",
         }
 
     return jsonify({
@@ -299,22 +367,8 @@ def pricing_json():
         "packs": GCX_PACKS,
         "subscriptions": SUBSCRIPTION_TIERS,
         "volume_discounts": AGENT_VOLUME_TIERS,
-        "payment_methods": {
-            "x402": {
-                "chain": "base",
-                "token": "USDC",
-                "wallet": config.x402_wallet,
-                "description": "Pay-per-call via x402 protocol (no account needed)",
-            },
-            "gcx_credits": {
-                "description": "Pre-purchased credits with volume discounts",
-                "welcome_bonus": 10,
-            },
-            "stripe": {
-                "description": "Credit card via Stripe (packs and subscriptions)",
-            },
-        },
-        "free_tools": [name for name, p in PRICING.items() if p.gcx_credits == 0],
+        "payment_methods": payment_methods,
+        "free_tools": [name for name, p in PRICING.items() if p.gcx_credits == 0 and _is_tool_enabled(name)],
         "links": {
             "mcp_endpoint": "https://studiomcphub.com/mcp",
             "documentation": "https://studiomcphub.com/llms.txt",
@@ -488,9 +542,59 @@ def mcp_endpoint():
         }), 200
 
     elif request.method == "GET":
-        # SSE endpoint for server-initiated messages (not implemented yet)
+        # No session = browser visit — show a friendly landing page
         if not session_id or session_id not in _mcp_sessions:
-            return jsonify({"error": "Invalid session"}), 400
+            accept = request.headers.get("Accept", "")
+            if "text/html" in accept or not session_id:
+                return Response(
+                    '<!DOCTYPE html>\n'
+                    '<html lang="en"><head>\n'
+                    '<meta charset="utf-8">\n'
+                    '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+                    '<title>StudioMCPHub — MCP Endpoint</title>\n'
+                    '<style>\n'
+                    'body{font-family:system-ui,sans-serif;max-width:640px;margin:60px auto;padding:0 20px;'
+                    'background:#0a0a0a;color:#e0e0e0;line-height:1.6}\n'
+                    'h1{color:#f5c542;margin-bottom:4px}\n'
+                    'code{background:#1a1a2e;padding:2px 6px;border-radius:4px;font-size:0.9em}\n'
+                    'pre{background:#1a1a2e;padding:16px;border-radius:8px;overflow-x:auto;border:1px solid #333}\n'
+                    'a{color:#f5c542}\n'
+                    '.badge{display:inline-block;background:#f5c542;color:#0a0a0a;padding:2px 8px;'
+                    'border-radius:4px;font-size:0.8em;font-weight:600;margin-left:8px}\n'
+                    '</style>\n'
+                    '</head><body>\n'
+                    '<h1>StudioMCPHub<span class="badge">MCP</span></h1>\n'
+                    '<p>This is a <strong>Model Context Protocol</strong> endpoint. '
+                    'It speaks JSON-RPC over HTTP, not HTML.</p>\n'
+                    '<h2>Connect your AI client</h2>\n'
+                    '<p>Add this to your MCP client config (Claude Code, Cursor, VS Code, etc.):</p>\n'
+                    '<pre><code>{\n'
+                    '  "mcpServers": {\n'
+                    '    "studiomcphub": {\n'
+                    '      "url": "https://studiomcphub.com/mcp"\n'
+                    '    }\n'
+                    '  }\n'
+                    '}</code></pre>\n'
+                    '<h2>What you get</h2>\n'
+                    '<p><strong>32 tools</strong> (18 free) — background removal, color palettes, '
+                    'mockups, CMYK conversion, vectorization, watermarking, AI enrichment, '
+                    '4x ESRGAN upscaling, and 2M+ museum artwork search.</p>\n'
+                    '<h2>Links</h2>\n'
+                    '<ul>\n'
+                    '<li><a href="/.well-known/mcp.json">MCP Server Card</a></li>\n'
+                    '<li><a href="/llms.txt">LLMs.txt</a></li>\n'
+                    '<li><a href="/pricing">Pricing</a></li>\n'
+                    '<li><a href="/health">Health Check</a></li>\n'
+                    '<li><a href="https://github.com/codex-curator/studiomcphub">GitHub</a></li>\n'
+                    '<li><a href="https://studiomcphub.com">Homepage</a></li>\n'
+                    '</ul>\n'
+                    '<p style="color:#666;font-size:0.85em;margin-top:40px">'
+                    'Metavolve Labs, Inc. | Streamable HTTP transport</p>\n'
+                    '</body></html>\n',
+                    status=200,
+                    content_type="text/html",
+                )
+        # SSE endpoint for server-initiated messages
         return Response("", status=200, content_type="text/event-stream")
 
     elif request.method == "DELETE":
@@ -519,6 +623,7 @@ def health():
 @app.route("/pricing")
 def pricing():
     """Return pricing table for all tools."""
+    from .mcp_tools import _is_tool_enabled
     return jsonify({
         "currency": "USD",
         "gcx_rate": {"dollars": 1, "gcx": GCX_PER_DOLLAR},
@@ -529,11 +634,10 @@ def pricing():
         ],
         "tools": {
             name: {
-                "x402_usd": p.x402_cents / 100,
                 "stripe_usd": p.stripe_cents / 100,
                 "gcx_credits": p.gcx_credits,
             }
-            for name, p in PRICING.items()
+            for name, p in PRICING.items() if _is_tool_enabled(name)
         },
     })
 

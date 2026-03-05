@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bot Guide — StudioMCPHub</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230a0a0f'/><text x='16' y='23' font-size='20' text-anchor='middle' fill='%237c5cff'>S</text></svg>">
+    <meta name="description" content="Connect your AI agent to StudioMCPHub. Integration guides for Claude Code, Cursor, Cline, cURL, and Python. Streamable HTTP MCP transport.">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="Bot Guide — StudioMCPHub">
+    <meta property="og:description" content="Connect your AI agent to StudioMCPHub. Integration guides for Claude Code, Cursor, Cline, cURL, and Python.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://studiomcphub.com/guide">
+    <meta property="og:image" content="https://studiomcphub.com/og-image.svg">
+    <link rel="canonical" href="https://studiomcphub.com/guide">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
         :root { --bg:#0a0a0f; --surface:#111119; --surface2:#16161f; --border:#1e1e2e; --text:#e0e0e8; --dim:#7878a0; --accent:#7c5cff; --teal:#00d4aa; --gold:#d4a843; --green:#22c55e; --mono:'SF Mono','Fira Code','Cascadia Code','JetBrains Mono',monospace; --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; }
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -59,19 +67,18 @@
         <h3>Step 2: Choose Your Path</h3>
         <table>
             <tr><th>I want to...</th><th>Tools needed</th><th>Cost</th></tr>
-            <tr><td>Generate a new image (fast)</td><td><code>generate_image_nano</code></td><td>1 GCX ($0.10)</td></tr>
-            <tr><td>Generate a new image (HD)</td><td><code>generate_image</code></td><td>2 GCX ($0.20)</td></tr>
+            <tr><td>Upscale my image (4x)</td><td><code>upscale_image</code></td><td>2 GCX ($0.20)</td></tr>
             <tr><td>Enhance my existing image</td><td><code>enrich_metadata</code> + <code>infuse_metadata</code></td><td>3 GCX ($0.30)</td></tr>
-            <tr><td>Full pipeline (one call)</td><td><code>full_pipeline</code></td><td>5 GCX ($0.50)</td></tr>
+            <tr><td>Remove background</td><td><code>remove_background</code></td><td>FREE</td></tr>
             <tr><td>Search museum artworks</td><td><code>search_artworks</code></td><td>FREE</td></tr>
         </table>
 
         <h3>Step 3: Make Your First Call</h3>
 <pre># Include your wallet as Bearer token for GCX payment
-curl -X POST https://studiomcphub.com/api/tools/generate_image_nano \
+curl -X POST https://studiomcphub.com/api/tools/upscale_image \
   -H "Authorization: Bearer 0xYOUR_WALLET" \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "a serene Japanese garden at sunset"}'</pre>
+  -d '{"image": "BASE64_IMAGE_DATA", "scale": 4}'</pre>
 
         <h2>Enhance Existing Images with Golden Codex</h2>
         <p>Already have images? Run them through the Golden Codex pipeline to add AI metadata, provenance, and professional-grade processing.</p>
@@ -117,31 +124,8 @@ curl -X POST https://studiomcphub.com/api/tools/register_hash \
 # Anyone can now verify your image with verify_provenance (FREE)</pre>
 
         <div class="tip">
-            <strong>Pro tip:</strong> Use <code>full_pipeline</code> (5 GCX) to do all of this in a single call. It handles generate/upscale/enrich/infuse/register automatically. Just pass <code>"image"</code> instead of <code>"prompt"</code> to skip generation.
+            <strong>Pro tip:</strong> Chain <code>enrich_metadata</code> + <code>infuse_metadata</code> + <code>register_hash</code> for a complete provenance pipeline. Total: 4 GCX ($0.40).
         </div>
-
-        <h3>Full Pipeline — One Call Does Everything</h3>
-<pre># Enhance an existing image through the complete pipeline (5 GCX)
-curl -X POST https://studiomcphub.com/api/tools/full_pipeline \
-  -H "Authorization: Bearer 0xYOUR_WALLET" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "image": "BASE64_IMAGE_DATA",
-    "options": {
-      "skip": ["store_permanent", "mint_nft"]
-    }
-  }'
-
-# Or generate a NEW image and run the full pipeline (7 GCX total)
-curl -X POST https://studiomcphub.com/api/tools/full_pipeline \
-  -H "Authorization: Bearer 0xYOUR_WALLET" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "impressionist landscape at golden hour",
-    "options": {
-      "skip": ["store_permanent", "mint_nft"]
-    }
-  }'</pre>
 
         <h2>Save & Retrieve Assets</h2>
         <p>Store your generated images and pipeline outputs in your personal wallet storage. 100MB free per wallet.</p>
@@ -183,8 +167,8 @@ curl -X POST https://studiomcphub.com/api/tools/list_assets \
         <ol>
             <li>Call <code>register_wallet</code> to get 10 free GCX</li>
             <li>Call <code>search_tools</code> to discover all available tools</li>
-            <li>Call <code>generate_image</code> or <code>generate_image_nano</code> to create images</li>
-            <li>Call <code>full_pipeline</code> to run the complete Golden Codex pipeline</li>
+            <li>Call <code>upscale_image</code> to enhance image resolution</li>
+            <li>Call <code>enrich_metadata</code> + <code>infuse_metadata</code> for provenance</li>
             <li>Call <code>save_asset</code> to store results for later</li>
         </ol>
 
@@ -193,15 +177,10 @@ curl -X POST https://studiomcphub.com/api/tools/list_assets \
         <h3>Creative Tools</h3>
         <table>
             <tr><th>Tool</th><th>Cost</th><th>Description</th></tr>
-            <tr><td><code>generate_image_nano</code></td><td>1 GCX</td><td>Fast concept generation (Imagen 3). Great for iteration.</td></tr>
-            <tr><td><code>generate_image</code></td><td>2 GCX</td><td>HD generation (SD 3.5 Large + T5-XXL). Museum quality.</td></tr>
             <tr><td><code>upscale_image</code></td><td>2 GCX</td><td>4x super-resolution (ESRGAN, NVIDIA L4).</td></tr>
             <tr><td><code>enrich_metadata</code></td><td>2 GCX</td><td>AI artwork analysis (Gemini). 8-section Golden Codex JSON.</td></tr>
             <tr><td><code>infuse_metadata</code></td><td>1 GCX</td><td>Embed metadata into image (ExifTool: XMP, IPTC, C2PA).</td></tr>
             <tr><td><code>register_hash</code></td><td>1 GCX</td><td>Perceptual hash registration. Strip-proof provenance.</td></tr>
-            <tr><td><code>store_permanent</code></td><td>15 GCX</td><td>Permanent Arweave L1 storage. Irreversible.</td></tr>
-            <tr><td><code>mint_nft</code></td><td>10 GCX</td><td>Polygon NFT with on-chain provenance link.</td></tr>
-            <tr><td><code>full_pipeline</code></td><td>5 GCX</td><td>Complete pipeline in one call. Best value.</td></tr>
             <tr><td><code>verify_provenance</code></td><td>FREE</td><td>Check an image against the Aegis hash index.</td></tr>
         </table>
 
@@ -229,15 +208,14 @@ curl -X POST https://studiomcphub.com/api/tools/list_assets \
         <h2>Pricing Math</h2>
         <div class="tip">
             <strong>10 free GCX gets you:</strong><br>
-            10 fast images (Nano Banana) OR 5 HD images (SD 3.5L) OR 2 full pipelines OR a mix of everything. Purchase GCX packs for more.<br><br>
-            <strong>Best value:</strong> <code>full_pipeline</code> at 5 GCX covers generate + upscale + enrich + infuse + register. That's everything except permanent storage and minting. A complete provenance-protected artwork for $0.50.
+            5 upscales OR 5 enrichments OR a complete provenance pipeline (upscale + enrich + infuse + register = 6 GCX) with credits to spare. Purchase GCX packs for more.<br><br>
+            <strong>Best value:</strong> Chain upscale + enrich + infuse + register at 6 GCX ($0.60) for a complete provenance-protected artwork.
         </div>
 
         <h2>Payment Methods</h2>
         <ul>
-            <li><strong>GCX Credits</strong> (recommended): Register wallet, get 50 free. Buy more with Stripe or USDC.</li>
-            <li><strong>x402 (USDC on Base L2)</strong>: Pay per call, no account needed. Wallet auto-provisioned.</li>
-            <li><strong>Stripe</strong>: Card payment for credit purchases.</li>
+            <li><strong>GCX Credits</strong> (recommended): Register wallet, get 10 free. Buy more with Stripe.</li>
+            <li><strong>Stripe</strong>: Card payment for credit purchases and per-call payments.</li>
         </ul>
         <p>Every paid call earns <strong>5% loyalty credits</strong> back. Volume discounts up to 30% off at $200+ monthly spend.</p>
     </div>

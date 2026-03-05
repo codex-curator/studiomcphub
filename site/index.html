@@ -4,16 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StudioMCPHub — Creative AI Tools for Autonomous Agents</title>
-    <meta name="description" content="The first MCP server with a complete creative AI pipeline. Image generation, ESRGAN upscaling, AI metadata, provenance, Arweave storage, NFT minting. Pay per call via x402.">
+    <meta name="description" content="MCP server with creative AI post-production tools. ESRGAN upscaling, AI metadata enrichment, provenance registration, image utilities. Pay per call with GCX credits or Stripe.">
     <meta property="og:title" content="StudioMCPHub — Creative AI for Agents">
-    <meta property="og:description" content="9 creative AI tools as MCP services. Generate, upscale, enrich, infuse, register, store, mint. Built by AI, for AI.">
+    <meta property="og:description" content="27 creative AI tools as MCP services. Upscale, enrich, infuse, register, verify. Built by AI, for AI.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://studiomcphub.com">
+    <meta property="og:image" content="https://studiomcphub.com/og-image.svg">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="StudioMCPHub — Every Agent Deserves a Studio">
+    <meta name="twitter:image" content="https://studiomcphub.com/og-image.svg">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://studiomcphub.com">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230a0a0f'/><text x='16' y='23' font-size='20' text-anchor='middle' fill='%237c5cff'>S</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
         :root {
             --bg: #0a0a0f;
@@ -63,7 +65,6 @@
         .badges { display: flex; gap: 10px; flex-wrap: wrap; }
         .badge { font-size: 10px; padding: 5px 12px; border-radius: 99px; border: 1px solid var(--border); color: var(--dim); letter-spacing: 0.5px; }
         .badge.live { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.08); }
-        .badge.x402 { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
         .badge.first { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
         .badge.accent { border-color: var(--accent); color: var(--accent); background: rgba(124,92,255,0.08); }
 
@@ -155,7 +156,6 @@
         .price-table tr:hover td { background: var(--surface); }
         .price-table .tool-col { color: var(--text); }
         .price-table .engine-col { color: var(--dim); font-size: 11px; }
-        .price-table .x402-col { color: var(--teal); }
         .price-table .stripe-col { color: var(--dim); }
         .price-table .gcx-col { color: var(--gold); }
         .price-table .free-row td { color: var(--green); }
@@ -221,13 +221,12 @@
                     <span class="highlight">for autonomous agents</span>
                     <span class="sub">built by AI, for AI</span>
                 </h1>
-                <p class="hero-desc">The first MCP server offering a complete creative post-production pipeline. Generate images, upscale with ESRGAN, enrich with AI metadata, embed provenance, store permanently on Arweave, mint NFTs. Register your wallet and start with 10 free GCX credits.</p>
+                <p class="hero-desc">The first MCP server offering a complete creative post-production pipeline. Upscale with ESRGAN, enrich with AI metadata, embed provenance, verify authenticity, and more. Register your wallet and start with 10 free GCX credits.</p>
                 <div class="badges">
                     <span class="badge live">MCP Server</span>
-                    <span class="badge x402">x402 Payments</span>
                     <span class="badge first">First of Its Kind</span>
                     <span class="badge accent">Streamable HTTP</span>
-                    <span class="badge">32 Tools (18 Free)</span>
+                    <span class="badge">27 Tools (18 Free)</span>
                     <span class="badge">NVIDIA L4 GPU</span>
                     <span class="badge" style="background:rgba(0,212,170,0.15);color:#00d4aa;">10 Free GCX</span>
                     <a href="cursor://anysphere.cursor-deeplink/mcp/install?name=StudioMCPHub&config=eyJ1cmwiOiAiaHR0cHM6Ly9zdHVkaW9tY3BodWIuY29tL21jcCIsICJ0cmFuc3BvcnQiOiAic3RyZWFtYWJsZS1odHRwIn0=" class="badge" style="background:rgba(124,92,255,0.15);color:var(--accent);border-color:var(--accent);cursor:pointer;text-decoration:none;">Install in Cursor</a>
@@ -253,8 +252,8 @@
                         <div id="tab-claude" class="tab-content active"><span class="comment">// Add to ~/.claude/settings.json</span><br><span class="brace">{</span><br>&nbsp;&nbsp;<span class="key">"mcpServers"</span>: <span class="brace">{</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"studiomcphub"</span>: <span class="brace">{</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"url"</span>: <span class="str">"https://studiomcphub.com/mcp"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"transport"</span>: <span class="str">"streamable-http"</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="brace">}</span><br>&nbsp;&nbsp;<span class="brace">}</span><br><span class="brace">}</span></div>
                         <div id="tab-cursor" class="tab-content"><span class="comment">// One-click install:</span><br><a href="cursor://anysphere.cursor-deeplink/mcp/install?name=StudioMCPHub&config=eyJ1cmwiOiAiaHR0cHM6Ly9zdHVkaW9tY3BodWIuY29tL21jcCIsICJ0cmFuc3BvcnQiOiAic3RyZWFtYWJsZS1odHRwIn0=" style="display:inline-block;margin:12px 0;padding:10px 24px;background:var(--accent);color:#fff;border-radius:6px;font-family:var(--mono);font-size:13px;text-decoration:none;">Install StudioMCPHub in Cursor</a><br><br><span class="comment">// Or add manually to .cursor/mcp.json</span><br><span class="brace">{</span><br>&nbsp;&nbsp;<span class="key">"mcpServers"</span>: <span class="brace">{</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"studiomcphub"</span>: <span class="brace">{</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"url"</span>: <span class="str">"https://studiomcphub.com/mcp"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"transport"</span>: <span class="str">"streamable-http"</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="brace">}</span><br>&nbsp;&nbsp;<span class="brace">}</span><br><span class="brace">}</span></div>
                         <div id="tab-cline" class="tab-content"><span class="comment">// Add to VS Code MCP settings</span><br><span class="brace">{</span><br>&nbsp;&nbsp;<span class="key">"studiomcphub"</span>: <span class="brace">{</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"transport"</span>: <span class="str">"streamable-http"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"url"</span>: <span class="str">"https://studiomcphub.com/mcp"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"headers"</span>: <span class="brace">{</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"Authorization"</span>: <span class="str">"Bearer YOUR_GCX_TOKEN"</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="brace">}</span><br>&nbsp;&nbsp;<span class="brace">}</span><br><span class="brace">}</span></div>
-                        <div id="tab-curl" class="tab-content"><span class="comment"># Step 1: Register wallet &amp; get 10 free GCX</span><br><span class="prompt">$</span> <span class="cmd">curl -X POST https://studiomcphub.com/api/wallet/register \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Content-Type: application/json" \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-d '{"wallet": "0xYOUR_WALLET"}'</span><br><br><span class="comment"># Step 2: Generate an image (2 GCX)</span><br><span class="prompt">$</span> <span class="cmd">curl -X POST https://studiomcphub.com/api/tools/generate_image \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Authorization: Bearer 0xYOUR_WALLET" \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Content-Type: application/json" \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-d '{"prompt": "sunset over mountains"}'</span></div>
-                        <div id="tab-python" class="tab-content"><span class="comment"># pip install mcp httpx</span><br><span class="key">from</span> mcp <span class="key">import</span> ClientSession<br><span class="key">from</span> mcp.client.streamable_http <span class="key">import</span> streamablehttp_client<br><br><span class="key">async with</span> streamablehttp_client(<br>&nbsp;&nbsp;&nbsp;&nbsp;url=<span class="str">"https://studiomcphub.com/mcp"</span><br>) <span class="key">as</span> (read, write, _):<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">async with</span> ClientSession(read, write) <span class="key">as</span> session:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">await</span> session.initialize()<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result = <span class="key">await</span> session.call_tool(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"generate_image"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="brace">{</span><span class="key">"prompt"</span>: <span class="str">"sunset over mountains"</span><span class="brace">}</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</div>
+                        <div id="tab-curl" class="tab-content"><span class="comment"># Step 1: Register wallet &amp; get 10 free GCX</span><br><span class="prompt">$</span> <span class="cmd">curl -X POST https://studiomcphub.com/api/wallet/register \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Content-Type: application/json" \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-d '{"wallet": "0xYOUR_WALLET"}'</span><br><br><span class="comment"># Step 2: Upscale an image (2 GCX)</span><br><span class="prompt">$</span> <span class="cmd">curl -X POST https://studiomcphub.com/api/tools/upscale_image \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Authorization: Bearer 0xYOUR_WALLET" \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Content-Type: application/json" \</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-d '{"image_url": "https://example.com/photo.jpg"}'</span></div>
+                        <div id="tab-python" class="tab-content"><span class="comment"># pip install mcp httpx</span><br><span class="key">from</span> mcp <span class="key">import</span> ClientSession<br><span class="key">from</span> mcp.client.streamable_http <span class="key">import</span> streamablehttp_client<br><br><span class="key">async with</span> streamablehttp_client(<br>&nbsp;&nbsp;&nbsp;&nbsp;url=<span class="str">"https://studiomcphub.com/mcp"</span><br>) <span class="key">as</span> (read, write, _):<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">async with</span> ClientSession(read, write) <span class="key">as</span> session:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">await</span> session.initialize()<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result = <span class="key">await</span> session.call_tool(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"upscale_image"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="brace">{</span><span class="key">"image_url"</span>: <span class="str">"https://example.com/photo.jpg"</span><span class="brace">}</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</div>
                     </div>
                 </div>
             </section>
@@ -262,12 +261,6 @@
             <section class="tools-section" id="tools">
                 <div class="section-label">Available Tools</div>
                 <div class="tool-grid">
-                    <div class="tool-card">
-                        <span class="tool-icon">&#9733;</span>
-                        <div class="tool-name">generate_image</div>
-                        <div class="tool-desc">Text-to-image with Stable Diffusion 3.5 Large + T5-XXL encoder on NVIDIA L4 GPU. Up to 2048x2048.</div>
-                        <div class="tool-meta"><span class="tool-price">2 GCX / $0.20</span><span class="tool-engine">SD 3.5L</span></div>
-                    </div>
                     <div class="tool-card">
                         <span class="tool-icon">&#9650;</span>
                         <div class="tool-name">upscale_image</div>
@@ -293,28 +286,34 @@
                         <div class="tool-meta"><span class="tool-price">1 GCX / $0.10</span><span class="tool-engine">Aegis</span></div>
                     </div>
                     <div class="tool-card">
-                        <span class="tool-icon">&#8734;</span>
-                        <div class="tool-name">store_permanent</div>
-                        <div class="tool-desc">Arweave L1 permanent storage. One payment, stored forever. Immutable and decentralized.</div>
-                        <div class="tool-meta"><span class="tool-price">15 GCX / $1.50</span><span class="tool-engine">Archivus / AR</span></div>
-                    </div>
-                    <div class="tool-card">
-                        <span class="tool-icon">&#9670;</span>
-                        <div class="tool-name">mint_nft</div>
-                        <div class="tool-desc">Polygon NFT with on-chain provenance link. Low gas, high throughput. OpenSea compatible.</div>
-                        <div class="tool-meta"><span class="tool-price">10 GCX / $1.00</span><span class="tool-engine">Mintra / Polygon</span></div>
-                    </div>
-                    <div class="tool-card">
                         <span class="tool-icon">&#10003;</span>
                         <div class="tool-name">verify_provenance</div>
                         <div class="tool-desc">Check any image against the Aegis hash index. Works even if all metadata was stripped.</div>
                         <div class="tool-meta"><span class="tool-price free">FREE</span><span class="tool-engine">Aegis</span></div>
                     </div>
-                    <div class="tool-card" style="background: linear-gradient(135deg, rgba(124,92,255,0.06), var(--surface));">
-                        <span class="tool-icon">&#9881;</span>
-                        <div class="tool-name">full_pipeline</div>
-                        <div class="tool-desc">Enrich + upscale + infuse in one call. Add generate and/or mint as options.</div>
-                        <div class="tool-meta"><span class="tool-price">5 GCX / $0.50</span><span class="tool-engine">All Agents</span></div>
+                    <div class="tool-card">
+                        <span class="tool-icon">&#127912;</span>
+                        <div class="tool-name">extract_palette</div>
+                        <div class="tool-desc">Extract dominant color palette from any image. Returns hex codes, names, and proportions.</div>
+                        <div class="tool-meta"><span class="tool-price free">FREE</span><span class="tool-engine">Vision</span></div>
+                    </div>
+                    <div class="tool-card">
+                        <span class="tool-icon">&#9634;</span>
+                        <div class="tool-name">resize_image</div>
+                        <div class="tool-desc">Resize images with aspect ratio control. Smart cropping and multiple output formats.</div>
+                        <div class="tool-meta"><span class="tool-price free">FREE</span><span class="tool-engine">Imaging</span></div>
+                    </div>
+                    <div class="tool-card">
+                        <span class="tool-icon">&#128451;</span>
+                        <div class="tool-name">save_asset / get_asset</div>
+                        <div class="tool-desc">Wallet-scoped cloud storage. Save, retrieve, list, and delete assets tied to your wallet.</div>
+                        <div class="tool-meta"><span class="tool-price free">FREE</span><span class="tool-engine">Storage</span></div>
+                    </div>
+                    <div class="tool-card">
+                        <span class="tool-icon">&#128218;</span>
+                        <div class="tool-name">alexandria_search</div>
+                        <div class="tool-desc">Search the Alexandria Aeternum dataset. 500K+ public domain artworks with rich metadata.</div>
+                        <div class="tool-meta"><span class="tool-price free">FREE</span><span class="tool-engine">Dataset</span></div>
                     </div>
                 </div>
             </section>
@@ -322,33 +321,30 @@
             <section class="pipeline-section" id="pipeline">
                 <div class="section-label">The Pipeline</div>
                 <div class="pipeline-visual">
-                    <div class="pipe-stage"><div class="pipe-num">01</div><div class="pipe-name">Generate</div><div class="pipe-agent">SD 3.5 Large</div></div>
-                    <div class="pipe-stage"><div class="pipe-num">02</div><div class="pipe-name">Upscale</div><div class="pipe-agent">ESRGAN x4</div></div>
-                    <div class="pipe-stage"><div class="pipe-num">03</div><div class="pipe-name">Enrich</div><div class="pipe-agent">Nova / Gemini</div></div>
-                    <div class="pipe-stage"><div class="pipe-num">04</div><div class="pipe-name">Infuse</div><div class="pipe-agent">Atlas / ExifTool</div></div>
-                    <div class="pipe-stage"><div class="pipe-num">05</div><div class="pipe-name">Register</div><div class="pipe-agent">Aegis Hash</div></div>
-                    <div class="pipe-stage"><div class="pipe-num">06</div><div class="pipe-name">Store</div><div class="pipe-agent">Arweave L1</div></div>
-                    <div class="pipe-stage"><div class="pipe-num">07</div><div class="pipe-name">Mint</div><div class="pipe-agent">Polygon NFT</div></div>
+                    <div class="pipe-stage"><div class="pipe-num">01</div><div class="pipe-name">Upscale</div><div class="pipe-agent">ESRGAN x4</div></div>
+                    <div class="pipe-stage"><div class="pipe-num">02</div><div class="pipe-name">Enrich</div><div class="pipe-agent">Nova / Gemini</div></div>
+                    <div class="pipe-stage"><div class="pipe-num">03</div><div class="pipe-name">Infuse</div><div class="pipe-agent">Atlas / ExifTool</div></div>
+                    <div class="pipe-stage"><div class="pipe-num">04</div><div class="pipe-name">Register</div><div class="pipe-agent">Aegis Hash</div></div>
                 </div>
                 <p style="color: var(--dim); font-size: 12px; margin-top: 16px; font-family: var(--sans);">
-                    Use any tool individually, chain them yourself, or call <code style="color: var(--teal);">full_pipeline</code> for the complete flow. Skip stages with <code style="color: var(--teal);">options.skip</code>.
+                    Use any tool individually or chain them together for a complete post-production workflow.
                 </p>
             </section>
 
             <section class="payment-section" id="pricing">
                 <div class="section-label">Payment Methods</div>
-                <div class="pay-grid">
+                <div class="pay-grid" style="grid-template-columns: repeat(2, 1fr);">
                     <div class="pay-card recommended">
-                        <div class="pay-rec">For Agents</div>
-                        <div class="pay-title">x402 / USDC</div>
-                        <div class="pay-for">Agent-native payments</div>
-                        <div class="pay-desc">Pay per call with USDC on Base L2. Server returns HTTP 402 with payment instructions. Sub-cent fees.</div>
+                        <div class="pay-rec">Recommended</div>
+                        <div class="pay-title" style="color: var(--gold);">GCX Credits</div>
+                        <div class="pay-for">Wallet = Account</div>
+                        <div class="pay-desc">Register your wallet and get 10 free GCX credits. Buy more with Stripe. Up to 38% off base rate with volume packs.</div>
                         <ul class="pay-features">
-                            <li>No account required</li>
-                            <li>No API key needed</li>
-                            <li>Payment IS authorization</li>
-                            <li>Lowest per-call price</li>
-                            <li>Instant settlement</li>
+                            <li>No email or username needed</li>
+                            <li>$0.10/GCX base, $0.0625 at Studio</li>
+                            <li>Works across StudioMCPHub + golden-codex.com</li>
+                            <li>Priority queue + usage dashboard</li>
+                            <li>Agents + humans, same wallet</li>
                         </ul>
                     </div>
                     <div class="pay-card">
@@ -360,18 +356,6 @@
                             <li>Usage dashboard</li>
                             <li>Invoice receipts</li>
                             <li>API key auth</li>
-                        </ul>
-                    </div>
-                    <div class="pay-card">
-                        <div class="pay-title" style="color: var(--gold);">GCX Credits</div>
-                        <div class="pay-for">Wallet = Account</div>
-                        <div class="pay-desc">Connect any EVM wallet. Buy GCX credits. Your wallet IS your identity. Up to 38% off base rate with volume packs.</div>
-                        <ul class="pay-features">
-                            <li>No email or username needed</li>
-                            <li>$0.10/GCX base, $0.0625 at Studio</li>
-                            <li>Works across StudioMCPHub + golden-codex.com</li>
-                            <li>Priority queue + usage dashboard</li>
-                            <li>Agents + humans, same wallet</li>
                         </ul>
                     </div>
                 </div>
@@ -387,8 +371,8 @@
                         Redeem anytime for any tool. Credits accrue off-chain — no gas costs.
                     </div>
                     <ul class="pay-features">
-                        <li>Spend 200 GCX on generations → earn 10 loyalty credits → 1 free pipeline</li>
-                        <li>Spend 800 GCX → earn 40 credits → 5 free pipelines or 20 upscales</li>
+                        <li>Spend 200 GCX on tool calls → earn 10 loyalty credits → 5 free upscales</li>
+                        <li>Spend 800 GCX → earn 40 credits → 20 upscales or 40 enrichments</li>
                         <li>Redeemed calls don't earn credits (no infinite loops)</li>
                         <li>Works for agents AND humans — same wallet, same rewards</li>
                     </ul>
@@ -431,31 +415,27 @@
                 </div>
                 <div class="gcx-examples">
                     <strong>What can you do with 100 GCX?</strong><br>
-                    12 image generations, or 50 upscales, or 20 full pipelines, or 50 enrichments + 50 infusions.
+                    50 upscales, or 50 enrichments + 50 infusions, or 100 hash registrations.
                     <br><br>
-                    <strong>Wallet = Account.</strong> Connect any EVM wallet (MetaMask, Coinbase, Agentic Wallet). Buy GCX with USDC or Stripe. Use across StudioMCPHub and golden-codex.com.
+                    <strong>Wallet = Account.</strong> Register any wallet address. Buy GCX with Stripe. Use across StudioMCPHub and golden-codex.com.
                 </div>
             </section>
 
             <section class="price-table-section">
                 <div class="section-label">Per-Call Pricing</div>
                 <table class="price-table">
-                    <thead><tr><th>Tool</th><th>Engine</th><th>GCX</th><th>x402 / Stripe</th><th>At Studio Rate</th></tr></thead>
+                    <thead><tr><th>Tool</th><th>Engine</th><th>GCX</th><th>Stripe</th><th>At Studio Rate</th></tr></thead>
                     <tbody>
-                        <tr><td class="tool-col">generate_image</td><td class="engine-col">SD 3.5 Large</td><td class="gcx-col">2</td><td class="x402-col">$0.20</td><td class="stripe-col">$0.125</td></tr>
-                        <tr><td class="tool-col">upscale_image</td><td class="engine-col">Real-ESRGAN x4</td><td class="gcx-col">2</td><td class="x402-col">$0.20</td><td class="stripe-col">$0.125</td></tr>
-                        <tr><td class="tool-col">enrich_metadata</td><td class="engine-col">Nova / Gemini</td><td class="gcx-col">2</td><td class="x402-col">$0.20</td><td class="stripe-col">$0.125</td></tr>
-                        <tr><td class="tool-col">infuse_metadata</td><td class="engine-col">Atlas / ExifTool</td><td class="gcx-col">1</td><td class="x402-col">$0.10</td><td class="stripe-col">$0.0625</td></tr>
-                        <tr><td class="tool-col">register_hash</td><td class="engine-col">Aegis LSH</td><td class="gcx-col">1</td><td class="x402-col">$0.10</td><td class="stripe-col">$0.0625</td></tr>
-                        <tr><td class="tool-col">store_permanent</td><td class="engine-col">Archivus / Arweave</td><td class="gcx-col">15</td><td class="x402-col">$1.50</td><td class="stripe-col">$0.94</td></tr>
-                        <tr><td class="tool-col">mint_nft</td><td class="engine-col">Mintra / Polygon</td><td class="gcx-col">10</td><td class="x402-col">$1.00</td><td class="stripe-col">$0.625</td></tr>
+                        <tr><td class="tool-col">upscale_image</td><td class="engine-col">Real-ESRGAN x4</td><td class="gcx-col">2</td><td class="stripe-col">$0.20</td><td class="stripe-col">$0.125</td></tr>
+                        <tr><td class="tool-col">enrich_metadata</td><td class="engine-col">Nova / Gemini</td><td class="gcx-col">2</td><td class="stripe-col">$0.20</td><td class="stripe-col">$0.125</td></tr>
+                        <tr><td class="tool-col">infuse_metadata</td><td class="engine-col">Atlas / ExifTool</td><td class="gcx-col">1</td><td class="stripe-col">$0.10</td><td class="stripe-col">$0.0625</td></tr>
+                        <tr><td class="tool-col">register_hash</td><td class="engine-col">Aegis LSH</td><td class="gcx-col">1</td><td class="stripe-col">$0.10</td><td class="stripe-col">$0.0625</td></tr>
                         <tr class="free-row"><td>verify_provenance</td><td>Aegis</td><td>FREE</td><td>FREE</td><td>FREE</td></tr>
-                        <tr style="font-weight:500"><td class="tool-col">full_pipeline</td><td class="engine-col">Enrich+Up+Infuse</td><td class="gcx-col">5</td><td class="x402-col">$0.50</td><td class="stripe-col">$0.31</td></tr>
                     </tbody>
                 </table>
                 <p style="color: var(--dim); font-size: 11px; margin-top: 12px; font-family: var(--sans);">
-                    "x402 / Stripe" = base rate ($0.10/GCX). "At Studio Rate" = $0.0625/GCX with Studio pack (1,600 GCX for $100).
-                    Volume agents get automatic discounts: 10% at $50 spend, 20% at $100, 30% at $200 (30-day rolling).
+                    "Stripe" = base rate ($0.10/GCX). "At Studio Rate" = $0.0625/GCX with Studio pack (1,600 GCX for $100).
+                    Volume users get automatic discounts: 10% at $50 spend, 20% at $100, 30% at $200 (30-day rolling).
                 </p>
             </section>
 

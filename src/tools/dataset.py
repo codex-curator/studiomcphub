@@ -43,27 +43,39 @@ def get_artwork(artifact_id: str) -> dict:
 
 def get_artwork_oracle(artifact_id: str) -> dict:
     """Get Hybrid_Premium 111-field NEST analysis + image for an artifact."""
-    response = httpx.get(
-        f"{_PORTAL}/agent/artifact/{artifact_id}/oracle",
-        timeout=120.0,
-    )
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = httpx.get(
+            f"{_PORTAL}/agent/artifact/{artifact_id}/oracle",
+            timeout=120.0,
+        )
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        raise ValueError(
+            f"Data portal returned {e.response.status_code} for artifact '{artifact_id}'. "
+            "This tool requires the upstream data portal to be available. Please try again later."
+        )
 
 
 def batch_download(dataset_id: str, quantity: int, offset: int = 0) -> dict:
     """Bulk download metadata + images (min 100)."""
-    response = httpx.post(
-        f"{_PORTAL}/agent/batch",
-        json={
-            "dataset_id": dataset_id,
-            "quantity": max(quantity, 100),
-            "offset": offset,
-        },
-        timeout=120.0,
-    )
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = httpx.post(
+            f"{_PORTAL}/agent/batch",
+            json={
+                "dataset_id": dataset_id,
+                "quantity": max(quantity, 100),
+                "offset": offset,
+            },
+            timeout=120.0,
+        )
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        raise ValueError(
+            f"Data portal returned {e.response.status_code} for batch download. "
+            "This tool requires the upstream data portal to be available. Please try again later."
+        )
 
 
 def compliance_manifest(dataset_id: str, regulation: str = "all") -> dict:

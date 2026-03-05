@@ -500,7 +500,7 @@ def _register_wallet(params: dict) -> dict:
         "wallet": wallet,
         "balance": welcome_bonus,
         "message": f"Welcome! You received {welcome_bonus} free GCX credits (${welcome_bonus * 0.10:.2f} value). Use them to call any tool.",
-        "next_step": "Call generate_image, enrich_metadata, or any tool — credits deduct automatically when you include 'Authorization: Bearer <wallet>' header.",
+        "next_step": "Call enrich_metadata, search_artworks, or any tool — credits deduct automatically when you include 'Authorization: Bearer <wallet>' header.",
     }
 
 

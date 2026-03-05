@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy — StudioMCPHub</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230a0a0f'/><text x='16' y='23' font-size='20' text-anchor='middle' fill='%237c5cff'>S</text></svg>">
+    <meta name="description" content="StudioMCPHub privacy policy. How we handle wallet data, payment info, and usage analytics. No images stored. GDPR and CCPA compliant.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://studiomcphub.com/privacy">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
         :root { --bg:#0a0a0f; --surface:#111119; --border:#1e1e2e; --text:#e0e0e8; --dim:#7878a0; --accent:#7c5cff; --teal:#00d4aa; --mono:'SF Mono','Fira Code','Cascadia Code','JetBrains Mono',monospace; --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; }
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -51,7 +54,6 @@
 
         <h3>3b. Payment & Transaction Data</h3>
         <ul>
-            <li><strong>x402 (USDC/Base L2):</strong> On-chain transaction hashes, payment amounts, sender wallet address</li>
             <li><strong>Stripe:</strong> Stripe customer ID, payment intent IDs, amounts (Stripe collects its own data per its <a href="https://stripe.com/privacy">privacy policy</a>)</li>
             <li><strong>GCX Credits:</strong> Balance, purchase history, spend history</li>
         </ul>
@@ -101,16 +103,13 @@
             <li>Transaction records: retained 7 years (tax/legal requirements)</li>
             <li>Usage logs: retained 90 days, then aggregated/anonymized</li>
             <li>Loyalty accounts: retained while active; deleted after 24 months inactivity</li>
-            <li>On-chain data: we cannot delete blockchain transaction data as it exists on public blockchains independent of our systems</li>
+            <li>Wallet addresses: retained while active; deleted after 24 months inactivity</li>
         </ul>
 
         <h2>7. Data Sharing & Third Parties</h2>
         <ul>
             <li><strong>Google Cloud Platform</strong> &mdash; infrastructure provider</li>
             <li><strong>Stripe</strong> &mdash; payment processing (<a href="https://stripe.com/privacy">Stripe Privacy Policy</a>)</li>
-            <li><strong>Coinbase x402 Facilitator</strong> &mdash; payment verification only</li>
-            <li><strong>Arweave network</strong> &mdash; if permanent storage tool is used (data becomes permanently public on a decentralized network)</li>
-            <li><strong>Polygon network</strong> &mdash; if NFT minting is used (wallet address and token metadata become public on-chain)</li>
         </ul>
         <div class="highlight">We do NOT sell personal data. We do NOT share data with advertisers.</div>
 
@@ -154,15 +153,10 @@
             <li>Infrastructure on Google Cloud Run (managed security)</li>
         </ul>
 
-        <h2>12. Blockchain Data Disclaimer</h2>
-        <div class="highlight">
-            Transactions on Base L2, Ethereum, Polygon, and Arweave are public and immutable. We cannot modify or delete on-chain data. Your wallet address and transaction history on public blockchains are visible to anyone.
-        </div>
-
-        <h2>13. Changes to This Policy</h2>
+        <h2>12. Changes to This Policy</h2>
         <p>We will post updates at <a href="/privacy">studiomcphub.com/privacy</a>. Material changes announced via API response headers (X-Policy-Updated) for 30 days.</p>
 
-        <h2>14. Contact</h2>
+        <h2>13. Contact</h2>
         <p>Metavolve Labs, Inc.<br>San Francisco, California<br><a href="mailto:privacy@metavolve.com">privacy@metavolve.com</a></p>
     </div>
 

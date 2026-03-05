@@ -965,6 +965,9 @@ def sandbox_generate():
     GET /api/sandbox/generate_image?prompt=a+crystal+fox
     Returns a sample response showing the exact format real calls return.
     """
+    from .mcp_tools import _is_tool_enabled
+    if not _is_tool_enabled("generate_image"):
+        return jsonify({"error": "Not available in this profile"}), 404
     prompt = request.args.get("prompt", "a crystal fox in moonlit snow")
     return jsonify({
         "_sandbox": True,
@@ -1170,6 +1173,9 @@ def sandbox_pipeline():
 
     GET /api/sandbox/full_pipeline?prompt=a+crystal+fox+in+moonlit+snow
     """
+    from .mcp_tools import _is_tool_enabled
+    if not _is_tool_enabled("full_pipeline"):
+        return jsonify({"error": "Not available in this profile"}), 404
     prompt = request.args.get("prompt", "a crystal fox in moonlit snow")
     return jsonify({
         "_sandbox": True,

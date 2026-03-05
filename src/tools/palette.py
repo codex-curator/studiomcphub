@@ -86,11 +86,24 @@ def extract_palette(
     # Quantize to extract dominant colors
     quantized = img.quantize(colors=num_colors, method=Image.Quantize.MEDIANCUT)
     palette_data = quantized.getpalette()
-    pixel_counts = quantized.histogram()[:num_colors]
+    histogram = quantized.histogram()
+
+    # Count actual distinct colors (histogram entries > 0 within quantized range)
+    actual_colors = 0
+    for cnt in histogram:
+        if cnt > 0:
+            actual_colors += 1
+        else:
+            break
+    actual_colors = min(actual_colors, num_colors)
+    if actual_colors == 0:
+        actual_colors = 1  # At least one color
+
+    pixel_counts = histogram[:actual_colors]
     total_pixels = sum(pixel_counts)
 
     colors = []
-    for i in range(num_colors):
+    for i in range(actual_colors):
         r, g, b = palette_data[i * 3], palette_data[i * 3 + 1], palette_data[i * 3 + 2]
         pct = round((pixel_counts[i] / total_pixels) * 100, 1) if total_pixels > 0 else 0
 

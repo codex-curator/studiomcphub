@@ -1,6 +1,6 @@
 {
   "name": "StudioMCPHub",
-  "description": "32 creative AI tools and art datasets for autonomous agents. Image generation (SD 3.5 + Imagen 3), 5-model ESRGAN upscaling, background removal, product mockups, color profile conversion, print-ready prep, vectorization, DCT watermarking, tiered metadata enrichment, provenance registration, Arweave storage, Base L2 NFT minting, wallet storage, and 53K+ museum artworks from Alexandria Aeternum.",
+  "description": "27 creative AI tools and art datasets for autonomous agents. 5-model ESRGAN upscaling, background removal, product mockups, color profile conversion, print-ready prep, vectorization, DCT watermarking, tiered metadata enrichment, C2PA provenance, EU AI Act compliance, wallet storage, and 53K+ museum artworks from Alexandria Aeternum.",
   "url": "https://studiomcphub.com",
   "version": "0.5.0",
   "capabilities": {
@@ -15,8 +15,8 @@
   },
   "authSchemes": [
     {
-      "type": "x402",
-      "description": "Pay per call with USDC on Base L2. No account needed. HTTP 402 flow."
+      "type": "oauth2",
+      "description": "OAuth 2.1 with PKCE (Authorization Code flow)."
     },
     {
       "type": "bearer",
@@ -28,7 +28,7 @@
     },
     {
       "type": "none",
-      "description": "Free tools (18 of 32) require no authentication."
+      "description": "Free tools (18 of 27) require no authentication."
     }
   ],
   "skills": [
@@ -44,21 +44,7 @@
       "name": "Get Tool Schema",
       "description": "Get the full JSON Schema and usage examples for a specific tool.",
       "tags": ["meta", "discovery", "free"],
-      "examples": ["Get schema for generate_image"]
-    },
-    {
-      "id": "generate_image",
-      "name": "Generate Image",
-      "description": "Text-to-image generation using SD 3.5 Large + T5-XXL on NVIDIA L4 GPU. $0.20 / 2 GCX.",
-      "tags": ["creative", "generation", "gpu", "paid"],
-      "examples": ["Generate a serene Japanese garden at sunset"]
-    },
-    {
-      "id": "generate_image_nano",
-      "name": "Generate Image Nano",
-      "description": "Fast concept generation via Google Imagen 3. Great for rapid iteration. $0.10 / 1 GCX.",
-      "tags": ["creative", "generation", "paid"],
-      "examples": ["Quick concept sketch of a crystal fox"]
+      "examples": ["Get schema for upscale_image"]
     },
     {
       "id": "upscale_image",
@@ -152,20 +138,6 @@
       "examples": ["Register an image's perceptual hash"]
     },
     {
-      "id": "store_permanent",
-      "name": "Store Permanent",
-      "description": "Upload to Arweave L1 for permanent, immutable storage. $1.50 / 15 GCX.",
-      "tags": ["creative", "storage", "arweave", "paid"],
-      "examples": ["Store an image permanently on Arweave"]
-    },
-    {
-      "id": "mint_nft",
-      "name": "Mint NFT",
-      "description": "Mint as NFT on Base L2 (Aeternum Collection) or Polygon. Arweave-backed metadata. Auto-listed on OpenSea. $1.00 / 10 GCX.",
-      "tags": ["creative", "nft", "base", "polygon", "arweave", "paid"],
-      "examples": ["Mint an artwork as an NFT on Base to my wallet"]
-    },
-    {
       "id": "verify_provenance",
       "name": "Verify Provenance",
       "description": "Strip-proof provenance verification via Aegis perceptual hash index. FREE.",
@@ -173,18 +145,11 @@
       "examples": ["Check if an image has registered provenance"]
     },
     {
-      "id": "full_pipeline",
-      "name": "Full Pipeline",
-      "description": "Complete creative pipeline: generate/upscale/enrich/infuse/register in one call. $0.50 / 5 GCX.",
-      "tags": ["creative", "pipeline", "paid"],
-      "examples": ["Run full pipeline on an image"]
-    },
-    {
       "id": "save_asset",
       "name": "Save Asset",
       "description": "Save an image or data to personal wallet storage. 100MB free, 500 assets max. $0.10 / 1 GCX.",
       "tags": ["storage", "wallet", "paid"],
-      "examples": ["Save my generated image as 'sunset-001'"]
+      "examples": ["Save my image as 'sunset-001'"]
     },
     {
       "id": "get_asset",
@@ -258,10 +223,10 @@
     }
   ],
   "tags": [
-    "creative-ai", "art", "image-generation", "upscaling", "background-removal",
+    "creative-ai", "art", "upscaling", "background-removal",
     "mockups", "color-profile", "print-ready", "vectorization", "watermarking",
-    "metadata", "provenance", "arweave", "nft", "base-l2", "dataset",
-    "museum-art", "golden-codex", "x402", "mcp", "resize", "wallet-storage"
+    "metadata", "provenance", "c2pa", "compliance", "eu-ai-act", "dataset",
+    "museum-art", "golden-codex", "mcp", "resize", "wallet-storage"
   ],
   "links": {
     "mcp_endpoint": "https://studiomcphub.com/mcp",
