@@ -419,7 +419,7 @@ def register_webhook():
 
 _mcp_rate = limiter.limit("200/minute") if limiter else lambda f: f
 
-@app.route("/mcp", methods=["POST", "GET", "DELETE"])
+@app.route("/mcp", methods=["POST", "GET", "DELETE", "HEAD"])
 @_mcp_rate
 def mcp_endpoint():
     """MCP Streamable HTTP endpoint.
@@ -595,6 +595,10 @@ def mcp_endpoint():
                     content_type="text/html",
                 )
         # SSE endpoint for server-initiated messages
+        return Response("", status=200, content_type="text/event-stream")
+
+    elif request.method == "HEAD":
+        # MCP client probes — return 200 with empty body
         return Response("", status=200, content_type="text/event-stream")
 
     elif request.method == "DELETE":
