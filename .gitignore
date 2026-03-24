@@ -33,3 +33,4 @@ service-account.json
 # Node (if any)
 node_modules/
 .firebase/
+.mcpregistry*
