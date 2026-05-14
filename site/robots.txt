@@ -1,0 +1,23 @@
+# StudioMCPHub - robots.txt
+# https://studiomcphub.com
+
+User-agent: *
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+Sitemap: https://studiomcphub.com/sitemap.xml
+
+Disallow: /api/
+Disallow: /admin
+Disallow: /__/
