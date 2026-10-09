@@ -9,7 +9,7 @@
 
 ## Reporting Vulnerabilities
 
-**Email**: security@metavolve.com
+**Email**: nexus@metavolvelabsinc.com
 
 We take security seriously. If you discover a vulnerability, please report it
 responsibly via email. Do not open a public GitHub issue for security problems.

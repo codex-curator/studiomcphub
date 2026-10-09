@@ -316,4 +316,4 @@ and semantic coverage by +160.3%. See "The Density Imperative" (DOI: 10.5281/zen
 - Glama: https://glama.ai/mcp/servers/@codex-curator/studio-mcp-hub
 - Golden Codex: https://golden-codex.com
 - HuggingFace: https://huggingface.co/datasets/Metavolve-Labs/alexandria-aeternum-genesis
-- Metavolve Labs: https://metavolve.com
+- Metavolve Labs: https://metavolvelabsinc.com

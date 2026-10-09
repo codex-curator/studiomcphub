@@ -231,6 +231,19 @@ def robots_txt():
     ), 200, {"Content-Type": "text/plain"}
 
 
+@app.route("/.well-known/security.txt")
+@app.route("/security.txt")
+def security_txt():
+    """RFC 9116 security contact. Expires must stay under a year out; renew before 2027-10-01."""
+    return (
+        "Contact: mailto:nexus@metavolvelabsinc.com\n"
+        "Expires: 2027-10-01T00:00:00Z\n"
+        "Preferred-Languages: en\n"
+        "Canonical: https://studiomcphub.com/.well-known/security.txt\n"
+        "Policy: https://github.com/metavolve-labs/studiomcphub/blob/master/SECURITY.md\n"
+    ), 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+
 @app.route("/sitemap.xml")
 def sitemap_xml():
     """XML sitemap for search engine indexing."""

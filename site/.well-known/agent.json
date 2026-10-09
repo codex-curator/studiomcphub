@@ -11,7 +11,7 @@
   "defaultOutputModes": ["application/json"],
   "provider": {
     "name": "Metavolve Labs",
-    "url": "https://metavolve.com"
+    "url": "https://metavolvelabsinc.com"
   },
   "authSchemes": [
     {

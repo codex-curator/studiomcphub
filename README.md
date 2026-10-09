@@ -128,7 +128,7 @@ Alexandria Aeternum metadata density improves VLM visual perception by +25.5% an
 
 - [Golden Codex Studio](https://golden-codex.com)
 - [HuggingFace Dataset](https://huggingface.co/datasets/Metavolve-Labs/alexandria-aeternum-genesis)
-- [Metavolve Labs](https://metavolve.com)
+- [Metavolve Labs](https://metavolvelabsinc.com)
 
 ## License
 
